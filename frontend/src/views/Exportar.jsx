@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, urlDescarga } from '../api/client.js'
+import Modal from '../components/Modal.jsx'
 
 export default function Exportar() {
   const [empresas, setEmpresas] = useState([])
@@ -7,6 +8,7 @@ export default function Exportar() {
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
   const [error, setError] = useState('')
+  const [sinViajes, setSinViajes] = useState(false)
 
   useEffect(() => {
     api.get('/empresas').then(setEmpresas).catch((e) => setError(e.message))
@@ -17,6 +19,21 @@ export default function Exportar() {
   if (desde) params.set('desde', desde)
   if (hasta) params.set('hasta', hasta)
   const sufijo = params.toString() ? `?${params.toString()}` : ''
+
+  async function descargar(tipo) {
+    setError('')
+    setSinViajes(false)
+    try {
+      const viajes = await api.get(`/viajes${sufijo}`)
+      if (viajes.length === 0) {
+        setSinViajes(true)
+        return
+      }
+      window.location.href = urlDescarga(`/export/${tipo}${sufijo}`)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
 
   return (
     <div className="vista">
@@ -55,14 +72,25 @@ export default function Exportar() {
         </div>
 
         <div className="acciones">
-          <a className="btn primario" href={urlDescarga(`/export/xlsx${sufijo}`)}>
+          <button type="button" className="btn primario" onClick={() => descargar('xlsx')}>
             Exportar a Excel
-          </a>
-          <a className="btn" href={urlDescarga(`/export/pdf${sufijo}`)}>
+          </button>
+          <button type="button" className="btn" onClick={() => descargar('pdf')}>
             Exportar a PDF
-          </a>
+          </button>
         </div>
       </section>
+
+      {sinViajes && (
+        <Modal titulo="Sin viajes" onClose={() => setSinViajes(false)}>
+          <p>No hay viajes para esta empresa en este intervalo de fechas.</p>
+          <div className="acciones">
+            <button type="button" className="btn primario" onClick={() => setSinViajes(false)}>
+              Aceptar
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

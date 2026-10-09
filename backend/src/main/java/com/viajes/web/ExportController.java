@@ -3,6 +3,7 @@ package com.viajes.web;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.viajes.domain.Empresa;
+import com.viajes.domain.Gasto;
 import com.viajes.domain.Punto;
 import com.viajes.domain.Viaje;
 import com.viajes.repo.EmpresaRepository;
@@ -59,6 +60,7 @@ public class ExportController {
         "VIATICOS",
         "PEAJES",
         "PAGO CHOFER",
+        "GASTOS VARIOS",
         "TOTAL BS",
         "TASA",
         "TOTAL $"
@@ -66,8 +68,10 @@ public class ExportController {
 
     /** Indices de las columnas en Bs que se muestran tambien convertidas a $. */
     private static final int COL_MONTO = 7;
-    private static final int COL_TASA = 13;
-    private static final int COL_TOTAL_USD = 14;
+    private static final int COL_GASTOS = 12;
+    private static final int COL_TOTAL_BS = 13;
+    private static final int COL_TASA = 14;
+    private static final int COL_TOTAL_USD = 15;
 
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter MARCA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -84,33 +88,53 @@ public class ExportController {
         BigDecimal viaticos = BigDecimal.ZERO;
         BigDecimal peajes = BigDecimal.ZERO;
         BigDecimal pagoChofer = BigDecimal.ZERO;
+        BigDecimal gastos = BigDecimal.ZERO;
         BigDecimal totalBs = BigDecimal.ZERO;
 
         BigDecimal combustibleUsd = BigDecimal.ZERO;
         BigDecimal viaticosUsd = BigDecimal.ZERO;
         BigDecimal peajesUsd = BigDecimal.ZERO;
         BigDecimal pagoChoferUsd = BigDecimal.ZERO;
+        BigDecimal gastosUsd = BigDecimal.ZERO;
         BigDecimal totalBsUsd = BigDecimal.ZERO;
 
         BigDecimal totalUsd = BigDecimal.ZERO;
 
         void sumar(Viaje v) {
             BigDecimal tasa = v.getTasa();
+            BigDecimal gastosVarios = sumaGastos(v);
             monto = monto.add(nulo(v.getMontoViaje()));
             combustible = combustible.add(nulo(v.getCombustible()));
             viaticos = viaticos.add(nulo(v.getViaticos()));
             peajes = peajes.add(nulo(v.getPeajes()));
             pagoChofer = pagoChofer.add(nulo(v.getPagoChofer()));
+            gastos = gastos.add(gastosVarios);
             totalBs = totalBs.add(nulo(v.getTotalBs()));
 
             combustibleUsd = combustibleUsd.add(enUsd(v.getCombustible(), tasa));
             viaticosUsd = viaticosUsd.add(enUsd(v.getViaticos(), tasa));
             peajesUsd = peajesUsd.add(enUsd(v.getPeajes(), tasa));
             pagoChoferUsd = pagoChoferUsd.add(enUsd(v.getPagoChofer(), tasa));
+            gastosUsd = gastosUsd.add(enUsd(gastosVarios, tasa));
             totalBsUsd = totalBsUsd.add(enUsd(v.getTotalBs(), tasa));
 
             totalUsd = totalUsd.add(nulo(v.getTotalUsd()));
         }
+    }
+
+    /**
+     * Suma de los gastos varios del viaje: es lo unico que viaja al Excel/PDF;
+     * las descripciones se muestran solo en pantalla.
+     */
+    private static BigDecimal sumaGastos(Viaje v) {
+        BigDecimal suma = BigDecimal.ZERO;
+        if (v.getGastos() == null) {
+            return suma;
+        }
+        for (Gasto g : v.getGastos()) {
+            suma = suma.add(nulo(g.getMonto()));
+        }
+        return suma;
     }
 
     @GetMapping("/xlsx")
@@ -155,14 +179,15 @@ public class ExportController {
                 texto(fila, 2, nombreEmpresa(v));
                 texto(fila, 3, nombreChofer(v));
                 texto(fila, 4, v.getCarga());
-                texto(fila, 4, nombrePunto(v.getPuntoSalida()));
-                texto(fila, 5, nombrePunto(v.getPuntoLlegada()));
+                texto(fila, 5, nombrePunto(v.getPuntoSalida()));
+                texto(fila, 6, nombrePunto(v.getPuntoLlegada()));
                 numerico(fila, COL_MONTO, v.getMontoViaje(), estiloNumero);
-                texto(fila, 7, dual(v.getCombustible(), v.getTasa()));
-                texto(fila, 8, dual(v.getViaticos(), v.getTasa()));
-                texto(fila, 9, dual(v.getPeajes(), v.getTasa()));
-                texto(fila, 10, dual(v.getPagoChofer(), v.getTasa()));
-                texto(fila, 11, dual(v.getTotalBs(), v.getTasa()));
+                texto(fila, 8, dual(v.getCombustible(), v.getTasa()));
+                texto(fila, 9, dual(v.getViaticos(), v.getTasa()));
+                texto(fila, 10, dual(v.getPeajes(), v.getTasa()));
+                texto(fila, 11, dual(v.getPagoChofer(), v.getTasa()));
+                texto(fila, COL_GASTOS, dual(sumaGastos(v), v.getTasa()));
+                texto(fila, COL_TOTAL_BS, dual(v.getTotalBs(), v.getTasa()));
                 numerico(fila, COL_TASA, v.getTasa(), estiloNumero);
                 numerico(fila, COL_TOTAL_USD, v.getTotalUsd(), estiloNumero);
             }
@@ -173,11 +198,12 @@ public class ExportController {
                 totales.createCell(i).setCellStyle(estiloTotales);
             }
             celdaTexto(totales, COL_MONTO, dolar(sumas.monto), estiloTotales);
-            celdaTexto(totales, 7, dualValores(sumas.combustible, sumas.combustibleUsd), estiloTotales);
-            celdaTexto(totales, 8, dualValores(sumas.viaticos, sumas.viaticosUsd), estiloTotales);
-            celdaTexto(totales, 9, dualValores(sumas.peajes, sumas.peajesUsd), estiloTotales);
-            celdaTexto(totales, 10, dualValores(sumas.pagoChofer, sumas.pagoChoferUsd), estiloTotales);
-            celdaTexto(totales, 11, dualValores(sumas.totalBs, sumas.totalBsUsd), estiloTotales);
+            celdaTexto(totales, 8, dualValores(sumas.combustible, sumas.combustibleUsd), estiloTotales);
+            celdaTexto(totales, 9, dualValores(sumas.viaticos, sumas.viaticosUsd), estiloTotales);
+            celdaTexto(totales, 10, dualValores(sumas.peajes, sumas.peajesUsd), estiloTotales);
+            celdaTexto(totales, 11, dualValores(sumas.pagoChofer, sumas.pagoChoferUsd), estiloTotales);
+            celdaTexto(totales, COL_GASTOS, dualValores(sumas.gastos, sumas.gastosUsd), estiloTotales);
+            celdaTexto(totales, COL_TOTAL_BS, dualValores(sumas.totalBs, sumas.totalBsUsd), estiloTotales);
             totales.createCell(COL_TASA).setCellStyle(estiloTotales);
             totales.createCell(COL_TOTAL_USD).setCellStyle(estiloTotales);
 
@@ -235,6 +261,7 @@ public class ExportController {
                     .append(tdNumRaw(dualPdf(v.getViaticos(), v.getTasa())))
                     .append(tdNumRaw(dualPdf(v.getPeajes(), v.getTasa())))
                     .append(tdNumRaw(dualPdf(v.getPagoChofer(), v.getTasa())))
+                    .append(tdNumRaw(dualPdf(sumaGastos(v), v.getTasa())))
                     .append(tdNumRaw(dualPdf(v.getTotalBs(), v.getTasa())))
                     .append(tdNum(money(v.getTasa())))
                     .append(tdNum(dolar(v.getTotalUsd())))
@@ -248,13 +275,14 @@ public class ExportController {
                 .append(tdNumRaw(dualValoresPdf(sumas.viaticos, sumas.viaticosUsd)))
                 .append(tdNumRaw(dualValoresPdf(sumas.peajes, sumas.peajesUsd)))
                 .append(tdNumRaw(dualValoresPdf(sumas.pagoChofer, sumas.pagoChoferUsd)))
+                .append(tdNumRaw(dualValoresPdf(sumas.gastos, sumas.gastosUsd)))
                 .append(tdNumRaw(dualValoresPdf(sumas.totalBs, sumas.totalBsUsd)))
                 .append(tdNum(""))
                 .append(tdNum(""))
                 .append("</tr>");
 
         cuerpo.append("<tr class=\"suma\">")
-                .append("<td colspan=\"14\" class=\"etiqueta\">SUMA TOTAL $</td>")
+                .append("<td colspan=\"15\" class=\"etiqueta\">SUMA TOTAL $</td>")
                 .append(tdNum(dolar(sumas.totalUsd)))
                 .append("</tr>");
 

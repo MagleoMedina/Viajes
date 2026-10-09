@@ -365,6 +365,68 @@
   padding: 0 2px;
 }
 
+/* ---------- Gastos varios ---------- */
+
+.gastos-varios {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gastos-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gastos-cab h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.gastos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gastos-fila {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.gastos-total {
+  margin: 0;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Celda de monto que abre un modal al hacer clic. */
+.celda-link {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.celda-link:hover {
+  color: var(--text);
+}
+
 /* ---------- Modal ---------- */
 
 .modal-overlay {

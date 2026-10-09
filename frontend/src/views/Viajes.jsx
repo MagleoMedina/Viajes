@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, money } from '../api/client.js'
+import Modal from '../components/Modal.jsx'
 
 export default function Viajes({ onEditar }) {
   const [lista, setLista] = useState([])
@@ -9,6 +10,8 @@ export default function Viajes({ onEditar }) {
   const [hasta, setHasta] = useState('')
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [desglose, setDesglose] = useState(null)
+  const [sinViajes, setSinViajes] = useState(false)
 
   function cargar() {
     const params = new URLSearchParams()
@@ -16,7 +19,10 @@ export default function Viajes({ onEditar }) {
     if (desde) params.set('desde', desde)
     if (hasta) params.set('hasta', hasta)
     const sufijo = params.toString() ? `?${params.toString()}` : ''
-    return api.get(`/viajes${sufijo}`).then(setLista)
+    return api.get(`/viajes${sufijo}`).then((datos) => {
+      setLista(datos)
+      return datos
+    })
   }
 
   useEffect(() => {
@@ -24,7 +30,16 @@ export default function Viajes({ onEditar }) {
   }, [])
 
   useEffect(() => {
-    cargar().catch((e) => setError(e.message))
+    cargar()
+      .then((listaCargada) => {
+        const conFiltro = Boolean(empresaId || desde || hasta)
+        if (conFiltro && listaCargada.length === 0) {
+          setSinViajes(true)
+        } else {
+          setSinViajes(false)
+        }
+      })
+      .catch((e) => setError(e.message))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [empresaId, desde, hasta])
 
@@ -44,6 +59,10 @@ export default function Viajes({ onEditar }) {
 
   const totalBs = lista.reduce((suma, v) => suma + (Number(v.totalBs) || 0), 0)
   const totalUsd = lista.reduce((suma, v) => suma + (Number(v.totalUsd) || 0), 0)
+
+  function sumarGastos(viaje) {
+    return (viaje.gastos || []).reduce((suma, g) => suma + (Number(g.monto) || 0), 0)
+  }
 
   return (
     <div className="vista">
@@ -116,6 +135,7 @@ export default function Viajes({ onEditar }) {
                   <th>Carga</th>
                   <th>Salida</th>
                   <th>Llegada</th>
+                  <th className="derecha">Gastos varios</th>
                   <th className="derecha">Total BS</th>
                   <th className="derecha">Tasa</th>
                   <th className="derecha">Total $</th>
@@ -134,6 +154,20 @@ export default function Viajes({ onEditar }) {
                     <td>{viaje.carga}</td>
                     <td>{viaje.puntoSalida?.nombre || '—'}</td>
                     <td>{viaje.puntoLlegada?.nombre || '—'}</td>
+                    <td className="derecha">
+                      {(viaje.gastos || []).length > 0 ? (
+                        <button
+                          type="button"
+                          className="celda-link"
+                          onClick={() => setDesglose(viaje)}
+                          title="Ver desglose de gastos varios"
+                        >
+                          {money(sumarGastos(viaje))}
+                        </button>
+                      ) : (
+                        <span>{money(0)}</span>
+                      )}
+                    </td>
                     <td className="derecha">{money(viaje.totalBs)}</td>
                     <td className="derecha">{money(viaje.tasa)}</td>
                     <td className="derecha">{money(viaje.totalUsd)}</td>
@@ -155,6 +189,53 @@ export default function Viajes({ onEditar }) {
             </table>
           </div>
         </section>
+      )}
+
+      {desglose && (
+        <Modal titulo="Desglose de gastos varios" onClose={() => setDesglose(null)}>
+          <p className="ayuda">
+            Viaje del {desglose.fechaInicio} al {desglose.fechaFin} · {desglose.chofer.nombre}{' '}
+            {desglose.chofer.apellido}
+          </p>
+          <div className="tabla-envoltura">
+            <table className="tabla">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th className="derecha">Monto (Bs)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(desglose.gastos || []).map((g, i) => (
+                  <tr key={g.id ?? i}>
+                    <td>{g.descripcion}</td>
+                    <td className="derecha">{money(g.monto)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th>Total</th>
+                  <th className="derecha">{money(sumarGastos(desglose))} Bs</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Modal>
+      )}
+
+      {sinViajes && (
+        <Modal
+          titulo="Sin viajes"
+          onClose={() => setSinViajes(false)}
+        >
+          <p>No hay viajes para esta empresa en este intervalo de fechas.</p>
+          <div className="acciones">
+            <button type="button" className="btn primario" onClick={() => setSinViajes(false)}>
+              Aceptar
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   )

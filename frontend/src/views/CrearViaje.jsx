@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, hoy, money } from '../api/client.js'
 import ChipsInput from '../components/ChipsInput.jsx'
+import Modal from '../components/Modal.jsx'
 
 const VACIO = {
   fechaInicio: hoy(),
@@ -15,6 +16,7 @@ const VACIO = {
   viaticos: '',
   peajes: '',
   pagoChofer: '',
+  gastos: [],
   tasa: '',
 }
 
@@ -37,6 +39,10 @@ function desdeViaje(viaje) {
     viaticos: aTexto(viaje.viaticos),
     peajes: aTexto(viaje.peajes),
     pagoChofer: aTexto(viaje.pagoChofer),
+    gastos: (viaje.gastos || []).map((g) => ({
+      monto: aTexto(g.monto),
+      descripcion: g.descripcion ?? '',
+    })),
     tasa: aTexto(viaje.tasa),
   }
 }
@@ -55,6 +61,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [guardado, setGuardado] = useState('')
 
   function cargar() {
     return Promise.all([api.get('/choferes'), api.get('/empresas'), api.get('/puntos'), api.get('/tasa')])
@@ -83,14 +90,30 @@ export default function CrearViaje({ viaje, onGuardado }) {
 
   const gastosBs =
     numero(form.combustible) + numero(form.viaticos) + numero(form.peajes) + numero(form.pagoChofer)
+  const gastosVarios = (form.gastos || []).reduce((suma, g) => suma + numero(g.monto), 0)
   const tasa = numero(form.tasa)
   // El monto del viaje se digita en $ y se multiplica por la tasa para obtener Bs.
   const montoBs = numero(form.montoViaje) * tasa
-  const totalBs = montoBs + gastosBs
+  const totalBs = montoBs + gastosBs + gastosVarios
   const totalUsd = tasa > 0 ? totalBs / tasa : 0
 
+  function agregarGasto() {
+    setForm((f) => ({ ...f, gastos: [...(f.gastos || []), { monto: '', descripcion: '' }] }))
+  }
+
+  function quitarGasto(indice) {
+    setForm((f) => ({ ...f, gastos: f.gastos.filter((_, i) => i !== indice) }))
+  }
+
+  function editarGasto(indice, campo, valor) {
+    setForm((f) => ({
+      ...f,
+      gastos: f.gastos.map((g, i) => (i === indice ? { ...g, [campo]: valor } : g)),
+    }))
+  }
+
   function limpiarFormulario() {
-    setForm((f) => ({ ...VACIO, tasa: f.tasa }))
+    setForm((f) => ({ ...VACIO, gastos: [], tasa: f.tasa }))
     setFinManual(false)
     setError('')
     setAviso('')
@@ -113,16 +136,20 @@ export default function CrearViaje({ viaje, onGuardado }) {
       viaticos: numero(form.viaticos),
       peajes: numero(form.peajes),
       pagoChofer: numero(form.pagoChofer),
+      gastos: (form.gastos || [])
+        .filter((g) => numero(g.monto) > 0 || g.descripcion.trim())
+        .map((g) => ({ monto: numero(g.monto), descripcion: g.descripcion.trim() })),
       tasa: tasa,
     }
     try {
       if (viaje) {
         await api.put(`/viajes/${viaje.id}`, payload)
         setAviso('Viaje actualizado.')
+        setGuardado('Viaje actualizado')
       } else {
         await api.post('/viajes', payload)
-        setAviso('Viaje registrado.')
         limpiarFormulario()
+        setGuardado('Viaje guardado')
       }
     } catch (err) {
       setError(err.message)
@@ -327,6 +354,53 @@ export default function CrearViaje({ viaje, onGuardado }) {
                 />
               </label>
             </div>
+
+            <div className="gastos-varios">
+              <div className="gastos-cab">
+                <h3>Gastos varios (Bs)</h3>
+                <button type="button" className="btn pequeno" onClick={agregarGasto}>
+                  + Agregar gasto
+                </button>
+              </div>
+              {(form.gastos || []).length === 0 ? (
+                <p className="ayuda">Sin gastos varios. El monto y la descripción se agregan uno por uno.</p>
+              ) : (
+                <ul className="gastos-lista">
+                  {(form.gastos || []).map((g, i) => (
+                    <li key={i} className="gastos-fila">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="Monto (Bs)"
+                        value={g.monto}
+                        onChange={(e) => editarGasto(i, 'monto', e.target.value)}
+                        required
+                      />
+                      <input
+                        type="text"
+                        maxLength="200"
+                        placeholder="Descripción del gasto"
+                        value={g.descripcion}
+                        onChange={(e) => editarGasto(i, 'descripcion', e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn pequeno peligro"
+                        onClick={() => quitarGasto(i)}
+                        aria-label="Quitar gasto"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(form.gastos || []).length > 0 && (
+                <p className="gastos-total">Suma de gastos varios: Bs {money(gastosVarios)}</p>
+              )}
+            </div>
           </section>
 
           <section className="tarjeta resumen">
@@ -338,6 +412,10 @@ export default function CrearViaje({ viaje, onGuardado }) {
             <div className="fila-total">
               <span>Combustible + Viáticos + Peajes + Pago a choferes</span>
               <strong>{money(gastosBs)} Bs</strong>
+            </div>
+            <div className="fila-total">
+              <span>Gastos varios</span>
+              <strong>{money(gastosVarios)} Bs</strong>
             </div>
             <div className="fila-total">
               <span>Tasa del día</span>
@@ -364,6 +442,21 @@ export default function CrearViaje({ viaje, onGuardado }) {
           </section>
         </div>
       </form>
+
+      {guardado && (
+        <Modal titulo={guardado} onClose={() => setGuardado('')}>
+          <p className="ok">
+            {viaje
+              ? 'Los cambios del viaje se guardaron correctamente.'
+              : 'El viaje se registró correctamente.'}
+          </p>
+          <div className="acciones">
+            <button type="button" className="btn primario" onClick={() => setGuardado('')}>
+              Aceptar
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@ package com.viajes.web;
 
 import com.viajes.domain.Chofer;
 import com.viajes.domain.Empresa;
+import com.viajes.domain.Gasto;
 import com.viajes.domain.Punto;
 import com.viajes.domain.Tasa;
 import com.viajes.domain.Viaje;
@@ -15,6 +16,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -39,6 +41,9 @@ public class ViajeController {
     private final PuntoRepository puntoRepo;
     private final TasaRepository tasaRepo;
 
+    public record GastoRequest(BigDecimal monto, String descripcion) {
+    }
+
     public record ViajeRequest(
             @NotNull(message = "La fecha de inicio es obligatoria") LocalDate fechaInicio,
             @NotNull(message = "La fecha de finalizacion es obligatoria") LocalDate fechaFin,
@@ -52,6 +57,7 @@ public class ViajeController {
             BigDecimal viaticos,
             BigDecimal peajes,
             BigDecimal pagoChofer,
+            List<GastoRequest> gastos,
             BigDecimal tasa) {
     }
 
@@ -116,6 +122,26 @@ public class ViajeController {
         viaje.setPagoChofer(cero(req.pagoChofer()));
         viaje.setTasa(cero(req.tasa()));
 
+        // Gastos varios: se reemplaza la lista completa; orphanRemoval borra los quitados.
+        viaje.getGastos().clear();
+        BigDecimal gastosVarios = BigDecimal.ZERO;
+        if (req.gastos() != null) {
+            for (GastoRequest g : req.gastos()) {
+                if (g == null || g.monto() == null || g.monto().signum() <= 0) {
+                    continue;
+                }
+                if (g.descripcion() == null || g.descripcion().isBlank()) {
+                    throw new ApiException(400, "Cada gasto varios necesita una descripcion");
+                }
+                Gasto gasto = new Gasto();
+                gasto.setViaje(viaje);
+                gasto.setMonto(g.monto());
+                gasto.setDescripcion(g.descripcion().trim());
+                viaje.getGastos().add(gasto);
+                gastosVarios = gastosVarios.add(gasto.getMonto());
+            }
+        }
+
         // El monto del viaje se digita en $: se multiplica por la tasa para pasarlo a Bs.
         BigDecimal montoBs = viaje.getTasa().signum() == 0
                 ? BigDecimal.ZERO
@@ -124,7 +150,8 @@ public class ViajeController {
                 .add(viaje.getCombustible())
                 .add(viaje.getViaticos())
                 .add(viaje.getPeajes())
-                .add(viaje.getPagoChofer());
+                .add(viaje.getPagoChofer())
+                .add(gastosVarios);
         viaje.setTotalBs(totalBs);
         viaje.setTotalUsd(dividir(totalBs, viaje.getTasa()));
     }

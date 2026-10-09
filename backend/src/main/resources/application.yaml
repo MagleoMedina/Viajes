@@ -2,7 +2,7 @@ spring:
   application:
     name: viajes
   datasource:
-    url: jdbc:sqlite:data/cabelum.db
+    url: jdbc:sqlite:data/viajes.db
     driver-class-name: org.sqlite.JDBC
     hikari:
       # Las claves foraneas viven por conexion en SQLite; hay que activarlas en cada una.
