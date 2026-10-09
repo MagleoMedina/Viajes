@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: viajes
+  datasource:
+    url: jdbc:sqlite:data/cabelum.db
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      # Las claves foraneas viven por conexion en SQLite; hay que activarlas en cada una.
+      connection-init-sql: PRAGMA foreign_keys=ON;
+  jpa:
+    hibernate:
+      ddl-auto: update
+    # Se mantiene abierto para que Jackson pueda serializar las referencias perezosas
+    # al devolver entidades desde los controladores.
+    open-in-view: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.community.dialect.SQLiteDialect
+        jdbc:
+          time_zone: UTC
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.viajes: INFO

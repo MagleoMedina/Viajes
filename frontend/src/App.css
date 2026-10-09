@@ -1,0 +1,428 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  width: 244px;
+  min-width: 244px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--primary);
+  color: #cbd5e1;
+}
+
+.nav {
+  flex: 1;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-padre,
+.nav-hijo,
+.nav-tasa {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-padre:hover,
+.nav-tasa:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.flecha {
+  color: #93a3c0;
+}
+
+.submenu {
+  list-style: none;
+  margin: 2px 0 8px;
+  padding: 0 0 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  margin-left: 14px;
+}
+
+.nav-hijo {
+  padding: 8px 12px;
+  font-weight: 500;
+  font-size: 13.5px;
+  color: #a9b7d1;
+}
+
+.nav-hijo:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.nav-hijo.activo {
+  background: var(--accent);
+  color: #fff;
+}
+
+.nav-tasa {
+  margin-top: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.etiqueta {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #93a3c0;
+}
+
+.sidebar-pie {
+  padding: 14px 16px;
+  font-size: 11px;
+  color: #7f8db0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Contenido ---------- */
+
+.contenido {
+  flex: 1;
+  min-width: 0;
+  padding: 26px 30px 60px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cabecera-logo {
+  display: block;
+  width: auto;
+  max-width: min(220px, 60vw);
+  height: auto;
+}
+
+.cabecera-sub {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.vista {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1200px;
+}
+
+.vista-cab {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.vista-cab .sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.contador {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.contador.acento {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  background: var(--accent-soft);
+}
+
+.totales {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Tarjetas y formularios ---------- */
+
+.tarjeta {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tarjeta.ancho-medio {
+  max-width: 620px;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.campos-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.campos-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.ancho-completo {
+  grid-column: 1 / -1;
+}
+
+.acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.tabla-envoltura {
+  overflow: auto;
+  max-height: 65vh;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* ---------- Viaje ---------- */
+
+.viaje {
+  gap: 18px;
+}
+
+.viaje-rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.resumen {
+  background: #fbfcfe;
+}
+
+.fila-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.fila-total strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.fila-total.grande {
+  border-bottom: none;
+  padding-top: 14px;
+}
+
+.fila-total.grande + .fila-total.grande {
+  border-top: 2px solid var(--border);
+  padding-top: 10px;
+}
+
+.fila-total.grande span {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fila-total.grande strong {
+  font-size: 24px;
+  color: var(--accent);
+}
+
+/* ---------- Chips de carga ---------- */
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chips-lista {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  min-height: 42px;
+}
+
+.chips-lista:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.chips-lista input {
+  flex: 1;
+  min-width: 140px;
+  width: auto;
+  border: none;
+  padding: 3px 4px;
+  background: transparent;
+}
+
+.chips-lista input:focus {
+  box-shadow: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+/* ---------- Modal ---------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.3);
+  padding: 18px;
+}
+
+.modal-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.modal-cab h3 {
+  font-size: 17px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 980px) {
+  .rejilla,
+  .viaje-rejilla {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .contenido {
+    padding: 20px 16px 50px;
+  }
+}
+
+@media (max-width: 720px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+  }
+
+  .cabecera-logo {
+    max-width: min(170px, 70vw);
+  }
+}
