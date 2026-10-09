@@ -244,6 +244,11 @@ public class ExportController {
                 ? ""
                 : "<span class=\"dato\"><span class=\"k\">EMPRESA</span>" + esc(nombreEmpresaId(empresaId)) + "</span>\n                    ";
 
+        // Titulo: "Viajes <empresa>" cuando se filtra; "Viajes realizados" con todo el historico.
+        String titulo = empresaId == null
+                ? "Viajes realizados"
+                : "Viajes " + esc(nombreEmpresaId(empresaId));
+
         StringBuilder cuerpo = new StringBuilder();
         int indice = 0;
         for (Viaje v : viajes) {
@@ -320,7 +325,7 @@ public class ExportController {
                   <div class="cab">
                     <img class="logo" src="%s" alt="Cabelum" />
                     <div class="cab-texto">
-                      <h1>Viajes Cabelum</h1>
+                      <h1>%s</h1>
                       <div class="rango">Histórico de viajes</div>
                     </div>
                   </div>
@@ -336,7 +341,7 @@ public class ExportController {
                   <div class="pie">%s</div>
                 </body></html>
                 """
-                .formatted(logoDataUri(), periodo, cantidad, empresaBox, ths(), cuerpo, pie(cantidad));
+                .formatted(logoDataUri(), titulo, periodo, cantidad, empresaBox, ths(), cuerpo, pie(cantidad));
 
         try {
             ByteArrayOutputStream salida = new ByteArrayOutputStream();

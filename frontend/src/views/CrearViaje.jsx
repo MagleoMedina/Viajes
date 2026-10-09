@@ -18,6 +18,7 @@ const VACIO = {
   pagoChofer: '',
   gastos: [],
   tasa: '',
+  recorrido: '',
 }
 
 function aTexto(valor) {
@@ -44,6 +45,7 @@ function desdeViaje(viaje) {
       descripcion: g.descripcion ?? '',
     })),
     tasa: aTexto(viaje.tasa),
+    recorrido: aTexto(viaje.recorrido),
   }
 }
 
@@ -57,6 +59,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const [choferes, setChoferes] = useState([])
   const [empresas, setEmpresas] = useState([])
   const [puntos, setPuntos] = useState([])
+  const [recorridos, setRecorridos] = useState([])
   const [finManual, setFinManual] = useState(() => Boolean(viaje && viaje.fechaFin !== viaje.fechaInicio))
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -64,11 +67,18 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const [guardado, setGuardado] = useState('')
 
   function cargar() {
-    return Promise.all([api.get('/choferes'), api.get('/empresas'), api.get('/puntos'), api.get('/tasa')])
-      .then(([c, e, p, t]) => {
+    return Promise.all([
+      api.get('/choferes'),
+      api.get('/empresas'),
+      api.get('/puntos'),
+      api.get('/tasa'),
+      api.get('/recorridos'),
+    ])
+      .then(([c, e, p, t, r]) => {
         setChoferes(c)
         setEmpresas(e)
         setPuntos(p)
+        setRecorridos(r)
         if (t?.valor != null) {
           setForm((f) => (f.tasa ? f : { ...f, tasa: String(t.valor) }))
         }
@@ -140,6 +150,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
         .filter((g) => numero(g.monto) > 0 || g.descripcion.trim())
         .map((g) => ({ monto: numero(g.monto), descripcion: g.descripcion.trim() })),
       tasa: tasa,
+      recorrido: form.recorrido.trim(),
     }
     try {
       if (viaje) {
@@ -285,6 +296,21 @@ export default function CrearViaje({ viaje, onGuardado }) {
                 onChange={(v) => set('carga', v)}
                 placeholder="Hortalizas, neveras, Mani"
               />
+            </label>
+            <label className="ancho-completo">
+              Recorrido
+              <input
+                list="lista-recorridos"
+                value={form.recorrido}
+                onChange={(e) => set('recorrido', e.target.value)}
+                placeholder="Escriba o elija un recorrido"
+                autoComplete="off"
+              />
+              <datalist id="lista-recorridos">
+                {recorridos.map((r) => (
+                  <option key={r.id} value={r.nombre} />
+                ))}
+              </datalist>
             </label>
           </div>
         </section>

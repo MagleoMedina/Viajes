@@ -6,31 +6,22 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Historial de tasas. La mas reciente es la vigente. */
+/** Catalogo de recorridos: alimenta el autocompletado del campo Ruta. */
 @Entity
-@Table(name = "tasas")
+@Table(name = "recorridos")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Tasa {
+public class Recorrido {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private BigDecimal valor;
-
-    @Column(nullable = false)
-    private LocalDateTime fecha = LocalDateTime.now();
-
-    /** "GoCambio (BCV)" si llego sola, "Manual" si la escribio el usuario. */
-    @Column(length = 40)
-    private String origen;
+    @Column(nullable = false, unique = true, length = 150)
+    private String nombre;
 }

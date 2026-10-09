@@ -8,11 +8,13 @@ import CrearViaje from './views/CrearViaje.jsx'
 import Viajes from './views/Viajes.jsx'
 import Exportar from './views/Exportar.jsx'
 import Tasa from './views/Tasa.jsx'
+import Recorridos from './views/Recorridos.jsx'
 import './App.css'
 
 function App() {
   const [vista, setVista] = useState('choferes')
   const [tasaAbierta, setTasaAbierta] = useState(false)
+  const [recorridosAbiertos, setRecorridosAbiertos] = useState(false)
   const [viajeEditando, setViajeEditando] = useState(null)
 
   function editarViaje(viaje) {
@@ -31,7 +33,12 @@ function App() {
 
   return (
     <div className="app">
-      <Sidebar vista={vista} onNavigate={navegar} onTasa={() => setTasaAbierta(true)} />
+      <Sidebar
+        vista={vista}
+        onNavigate={navegar}
+        onTasa={() => setTasaAbierta(true)}
+        onRecorridos={() => setRecorridosAbiertos(true)}
+      />
 
       <main className="contenido">
         <header className="cabecera">
@@ -51,6 +58,7 @@ function App() {
       </main>
 
       {tasaAbierta && <Tasa onClose={() => setTasaAbierta(false)} />}
+      {recorridosAbiertos && <Recorridos onClose={() => setRecorridosAbiertos(false)} />}
     </div>
   )
 }

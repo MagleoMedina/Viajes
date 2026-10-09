@@ -10,7 +10,7 @@ const SUBMENU = [
   { id: 'exportar', label: 'Exportar' },
 ]
 
-export default function Sidebar({ vista, onNavigate, onTasa }) {
+export default function Sidebar({ vista, onNavigate, onTasa, onRecorridos }) {
   const [abierto, setAbierto] = useState(true)
 
   return (
@@ -39,6 +39,11 @@ export default function Sidebar({ vista, onNavigate, onTasa }) {
                 </button>
               </li>
             ))}
+            <li>
+              <button type="button" className="nav-hijo" onClick={onRecorridos}>
+                Recorridos
+              </button>
+            </li>
           </ul>
         )}
 

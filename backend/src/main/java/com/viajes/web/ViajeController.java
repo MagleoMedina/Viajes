@@ -4,11 +4,13 @@ import com.viajes.domain.Chofer;
 import com.viajes.domain.Empresa;
 import com.viajes.domain.Gasto;
 import com.viajes.domain.Punto;
+import com.viajes.domain.Recorrido;
 import com.viajes.domain.Tasa;
 import com.viajes.domain.Viaje;
 import com.viajes.repo.ChoferRepository;
 import com.viajes.repo.EmpresaRepository;
 import com.viajes.repo.PuntoRepository;
+import com.viajes.repo.RecorridoRepository;
 import com.viajes.repo.TasaRepository;
 import com.viajes.repo.ViajeRepository;
 import jakarta.validation.Valid;
@@ -40,6 +42,7 @@ public class ViajeController {
     private final EmpresaRepository empresaRepo;
     private final PuntoRepository puntoRepo;
     private final TasaRepository tasaRepo;
+    private final RecorridoRepository recorridoRepo;
 
     public record GastoRequest(BigDecimal monto, String descripcion) {
     }
@@ -58,7 +61,8 @@ public class ViajeController {
             BigDecimal peajes,
             BigDecimal pagoChofer,
             List<GastoRequest> gastos,
-            BigDecimal tasa) {
+            BigDecimal tasa,
+            String recorrido) {
     }
 
     @GetMapping
@@ -101,6 +105,18 @@ public class ViajeController {
         repo.deleteById(id);
     }
 
+    /** Guarda automaticamente el recorrido tecleado para alimentar el autocompletado. */
+    private void guardarRecorrido(String recorrido) {
+        if (recorrido == null || recorrido.isBlank()) {
+            return;
+        }
+        if (!recorridoRepo.existsByNombreIgnoreCase(recorrido)) {
+            Recorrido nuevo = new Recorrido();
+            nuevo.setNombre(recorrido);
+            recorridoRepo.save(nuevo);
+        }
+    }
+
     private void aplicar(Viaje viaje, ViajeRequest req) {
         if (req.fechaFin().isBefore(req.fechaInicio())) {
             throw new ApiException(400, "La fecha de finalizacion no puede ser anterior a la de inicio");
@@ -113,6 +129,8 @@ public class ViajeController {
         viaje.setChofer(chofer);
         viaje.setEmpresa(empresa(req.empresaId()));
         viaje.setCarga(req.carga().trim());
+        viaje.setRecorrido(req.recorrido() == null ? null : req.recorrido().trim());
+        guardarRecorrido(viaje.getRecorrido());
         viaje.setPuntoSalida(punto(req.puntoSalidaId()));
         viaje.setPuntoLlegada(punto(req.puntoLlegadaId()));
         viaje.setMontoViaje(cero(req.montoViaje()));

@@ -50,6 +50,10 @@ public class Viaje {
     @Column(nullable = false)
     private String carga;
 
+    /** Recorrido realizado; el texto se agrega al catalogo para autocompletar. */
+    @Column(length = 150)
+    private String recorrido;
+
     @ManyToOne
     @JoinColumn(name = "punto_salida_id")
     private Punto puntoSalida;

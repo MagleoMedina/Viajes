@@ -427,6 +427,28 @@
   color: var(--text);
 }
 
+/* Lista de recorridos del modal lateral. */
+.lista-recorridos {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 40vh;
+  overflow: auto;
+}
+
+.lista-recorridos li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
 /* ---------- Modal ---------- */
 
 .modal-overlay {
