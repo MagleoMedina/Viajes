@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FiPlus, FiSave, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import { api } from '../api/client.js'
 
 const VACIO = { nombre: '', apellido: '', cedula: '' }
@@ -113,11 +114,16 @@ export default function Choferes() {
 
             <div className="acciones">
               <button type="submit" className="btn primario">
+                {editandoId == null ? (
+                  <FiPlus aria-hidden="true" />
+                ) : (
+                  <FiSave aria-hidden="true" />
+                )}
                 {editandoId == null ? 'Registrar' : 'Guardar cambios'}
               </button>
               {editandoId != null && (
                 <button type="button" className="btn" onClick={limpiar}>
-                  Cancelar
+                  <FiX aria-hidden="true" /> Cancelar
                 </button>
               )}
             </div>
@@ -149,14 +155,14 @@ export default function Choferes() {
                       <td>{chofer.cedula}</td>
                       <td className="centro">
                         <button type="button" className="btn pequeno" onClick={() => editar(chofer)}>
-                          Editar
+                          <FiEdit2 aria-hidden="true" /> Editar
                         </button>
                         <button
                           type="button"
                           className="btn pequeno peligro"
                           onClick={() => eliminar(chofer)}
                         >
-                          Eliminar
+                          <FiTrash2 aria-hidden="true" /> Eliminar
                         </button>
                       </td>
                     </tr>

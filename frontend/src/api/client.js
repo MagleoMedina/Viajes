@@ -42,3 +42,10 @@ export function money(valor) {
 export function hoy() {
   return new Date().toISOString().slice(0, 10)
 }
+
+/** "2026-10-11" -> "11/10/2026". Entrada ISO, salida día/mes/año. */
+export function fecha(valor) {
+  if (!valor) return ''
+  const [a, m, d] = String(valor).slice(0, 10).split('-')
+  return d && m && a ? `${d}/${m}/${a}` : valor
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, hoy, money } from '../api/client.js'
+import { FiPlus, FiX, FiSave, FiCheck } from 'react-icons/fi'
+import { api, hoy, money, fecha } from '../api/client.js'
 import ChipsInput from '../components/ChipsInput.jsx'
 import Modal from '../components/Modal.jsx'
 
@@ -65,6 +66,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const [guardado, setGuardado] = useState('')
+  const [confirmar, setConfirmar] = useState(false)
 
   function cargar() {
     return Promise.all([
@@ -107,6 +109,9 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const totalBs = montoBs + gastosBs + gastosVarios
   const totalUsd = tasa > 0 ? totalBs / tasa : 0
 
+  const choferElegido = choferes.find((c) => String(c.id) === form.choferId)
+  const empresaElegida = empresas.find((e) => String(e.id) === form.empresaId)
+
   function agregarGasto() {
     setForm((f) => ({ ...f, gastos: [...(f.gastos || []), { monto: '', descripcion: '' }] }))
   }
@@ -129,8 +134,16 @@ export default function CrearViaje({ viaje, onGuardado }) {
     setAviso('')
   }
 
-  async function guardar(e) {
+  function enviar(e) {
     e.preventDefault()
+    if (!viaje) {
+      setConfirmar(true)
+      return
+    }
+    guardar()
+  }
+
+  async function guardar() {
     setError('')
     setAviso('')
     const payload = {
@@ -205,7 +218,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
         </div>
       </header>
 
-      <form onSubmit={guardar} className="form viaje">
+      <form onSubmit={enviar} className="form viaje">
         <section className="tarjeta">
           <h2>Ruta</h2>
           <div className="campos-4">
@@ -385,7 +398,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
               <div className="gastos-cab">
                 <h3>Gastos varios (Bs)</h3>
                 <button type="button" className="btn pequeno" onClick={agregarGasto}>
-                  + Agregar gasto
+                  <FiPlus aria-hidden="true" /> Agregar gasto
                 </button>
               </div>
               {(form.gastos || []).length === 0 ? (
@@ -417,7 +430,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
                         onClick={() => quitarGasto(i)}
                         aria-label="Quitar gasto"
                       >
-                        ×
+                        <FiX aria-hidden="true" />
                       </button>
                     </li>
                   ))}
@@ -457,10 +470,11 @@ export default function CrearViaje({ viaje, onGuardado }) {
             </div>
             <div className="acciones">
               <button type="submit" className="btn primario">
+                <FiSave aria-hidden="true" />
                 {viaje ? 'Guardar cambios' : 'Registrar viaje'}
               </button>
               <button type="button" className="btn" onClick={cancelar}>
-                Limpiar
+                <FiX aria-hidden="true" /> Limpiar
               </button>
             </div>
             {error && <p className="error">{error}</p>}
@@ -468,6 +482,33 @@ export default function CrearViaje({ viaje, onGuardado }) {
           </section>
         </div>
       </form>
+
+      {confirmar && (
+        <Modal titulo="Confirmar registro" onClose={() => setConfirmar(false)}>
+          <p>¿Registrar este viaje?</p>
+          <p className="ayuda">
+            {fecha(form.fechaInicio)} al {fecha(form.fechaFin)}
+            {empresaElegida ? ` · ${empresaElegida.nombre}` : ''}
+            {choferElegido ? ` · ${choferElegido.nombre} ${choferElegido.apellido}` : ''}
+            {` · Total Bs ${money(totalBs)}`}
+          </p>
+          <div className="acciones">
+            <button
+              type="button"
+              className="btn primario"
+              onClick={() => {
+                setConfirmar(false)
+                guardar()
+              }}
+            >
+              <FiCheck aria-hidden="true" /> Confirmar
+            </button>
+            <button type="button" className="btn" onClick={() => setConfirmar(false)}>
+              <FiX aria-hidden="true" /> Cancelar
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {guardado && (
         <Modal titulo={guardado} onClose={() => setGuardado('')}>
@@ -478,7 +519,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
           </p>
           <div className="acciones">
             <button type="button" className="btn primario" onClick={() => setGuardado('')}>
-              Aceptar
+              <FiCheck aria-hidden="true" /> Aceptar
             </button>
           </div>
         </Modal>

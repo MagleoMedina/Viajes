@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FiX } from 'react-icons/fi'
 
 /**
  * Campo de carga multi-tipo: separar con coma ("Hortalizas, neveras, Mani").
@@ -48,7 +49,7 @@ export default function ChipsInput({ value, onChange, placeholder }) {
               aria-label={`Quitar ${chip}`}
               onClick={() => onChange(chips.filter((c) => c !== chip).join(', '))}
             >
-              ×
+              <FiX aria-hidden="true" />
             </button>
           </span>
         ))}

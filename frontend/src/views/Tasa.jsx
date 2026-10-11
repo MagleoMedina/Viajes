@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FiSave, FiRefreshCw, FiX, FiCheck } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
 
@@ -79,13 +80,13 @@ export default function Tasa({ onClose }) {
           </label>
           <div className="acciones">
             <button type="submit" className="btn primario">
-              Actualizar tasa
+              <FiSave aria-hidden="true" /> Actualizar tasa
             </button>
             <button type="button" className="btn" onClick={refrescar} disabled={refrescando}>
-              {refrescando ? 'Refrescando…' : 'Refrescar ahora'}
+              <FiRefreshCw aria-hidden="true" /> {refrescando ? 'Refrescando…' : 'Refrescar ahora'}
             </button>
             <button type="button" className="btn" onClick={onClose}>
-              Cerrar
+              <FiX aria-hidden="true" /> Cerrar
             </button>
           </div>
           {error && <p className="error">{error}</p>}
@@ -100,7 +101,7 @@ export default function Tasa({ onClose }) {
           </p>
           <div className="acciones">
             <button type="button" className="btn primario" onClick={() => setModalOk(false)}>
-              Aceptar
+              <FiCheck aria-hidden="true" /> Aceptar
             </button>
           </div>
         </Modal>

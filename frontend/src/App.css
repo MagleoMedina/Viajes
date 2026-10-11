@@ -51,8 +51,15 @@
   color: #fff;
 }
 
+.nav-padre-eti {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .flecha {
   color: #93a3c0;
+  font-size: 16px;
 }
 
 .submenu {
@@ -71,6 +78,7 @@
   font-weight: 500;
   font-size: 13.5px;
   color: #a9b7d1;
+  justify-content: flex-start;
 }
 
 .nav-hijo:hover {
@@ -112,10 +120,6 @@
 }
 
 .cabecera {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
@@ -123,14 +127,10 @@
 
 .cabecera-logo {
   display: block;
-  width: auto;
-  max-width: min(220px, 60vw);
+  width: 50%;
+  max-width: 50%;
   height: auto;
-}
-
-.cabecera-sub {
-  color: var(--muted);
-  font-size: 13px;
+  margin: 0 auto;
 }
 
 .vista {
@@ -138,6 +138,18 @@
   flex-direction: column;
   gap: 18px;
   max-width: 1200px;
+  animation: vista-in 0.28s ease both;
+}
+
+@keyframes vista-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .vista-cab {
@@ -427,28 +439,6 @@
   color: var(--text);
 }
 
-/* Lista de recorridos del modal lateral. */
-.lista-recorridos {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 40vh;
-  overflow: auto;
-}
-
-.lista-recorridos li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
 /* ---------- Modal ---------- */
 
 .modal-overlay {
@@ -459,6 +449,7 @@
   background: rgba(15, 23, 42, 0.5);
   padding: 20px;
   z-index: 50;
+  animation: overlay-in 0.18s ease both;
 }
 
 .modal {
@@ -468,6 +459,27 @@
   border-radius: 14px;
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.3);
   padding: 18px;
+  animation: modal-in 0.22s ease both;
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .modal-cab {
@@ -482,6 +494,14 @@
 }
 
 /* ---------- Responsive ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .vista,
+  .modal,
+  .modal-overlay {
+    animation: none;
+  }
+}
 
 @media (max-width: 980px) {
   .rejilla,
@@ -504,9 +524,5 @@
     width: 100%;
     min-width: 0;
     height: auto;
-  }
-
-  .cabecera-logo {
-    max-width: min(170px, 70vw);
   }
 }

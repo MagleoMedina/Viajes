@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
+import { FiPlus, FiTrash2 } from 'react-icons/fi'
 import { api } from '../api/client.js'
-import Modal from '../components/Modal.jsx'
 
-export default function Recorridos({ onClose }) {
+export default function Recorridos() {
   const [lista, setLista] = useState([])
   const [nombre, setNombre] = useState('')
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
 
+  function cargar() {
+    return api.get('/recorridos').then(setLista)
+  }
+
   useEffect(() => {
-    api.get('/recorridos').then(setLista).catch((e) => setError(e.message))
+    cargar().catch((e) => setError(e.message))
   }, [])
 
   async function agregar(e) {
@@ -19,7 +23,7 @@ export default function Recorridos({ onClose }) {
     try {
       await api.post('/recorridos', { nombre })
       setNombre('')
-      setLista(await api.get('/recorridos'))
+      await cargar()
       setAviso('Recorrido guardado.')
     } catch (err) {
       setError(err.message)
@@ -32,50 +36,79 @@ export default function Recorridos({ onClose }) {
     setAviso('')
     try {
       await api.del(`/recorridos/${r.id}`)
-      setLista(await api.get('/recorridos'))
+      await cargar()
     } catch (err) {
       setError(err.message)
     }
   }
 
   return (
-    <Modal titulo="Recorridos" onClose={onClose}>
-      <form onSubmit={agregar} className="form">
-        <label>
-          Nuevo recorrido
-          <input
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Ej: Cabelum - Ferrominera"
-            autoFocus
-          />
-        </label>
-        <div className="acciones">
-          <button type="submit" className="btn primario" disabled={!nombre.trim()}>
-            Agregar
-          </button>
-          <button type="button" className="btn" onClick={onClose}>
-            Cerrar
-          </button>
+    <div className="vista">
+      <header className="vista-cab">
+        <div>
+          <h1>Recorridos</h1>
+          <p className="sub">Rutas recurrentes para reutilizar al registrar viajes.</p>
         </div>
-        {error && <p className="error">{error}</p>}
-        {aviso && <p className="ok">{aviso}</p>}
-      </form>
+        <span className="contador">{lista.length} registrados</span>
+      </header>
 
-      {lista.length === 0 ? (
-        <p className="ayuda">Todavía no hay recorridos guardados.</p>
-      ) : (
-        <ul className="lista-recorridos">
-          {lista.map((r) => (
-            <li key={r.id}>
-              <span>{r.nombre}</span>
-              <button type="button" className="btn peligro" onClick={() => eliminar(r)}>
-                Eliminar
+      <div className="rejilla">
+        <section className="tarjeta">
+          <h2>Nuevo recorrido</h2>
+          <form onSubmit={agregar} className="form">
+            <label>
+              Nombre
+              <input
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Ej: Cabelum - Ferrominera"
+                required
+              />
+            </label>
+            <div className="acciones">
+              <button type="submit" className="btn primario" disabled={!nombre.trim()}>
+                <FiPlus aria-hidden="true" /> Agregar
               </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Modal>
+            </div>
+          </form>
+          {error && <p className="error">{error}</p>}
+          {aviso && <p className="ok">{aviso}</p>}
+        </section>
+
+        <section className="tarjeta">
+          <h2>Listado</h2>
+          {lista.length === 0 ? (
+            <p className="vacio">Todavía no hay recorridos guardados.</p>
+          ) : (
+            <div className="tabla-envoltura">
+              <table className="tabla">
+                <thead>
+                  <tr>
+                    <th>Recorrido</th>
+                    <th className="centro">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lista.map((r) => (
+                    <tr key={r.id}>
+                      <td>{r.nombre}</td>
+                      <td className="centro">
+                        <button
+                          type="button"
+                          className="btn pequeno peligro"
+                          onClick={() => eliminar(r)}
+                        >
+                          <FiTrash2 aria-hidden="true" /> Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
   )
 }

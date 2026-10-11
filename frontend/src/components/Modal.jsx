@@ -1,3 +1,5 @@
+import { FiX } from 'react-icons/fi'
+
 export default function Modal({ titulo, onClose, children }) {
   function fondo(e) {
     if (e.target === e.currentTarget) onClose()
@@ -9,7 +11,7 @@ export default function Modal({ titulo, onClose, children }) {
         <div className="modal-cab">
           <h3>{titulo}</h3>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Cerrar">
-            ×
+            <FiX aria-hidden="true" />
           </button>
         </div>
         {children}

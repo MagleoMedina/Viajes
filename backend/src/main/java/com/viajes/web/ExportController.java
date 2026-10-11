@@ -73,7 +73,7 @@ public class ExportController {
     private static final int COL_TASA = 14;
     private static final int COL_TOTAL_USD = 15;
 
-    private static final DateTimeFormatter FECHA = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter MARCA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final Locale NUMEROS = Locale.GERMANY;
 

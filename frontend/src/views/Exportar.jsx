@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FiGrid, FiFileText, FiCheck } from 'react-icons/fi'
 import { api, urlDescarga } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
 
@@ -73,10 +74,10 @@ export default function Exportar() {
 
         <div className="acciones">
           <button type="button" className="btn primario" onClick={() => descargar('xlsx')}>
-            Exportar a Excel
+            <FiGrid aria-hidden="true" /> Exportar a Excel
           </button>
           <button type="button" className="btn" onClick={() => descargar('pdf')}>
-            Exportar a PDF
+            <FiFileText aria-hidden="true" /> Exportar a PDF
           </button>
         </div>
       </section>
@@ -86,7 +87,7 @@ export default function Exportar() {
           <p>No hay viajes para esta empresa en este intervalo de fechas.</p>
           <div className="acciones">
             <button type="button" className="btn primario" onClick={() => setSinViajes(false)}>
-              Aceptar
+              <FiCheck aria-hidden="true" /> Aceptar
             </button>
           </div>
         </Modal>

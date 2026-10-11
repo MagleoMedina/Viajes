@@ -14,7 +14,6 @@ import './App.css'
 function App() {
   const [vista, setVista] = useState('choferes')
   const [tasaAbierta, setTasaAbierta] = useState(false)
-  const [recorridosAbiertos, setRecorridosAbiertos] = useState(false)
   const [viajeEditando, setViajeEditando] = useState(null)
 
   function editarViaje(viaje) {
@@ -37,13 +36,11 @@ function App() {
         vista={vista}
         onNavigate={navegar}
         onTasa={() => setTasaAbierta(true)}
-        onRecorridos={() => setRecorridosAbiertos(true)}
       />
 
       <main className="contenido">
         <header className="cabecera">
-          <img className="cabecera-logo" src="/logo.jpg" alt="Cabelum" />
-          <small className="cabecera-sub">Gestión de rutas</small>
+          <img className="cabecera-logo" src="/logo.svg" alt="Cabelum" />
         </header>
 
         {vista === 'choferes' && <Choferes />}
@@ -55,10 +52,10 @@ function App() {
         )}
         {vista === 'viajes' && <Viajes onEditar={editarViaje} />}
         {vista === 'exportar' && <Exportar />}
+        {vista === 'recorridos' && <Recorridos />}
       </main>
 
       {tasaAbierta && <Tasa onClose={() => setTasaAbierta(false)} />}
-      {recorridosAbiertos && <Recorridos onClose={() => setRecorridosAbiertos(false)} />}
     </div>
   )
 }

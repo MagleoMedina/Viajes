@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, money } from '../api/client.js'
+import { FiEdit2, FiTrash2, FiX, FiCheck } from 'react-icons/fi'
+import { api, money, fecha } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
 
 export default function Viajes({ onEditar }) {
@@ -44,7 +45,7 @@ export default function Viajes({ onEditar }) {
   }, [empresaId, desde, hasta])
 
   async function eliminar(viaje) {
-    if (!window.confirm(`¿Eliminar el viaje del ${viaje.fechaInicio} al chofer ${viaje.chofer.nombre}?`))
+    if (!window.confirm(`¿Eliminar el viaje del ${fecha(viaje.fechaInicio)} al chofer ${viaje.chofer.nombre}?`))
       return
     setError('')
     setAviso('')
@@ -113,7 +114,7 @@ export default function Viajes({ onEditar }) {
               setHasta('')
             }}
           >
-            Limpiar filtros
+            <FiX aria-hidden="true" /> Limpiar filtros
           </button>
         </div>
       </section>
@@ -145,8 +146,8 @@ export default function Viajes({ onEditar }) {
               <tbody>
                 {lista.map((viaje) => (
                   <tr key={viaje.id}>
-                    <td>{viaje.fechaInicio}</td>
-                    <td>{viaje.fechaFin}</td>
+                    <td>{fecha(viaje.fechaInicio)}</td>
+                    <td>{fecha(viaje.fechaFin)}</td>
                     <td>{viaje.empresa?.nombre || 'Sin empresa'}</td>
                     <td>
                       {viaje.chofer.nombre} {viaje.chofer.apellido}
@@ -173,14 +174,14 @@ export default function Viajes({ onEditar }) {
                     <td className="derecha">{money(viaje.totalUsd)}</td>
                     <td className="centro">
                       <button type="button" className="btn pequeno" onClick={() => onEditar(viaje)}>
-                        Editar
+                        <FiEdit2 aria-hidden="true" /> Editar
                       </button>
                       <button
                         type="button"
                         className="btn pequeno peligro"
                         onClick={() => eliminar(viaje)}
                       >
-                        Eliminar
+                        <FiTrash2 aria-hidden="true" /> Eliminar
                       </button>
                     </td>
                   </tr>
@@ -194,7 +195,7 @@ export default function Viajes({ onEditar }) {
       {desglose && (
         <Modal titulo="Desglose de gastos varios" onClose={() => setDesglose(null)}>
           <p className="ayuda">
-            Viaje del {desglose.fechaInicio} al {desglose.fechaFin} · {desglose.chofer.nombre}{' '}
+            Viaje del {fecha(desglose.fechaInicio)} al {fecha(desglose.fechaFin)} · {desglose.chofer.nombre}{' '}
             {desglose.chofer.apellido}
           </p>
           <div className="tabla-envoltura">
@@ -232,7 +233,7 @@ export default function Viajes({ onEditar }) {
           <p>No hay viajes para esta empresa en este intervalo de fechas.</p>
           <div className="acciones">
             <button type="button" className="btn primario" onClick={() => setSinViajes(false)}>
-              Aceptar
+              <FiCheck aria-hidden="true" /> Aceptar
             </button>
           </div>
         </Modal>
