@@ -13,9 +13,12 @@
  *   en git), scripts/sync-turso.js (cron Turso) y .env. Todo se copia junto a dist.
  * - puppeteer necesita su postinstall (descarga Chrome): NO usar --ignore-scripts.
  *   Chrome queda en ~/.cache/puppeteer del usuario (no dentro de build_lista).
+ * - Paso final: empaquetar la app de escritorio con Electron (electron/main.js),
+ *   shell que levanta el backend y abre la UI. Requiere Node en la maquina
+ *   destino y electron + electron-packager en electron/ (se instalan solos).
  */
 import { execSync, spawn } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, symlinkSync, appendFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -128,19 +131,60 @@ try {
 
   // 5. Dependencias de producción en el destino
   //    puppeteer postinstall descarga Chrome (allowBuilds en pnpm-workspace.yaml).
+  //    node-linker=hoisted: layout plano sin symlinks — electron-packager
+  //    desreferencia symlinks y el layout pnpm clasico (.pnpm/) rompe requires
+  //    (p.ej. tslib) dentro de la app empaquetada. pnpm 11.20 NO lee esto de
+  //    .npmrc: va en pnpm-workspace.yaml (nodeLinker, camelCase).
   console.log('\n--- INSTALANDO DEPENDENCIAS DE PRODUCCION ---');
+  appendFileSync(join(TARGET_BACK, 'pnpm-workspace.yaml'), 'nodeLinker: hoisted\n');
   run('pnpm install --prod', TARGET_BACK);
 
   // 6. Smoke test
   await smokeTest();
 
-  // 7. Criterios de aceptación
+  // 7. Empaquetado de escritorio (Electron): app = backend + main.js + package.json
+  console.log('\n--- EMPAQUETANDO APP DE ESCRITORIO (Electron) ---');
+  const ELECTRON_SRC = join(ROOT, 'electron');
+  const APP_DST = join(TARGET, 'electron', 'app');
+  mkdirSync(APP_DST, { recursive: true });
+  copiar(TARGET_BACK, APP_DST);
+  copiar(join(ELECTRON_SRC, 'main.js'), join(APP_DST, 'main.js'), true);
+  copiar(join(ELECTRON_SRC, 'package.json'), join(APP_DST, 'package.json'), true);
+  // electron-packager resuelve el modulo electron desde el dir de la app (para
+  // conocer la version y el binario). Enlace a la instalacion local de electron/
+  // para que no tenga que hallarlo dentro de la app empaquetada.
+  const nmApp = join(APP_DST, 'node_modules');
+  const enlaceElectron = join(nmApp, 'electron');
+  if (!existsSync(enlaceElectron)) {
+    mkdirSync(nmApp, { recursive: true });
+    symlinkSync(join(ELECTRON_SRC, 'node_modules', 'electron'), enlaceElectron, 'dir');
+    console.log(`  enlace: ${enlaceElectron} -> electron/node_modules/electron`);
+  }
+  run('pnpm install', ELECTRON_SRC);
+  const SALIDA_ELECTRON = join(TARGET, 'electron-dist');
+  const PLAT = process.platform;
+  const ARCH = process.arch;
+  // --no-prune: el package.json de la app solo declara main/name; el node_modules
+  // copiado ya es solo produccion y debe conservarse tal cual.
+  // --ignore: el symlink temporal de electron no puede colarse en el paquete.
+  run(
+    `pnpm exec electron-packager ${APP_DST} viajes --out=${SALIDA_ELECTRON} --platform=${PLAT} --arch=${ARCH} --no-asar --no-prune --ignore=node_modules/electron --overwrite`,
+    ELECTRON_SRC,
+  );
+  // ServeStatic del backend resuelve <__dirname>/../../../../frontend/dist: en
+  // el paquete (resources/app/dist/src) eso cae en resources/frontend/dist, que
+  // es HERMANO de resources/app, no parte de el. El SPA debe vivir ahi.
+  const SALIDA_APP = join(SALIDA_ELECTRON, `viajes-${PLAT}-${ARCH}`);
+  copiar(TARGET_FRONT, join(SALIDA_APP, 'resources', 'frontend', 'dist'));
+
+  // 8. Criterios de aceptación
   console.log('\n=== BUILD COMPLETADO CON EXITO EN build_lista ===');
   const checks = [
     ['frontend', join(TARGET_FRONT, 'index.html')],
     ['frontend bundles', join(TARGET_FRONT, 'assets')],
     ['backend entrada', join(TARGET_BACK, 'dist', 'src', 'main.js')],
     ['backend node_modules', join(TARGET_BACK, 'node_modules')],
+    ['electron app', join(SALIDA_ELECTRON, `viajes-${PLAT}-${ARCH}`, 'viajes')],
   ];
   for (const [nombre, p] of checks) {
     const ok = existsSync(p);
