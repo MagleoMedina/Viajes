@@ -11,7 +11,7 @@ export default defineConfig({
   server: {
     proxy: {
       // El backend Spring Boot corre en el 8080 durante el desarrollo.
-      '/api': 'http://localhost:8082',
+      '/api': 'http://localhost:8080',
     },
   },
 })
