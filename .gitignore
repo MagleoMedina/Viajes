@@ -6,3 +6,6 @@ node_modules/
 
 # Base de datos local del backend
 backend-node/data/
+
+# Build unificado de produccion
+build_lista/
