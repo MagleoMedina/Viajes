@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { FiPlus, FiSave, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import { api } from '../api/client.js'
 
-const VACIO = { nombre: '' }
+const VACIO = { nombre: '', direccion: '' }
 
 export default function Empresas() {
   const [lista, setLista] = useState([])
@@ -21,7 +21,7 @@ export default function Empresas() {
 
   function editar(empresa) {
     setEditandoId(empresa.id)
-    setForm({ nombre: empresa.nombre })
+    setForm({ nombre: empresa.nombre, direccion: empresa.direccion ?? '' })
     setError('')
     setAviso('')
   }
@@ -89,6 +89,15 @@ export default function Empresas() {
               />
             </label>
 
+            <label>
+              Dirección
+              <input
+                type="text"
+                value={form.direccion}
+                onChange={(e) => setForm((f) => ({ ...f, direccion: e.target.value }))}
+              />
+            </label>
+
             <div className="acciones">
               <button type="submit" className="btn primario">
                 {editandoId == null ? (
@@ -119,6 +128,7 @@ export default function Empresas() {
                 <thead>
                   <tr>
                     <th>Nombre</th>
+                    <th>Dirección</th>
                     <th className="centro">Acciones</th>
                   </tr>
                 </thead>
@@ -126,6 +136,7 @@ export default function Empresas() {
                   {lista.map((empresa) => (
                     <tr key={empresa.id}>
                       <td>{empresa.nombre}</td>
+                      <td>{empresa.direccion}</td>
                       <td className="centro">
                         <button type="button" className="btn pequeno" onClick={() => editar(empresa)}>
                           <FiEdit2 aria-hidden="true" /> Editar

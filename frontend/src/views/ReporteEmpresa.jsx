@@ -7,7 +7,6 @@ export default function ReporteEmpresa() {
   const [empresaId, setEmpresaId] = useState('')
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
-  const [direccion, setDireccion] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -19,7 +18,6 @@ export default function ReporteEmpresa() {
     const params = new URLSearchParams({ empresaId })
     if (desde) params.set('desde', desde)
     if (hasta) params.set('hasta', hasta)
-    if (direccion) params.set('direccion', direccion)
     window.location.href = urlDescarga(`/export/reporte?${params.toString()}`)
   }
 
@@ -58,16 +56,6 @@ export default function ReporteEmpresa() {
             <input type="date" value={hasta} min={desde} onChange={(e) => setHasta(e.target.value)} />
           </label>
         </div>
-
-        <label>
-          Dirección (opcional)
-          <input
-            type="text"
-            value={direccion}
-            onChange={(e) => setDireccion(e.target.value)}
-            placeholder="Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar"
-          />
-        </label>
 
         <div className="acciones">
           <button type="button" className="btn primario" onClick={descargar} disabled={!empresaId}>
