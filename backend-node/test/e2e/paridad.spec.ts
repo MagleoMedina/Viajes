@@ -1,16 +1,11 @@
 import { INestApplication } from '@nestjs/common';
-import { ChildProcess } from 'child_process';
 import * as ExcelJS from 'exceljs';
 import {
   crearNest,
-  javaSinTasas,
   limpiarTmp,
-  matarJava,
   normalizar,
-  pasoJava,
   pasoNest,
   Politica,
-  startJava,
   tmpDb,
   wipeTasas,
 } from '../harness';
@@ -33,46 +28,32 @@ const GRUPOS: [string, Politica[]][] = [
   ['tasa', escenarios.tasa],
 ];
 
-describe('paridad con backend Java', () => {
+describe('backend Node', () => {
   let app: INestApplication;
-  let java: ChildProcess;
   let nodeDb: string;
-  let javaDb: string;
 
-  beforeAll(
-    async () => {
-      nodeDb = tmpDb('node');
-      javaDb = tmpDb('java');
-      await wipeTasas(nodeDb);
-      java = await startJava(javaDb);
-      // Java inserta una tasa de GoCambio al arrancar; se limpia para partir iguales.
-      await javaSinTasas(javaDb);
-      app = await crearNest(nodeDb);
-    },
-    240000,
-  );
+  beforeAll(async () => {
+    nodeDb = tmpDb('node');
+    await wipeTasas(nodeDb);
+    app = await crearNest(nodeDb);
+  }, 120000);
 
   afterAll(async () => {
     await app?.close();
-    await matarJava(java);
     if (nodeDb) limpiarTmp(nodeDb);
-    if (javaDb) limpiarTmp(javaDb);
   });
 
+  // Las secuencias mutan el estado en orden; los snapshots fijan el contrato
+  // actual para detectar regresiones sin depender de un backend de referencia.
   for (const [grupo, pasos] of GRUPOS) {
     describe(grupo, () => {
       for (const paso of pasos) {
         it(paso.name ?? paso.path, async () => {
-          const [deNest, deJava] = await Promise.all([
-            pasoNest(app, paso),
-            pasoJava(paso),
-          ]);
-          const a = normalizar(deNest, paso);
-          const b = normalizar(deJava, paso);
+          const res = normalizar(await pasoNest(app, paso), paso);
           if (paso.ignoreBody) {
-            expect(a.status).toBe(b.status);
+            expect({ status: res.status }).toMatchSnapshot();
           } else {
-            expect(a).toEqual(b);
+            expect(res).toMatchSnapshot();
           }
         });
       }
@@ -89,15 +70,11 @@ describe('paridad con backend Java', () => {
 
     for (const caso of casos) {
       it(caso.name, async () => {
-        const esPdf = caso.path.includes('/pdf');
-        const [deNest, deJava] = await Promise.all([
-          traerBinario(app, caso.path),
-          fetch('http://127.0.0.1:8099' + caso.path).then(async (r) => Buffer.from(await r.arrayBuffer())),
-        ]);
-        if (esPdf) {
-          await compararPdf(deNest, deJava);
+        const buf = await traerBinario(app, caso.path);
+        if (caso.path.includes('/pdf')) {
+          await verificarPdf(buf);
         } else {
-          await compararXlsx(deNest, deJava);
+          expect(await matrizXlsx(buf)).toMatchSnapshot();
         }
       });
     }
@@ -121,9 +98,16 @@ async function traerBinario(app: INestApplication, path: string): Promise<Buffer
   return res.body;
 }
 
-async function compararXlsx(a: Buffer, b: Buffer) {
-  const [ma, mb] = await Promise.all([matrizXlsx(a), matrizXlsx(b)]);
-  expect(JSON.stringify(ma)).toBe(JSON.stringify(mb));
+/** El PDF lo genera Puppeteer: debe ser valido, con las 16 columnas. */
+async function verificarPdf(buf: Buffer) {
+  expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const pdfParse = require('pdf-parse');
+  const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
+  for (const header of HEADERS_PDF) {
+    expect(texto).toContain(header);
+  }
+  expect(tokensPdf(texto)).toMatchSnapshot();
 }
 
 async function matrizXlsx(buf: Buffer): Promise<any[][]> {
@@ -140,23 +124,6 @@ async function matrizXlsx(buf: Buffer): Promise<any[][]> {
     matriz.push(fila);
   });
   return matriz;
-}
-
-async function compararPdf(a: Buffer, b: Buffer) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const pdfParse = require('pdf-parse');
-  const [rawA, rawB] = await Promise.all([
-    pdfParse(a).then((r: any) => r.text),
-    pdfParse(b).then((r: any) => r.text),
-  ]);
-  // pdfkit corta palabras en saltos de linea; colapsar espacios equipara el texto.
-  const textoA = rawA.replace(/\s+/g, ' ');
-  const textoB = rawB.replace(/\s+/g, ' ');
-  for (const header of HEADERS_PDF) {
-    expect(textoA).toContain(header);
-    expect(textoB).toContain(header);
-  }
-  expect(tokensPdf(textoA)).toEqual(tokensPdf(textoB));
 }
 
 /**

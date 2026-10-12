@@ -1,0 +1,1392 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`backend Node choferes actualizar 1`] = `
+{
+  "body": {
+    "apellido": "Muñoz",
+    "cedula": "30696510",
+    "id": 1,
+    "nombre": "Nelson",
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node choferes actualizar-404 1`] = `
+{
+  "body": {
+    "message": "Chofer no encontrado",
+    "status": 404,
+  },
+  "status": 404,
+}
+`;
+
+exports[`backend Node choferes actualizar-409 1`] = `
+{
+  "body": {
+    "message": "Ya existe un chofer con cedula V-12345",
+    "status": 409,
+  },
+  "status": 409,
+}
+`;
+
+exports[`backend Node choferes crear 1`] = `
+{
+  "body": {
+    "apellido": "Perez",
+    "cedula": "V-12345",
+    "id": 3,
+    "nombre": "Ana",
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node choferes duplicado 1`] = `
+{
+  "body": {
+    "message": "Ya existe un chofer con cedula V-12345",
+    "status": 409,
+  },
+  "status": 409,
+}
+`;
+
+exports[`backend Node choferes eliminar 1`] = `
+{
+  "status": 200,
+}
+`;
+
+exports[`backend Node choferes eliminar-404 1`] = `
+{
+  "status": 404,
+}
+`;
+
+exports[`backend Node choferes eliminar-en-uso 1`] = `
+{
+  "status": 409,
+}
+`;
+
+exports[`backend Node choferes listar 1`] = `
+{
+  "body": [
+    {
+      "apellido": "Muñoz",
+      "cedula": "30696510",
+      "id": 1,
+      "nombre": "Nelson",
+    },
+    {
+      "apellido": "Nuñez",
+      "cedula": "20587874",
+      "id": 2,
+      "nombre": "Juan Carlos",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node choferes validacion 1`] = `
+{
+  "body": {
+    "fields": {
+      "cedula": "La cedula es obligatoria",
+    },
+    "message": "La cedula es obligatoria",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node empresas actualizar 1`] = `
+{
+  "body": {
+    "id": 4,
+    "nombre": "MINERA DEL SUR C.A.",
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node empresas actualizar-409 1`] = `
+{
+  "body": {
+    "message": "Ya existe la empresa cabelum",
+    "status": 409,
+  },
+  "status": 409,
+}
+`;
+
+exports[`backend Node empresas crear 1`] = `
+{
+  "body": {
+    "id": 4,
+    "nombre": "MINERA DEL SUR",
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node empresas duplicado-ignore-case 1`] = `
+{
+  "body": {
+    "message": "Ya existe la empresa minera del sur",
+    "status": 409,
+  },
+  "status": 409,
+}
+`;
+
+exports[`backend Node empresas eliminar 1`] = `
+{
+  "status": 200,
+}
+`;
+
+exports[`backend Node empresas eliminar-404 1`] = `
+{
+  "status": 404,
+}
+`;
+
+exports[`backend Node empresas eliminar-en-uso 1`] = `
+{
+  "status": 409,
+}
+`;
+
+exports[`backend Node empresas listar 1`] = `
+{
+  "body": [
+    {
+      "id": 1,
+      "nombre": "CABELUM",
+    },
+    {
+      "id": 3,
+      "nombre": "CARBONORCA",
+    },
+    {
+      "id": 2,
+      "nombre": "FERROMINERA",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node empresas validacion 1`] = `
+{
+  "body": {
+    "fields": {
+      "nombre": "El nombre es obligatorio",
+    },
+    "message": "El nombre es obligatorio",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node export pdf-filtrado 1`] = `
+[
+  "0,01",
+  "0,01",
+  "0,01",
+  "0,01",
+  "0,02",
+  "0,02",
+  "0,06",
+  "0,06",
+  "0,07",
+  "0,07",
+  "1",
+  "10",
+  "10",
+  "10",
+  "10",
+  "10,00",
+  "10,00",
+  "100,00",
+  "100,00",
+  "100,16",
+  "100,16",
+  "100,16",
+  "100,16",
+  "20,00",
+  "20,00",
+  "2026",
+  "2026",
+  "2026",
+  "202622",
+  "21",
+  "21",
+  "22",
+  "5,00",
+  "5,00",
+  "50,00",
+  "50,00",
+  "57,75",
+  "57,75",
+  "87.707,75",
+  "87.707,75",
+  "875,65",
+]
+`;
+
+exports[`backend Node export pdf-todo 1`] = `
+[
+  "0,01",
+  "0,01",
+  "0,01",
+  "0,01",
+  "0,02",
+  "0,02",
+  "0,06",
+  "0,06",
+  "0,07",
+  "0,07",
+  "1",
+  "10",
+  "10",
+  "10",
+  "10",
+  "10,00",
+  "10,00",
+  "100,00",
+  "100,00",
+  "100,16",
+  "100,16",
+  "100,16",
+  "100,16",
+  "20,00",
+  "20,00",
+  "2026",
+  "2026",
+  "2026",
+  "202622",
+  "21",
+  "21",
+  "22",
+  "5,00",
+  "5,00",
+  "50,00",
+  "50,00",
+  "57,75",
+  "57,75",
+  "87.707,75",
+  "87.707,75",
+  "875,65",
+]
+`;
+
+exports[`backend Node export xlsx-filtrado 1`] = `
+[
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  [
+    "FECHA INICIO",
+    "FECHA FIN",
+    "EMPRESA",
+    "CHOFER",
+    "CARGA",
+    "PUNTO SALIDA",
+    "PUNTO LLEGADA",
+    "MONTO VIAJE $",
+    "COMBUSTIBLE",
+    "VIATICOS",
+    "PEAJES",
+    "PAGO CHOFER",
+    "GASTOS VARIOS",
+    "TOTAL BS",
+    "TASA",
+    "TOTAL $",
+  ],
+  [
+    "21/10/2026",
+    "22/10/2026",
+    "FERROMINERA",
+    "Nelson Muñoz",
+    "Neveras",
+    "CABELUM",
+    "FERROMINERA",
+    100,
+    "Bs 20,00 / $ 0,02",
+    "Bs 10,00 / $ 0,01",
+    "Bs 5,00 / $ 0,01",
+    "Bs 50,00 / $ 0,06",
+    "Bs 57,75 / $ 0,07",
+    "Bs 87.707,75 / $ 100,16",
+    875.65,
+    100.16,
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "$ 100,00",
+    "Bs 20,00 / $ 0,02",
+    "Bs 10,00 / $ 0,01",
+    "Bs 5,00 / $ 0,01",
+    "Bs 50,00 / $ 0,06",
+    "Bs 57,75 / $ 0,07",
+    "Bs 87.707,75 / $ 100,16",
+    null,
+    null,
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "SUMA TOTAL $",
+    100.16,
+  ],
+]
+`;
+
+exports[`backend Node export xlsx-todo 1`] = `
+[
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  [
+    "FECHA INICIO",
+    "FECHA FIN",
+    "EMPRESA",
+    "CHOFER",
+    "CARGA",
+    "PUNTO SALIDA",
+    "PUNTO LLEGADA",
+    "MONTO VIAJE $",
+    "COMBUSTIBLE",
+    "VIATICOS",
+    "PEAJES",
+    "PAGO CHOFER",
+    "GASTOS VARIOS",
+    "TOTAL BS",
+    "TASA",
+    "TOTAL $",
+  ],
+  [
+    "21/10/2026",
+    "22/10/2026",
+    "FERROMINERA",
+    "Nelson Muñoz",
+    "Neveras",
+    "CABELUM",
+    "FERROMINERA",
+    100,
+    "Bs 20,00 / $ 0,02",
+    "Bs 10,00 / $ 0,01",
+    "Bs 5,00 / $ 0,01",
+    "Bs 50,00 / $ 0,06",
+    "Bs 57,75 / $ 0,07",
+    "Bs 87.707,75 / $ 100,16",
+    875.65,
+    100.16,
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "$ 100,00",
+    "Bs 20,00 / $ 0,02",
+    "Bs 10,00 / $ 0,01",
+    "Bs 5,00 / $ 0,01",
+    "Bs 50,00 / $ 0,06",
+    "Bs 57,75 / $ 0,07",
+    "Bs 87.707,75 / $ 100,16",
+    null,
+    null,
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "SUMA TOTAL $",
+    100.16,
+  ],
+]
+`;
+
+exports[`backend Node puntos actualizar 1`] = `
+{
+  "body": {
+    "id": 3,
+    "nombre": "MATANZAS SUR",
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node puntos actualizar-409 1`] = `
+{
+  "body": {
+    "message": "Ya existe el punto CABELUM",
+    "status": 409,
+  },
+  "status": 409,
+}
+`;
+
+exports[`backend Node puntos crear 1`] = `
+{
+  "body": {
+    "id": 3,
+    "nombre": "MATANZAS",
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node puntos duplicado-ignore-case 1`] = `
+{
+  "body": {
+    "message": "Ya existe el punto matanzas",
+    "status": 409,
+  },
+  "status": 409,
+}
+`;
+
+exports[`backend Node puntos eliminar 1`] = `
+{
+  "status": 200,
+}
+`;
+
+exports[`backend Node puntos eliminar-404 1`] = `
+{
+  "status": 404,
+}
+`;
+
+exports[`backend Node puntos eliminar-en-uso 1`] = `
+{
+  "status": 409,
+}
+`;
+
+exports[`backend Node puntos listar 1`] = `
+{
+  "body": [
+    {
+      "id": 1,
+      "nombre": "CABELUM",
+    },
+    {
+      "id": 2,
+      "nombre": "FERROMINERA",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node puntos validacion 1`] = `
+{
+  "body": {
+    "fields": {
+      "nombre": "El nombre del punto es obligatorio",
+    },
+    "message": "El nombre del punto es obligatorio",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node recorridos crear 1`] = `
+{
+  "body": {
+    "id": 3,
+    "nombre": "Nueva Ruta 7",
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node recorridos duplicado 1`] = `
+{
+  "body": {
+    "message": "Ya existe el recorrido Nueva Ruta 7",
+    "status": 409,
+  },
+  "status": 409,
+}
+`;
+
+exports[`backend Node recorridos eliminar 1`] = `
+{
+  "status": 200,
+}
+`;
+
+exports[`backend Node recorridos eliminar-404 1`] = `
+{
+  "status": 404,
+}
+`;
+
+exports[`backend Node recorridos listar 1`] = `
+{
+  "body": [
+    {
+      "id": 1,
+      "nombre": "CABELUM - FERROMINERA via Guatire",
+    },
+    {
+      "id": 2,
+      "nombre": "canaima",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node recorridos validacion 1`] = `
+{
+  "body": {
+    "fields": {
+      "nombre": "El recorrido es obligatorio",
+    },
+    "message": "El recorrido es obligatorio",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node tasa put-cero-invalido 1`] = `
+{
+  "body": {
+    "fields": {
+      "valor": "La tasa debe ser mayor que 0",
+    },
+    "message": "La tasa debe ser mayor que 0",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node tasa put-manual 1`] = `
+{
+  "body": {
+    "origen": "Manual",
+    "valor": 900,
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node tasa put-sin-valor 1`] = `
+{
+  "body": {
+    "fields": {
+      "valor": "La tasa es obligatoria",
+    },
+    "message": "La tasa es obligatoria",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node tasa vacia 1`] = `
+{
+  "body": {},
+  "status": 200,
+}
+`;
+
+exports[`backend Node tasa vigente 1`] = `
+{
+  "body": {
+    "origen": "Manual",
+    "valor": 900,
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node tasa vigente-final 1`] = `
+{
+  "body": {
+    "origen": "Manual",
+    "valor": 900,
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node vehiculos actualizar-404 1`] = `
+{
+  "body": {
+    "message": "Vehiculo no encontrado",
+    "status": 404,
+  },
+  "status": 404,
+}
+`;
+
+exports[`backend Node vehiculos crear 1`] = `
+{
+  "body": {
+    "id": 3,
+    "marca": "Toyota",
+    "modelo": "Hilux",
+    "placa": "ABC12",
+    "tipo": "Camioneta",
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node vehiculos duplicado-placa 1`] = `
+{
+  "body": {
+    "message": "Ya existe un vehiculo con placa ABC12",
+    "status": 409,
+  },
+  "status": 409,
+}
+`;
+
+exports[`backend Node vehiculos eliminar 1`] = `
+{
+  "status": 200,
+}
+`;
+
+exports[`backend Node vehiculos eliminar-404 1`] = `
+{
+  "status": 404,
+}
+`;
+
+exports[`backend Node vehiculos listar 1`] = `
+{
+  "body": [
+    {
+      "id": 1,
+      "marca": "Iveco",
+      "modelo": "Strais",
+      "placa": "A73AA5M",
+      "tipo": "Gandola",
+    },
+    {
+      "id": 2,
+      "marca": "Hyundai",
+      "modelo": "HD65",
+      "placa": "A97CT2A",
+      "tipo": "Camion",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node vehiculos placa-mayusculas 1`] = `
+{
+  "body": [
+    {
+      "id": 1,
+      "marca": "Iveco",
+      "modelo": "Strais",
+      "placa": "A73AA5M",
+      "tipo": "Gandola",
+    },
+    {
+      "id": 2,
+      "marca": "Hyundai",
+      "modelo": "HD65",
+      "placa": "A97CT2A",
+      "tipo": "Camion",
+    },
+    {
+      "id": 3,
+      "marca": "Toyota",
+      "modelo": "Hilux",
+      "placa": "ABC12",
+      "tipo": "Camioneta",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node vehiculos validacion 1`] = `
+{
+  "body": {
+    "fields": {
+      "modelo": "El modelo es obligatorio",
+      "placa": "La placa es obligatoria",
+      "tipo": "El tipo es obligatorio",
+    },
+    "message": undefined,
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node viajes actualizar-404 1`] = `
+{
+  "body": {
+    "message": "Viaje no encontrado",
+    "status": 404,
+  },
+  "status": 404,
+}
+`;
+
+exports[`backend Node viajes actualizar-reemplaza-gastos 1`] = `
+{
+  "body": {
+    "carga": "Neveras",
+    "chofer": {
+      "apellido": "Muñoz",
+      "cedula": "30696510",
+      "id": 1,
+      "nombre": "Nelson",
+    },
+    "combustible": 20,
+    "empresa": {
+      "id": 2,
+      "nombre": "FERROMINERA",
+    },
+    "fechaFin": "2026-10-22",
+    "fechaInicio": "2026-10-21",
+    "gastos": [
+      {
+        "descripcion": "Peaje extra",
+        "id": 6,
+        "monto": 45.5,
+      },
+      {
+        "descripcion": "Lavado",
+        "id": 7,
+        "monto": 12.25,
+      },
+    ],
+    "id": 2,
+    "montoViaje": 100,
+    "pagoChofer": 50,
+    "peajes": 5,
+    "puntoLlegada": {
+      "id": 2,
+      "nombre": "FERROMINERA",
+    },
+    "puntoSalida": {
+      "id": 1,
+      "nombre": "CABELUM",
+    },
+    "recorrido": "Ruta Nova",
+    "tasa": 875.65,
+    "totalBs": 87707.75,
+    "totalUsd": 100.16,
+    "viaticos": 10,
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes chofer-inexistente 1`] = `
+{
+  "body": {
+    "message": "La fecha de finalizacion no puede ser anterior a la de inicio",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node viajes crear-con-gastos 1`] = `
+{
+  "body": {
+    "carga": "Papa",
+    "chofer": {
+      "apellido": "Muñoz",
+      "cedula": "30696510",
+      "id": 1,
+      "nombre": "Nelson",
+    },
+    "combustible": 20,
+    "empresa": {
+      "id": 2,
+      "nombre": "FERROMINERA",
+    },
+    "fechaFin": "2026-11-02",
+    "fechaInicio": "2026-11-01",
+    "gastos": [
+      {
+        "descripcion": "Comida",
+        "id": 5,
+        "monto": 30,
+      },
+    ],
+    "id": 3,
+    "montoViaje": 100,
+    "pagoChofer": 50,
+    "peajes": 5,
+    "puntoLlegada": {
+      "id": 2,
+      "nombre": "FERROMINERA",
+    },
+    "puntoSalida": {
+      "id": 1,
+      "nombre": "CABELUM",
+    },
+    "recorrido": "Ruta Nova",
+    "tasa": 875.65,
+    "totalBs": 87680,
+    "totalUsd": 100.13,
+    "viaticos": 10,
+  },
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes eliminar-404 1`] = `
+{
+  "status": 404,
+}
+`;
+
+exports[`backend Node viajes eliminar-creado 1`] = `
+{
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes eliminar-uno 1`] = `
+{
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes fecha-invalida 1`] = `
+{
+  "body": {
+    "message": "La fecha de finalizacion no puede ser anterior a la de inicio",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node viajes filtrar-empresa 1`] = `
+{
+  "body": [
+    {
+      "carga": "Demo gastos varios",
+      "chofer": {
+        "apellido": "Muñoz",
+        "cedula": "30696510",
+        "id": 1,
+        "nombre": "Nelson",
+      },
+      "combustible": 200,
+      "empresa": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "fechaFin": "2026-10-21",
+      "fechaInicio": "2026-10-20",
+      "gastos": [
+        {
+          "descripcion": "Peaje extra Cochabamba",
+          "id": 3,
+          "monto": 75.5,
+        },
+        {
+          "descripcion": "Estacionamiento",
+          "id": 4,
+          "monto": 24.5,
+        },
+      ],
+      "id": 2,
+      "montoViaje": 100,
+      "pagoChofer": 100,
+      "peajes": 30,
+      "puntoLlegada": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "puntoSalida": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "tasa": 850,
+      "totalBs": 85480,
+      "totalUsd": 100.56,
+      "viaticos": 50,
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes filtrar-empresa-fechas 1`] = `
+{
+  "body": [
+    {
+      "carga": "Demo gastos varios",
+      "chofer": {
+        "apellido": "Muñoz",
+        "cedula": "30696510",
+        "id": 1,
+        "nombre": "Nelson",
+      },
+      "combustible": 200,
+      "empresa": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "fechaFin": "2026-10-21",
+      "fechaInicio": "2026-10-20",
+      "gastos": [
+        {
+          "descripcion": "Peaje extra Cochabamba",
+          "id": 3,
+          "monto": 75.5,
+        },
+        {
+          "descripcion": "Estacionamiento",
+          "id": 4,
+          "monto": 24.5,
+        },
+      ],
+      "id": 2,
+      "montoViaje": 100,
+      "pagoChofer": 100,
+      "peajes": 30,
+      "puntoLlegada": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "puntoSalida": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "tasa": 850,
+      "totalBs": 85480,
+      "totalUsd": 100.56,
+      "viaticos": 50,
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes filtrar-fechas 1`] = `
+{
+  "body": [
+    {
+      "carga": "Demo gastos varios",
+      "chofer": {
+        "apellido": "Muñoz",
+        "cedula": "30696510",
+        "id": 1,
+        "nombre": "Nelson",
+      },
+      "combustible": 200,
+      "empresa": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "fechaFin": "2026-10-21",
+      "fechaInicio": "2026-10-20",
+      "gastos": [
+        {
+          "descripcion": "Peaje extra Cochabamba",
+          "id": 3,
+          "monto": 75.5,
+        },
+        {
+          "descripcion": "Estacionamiento",
+          "id": 4,
+          "monto": 24.5,
+        },
+      ],
+      "id": 2,
+      "montoViaje": 100,
+      "pagoChofer": 100,
+      "peajes": 30,
+      "puntoLlegada": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "puntoSalida": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "tasa": 850,
+      "totalBs": 85480,
+      "totalUsd": 100.56,
+      "viaticos": 50,
+    },
+    {
+      "carga": "FRIGORIFICOS",
+      "chofer": {
+        "apellido": "Muñoz",
+        "cedula": "30696510",
+        "id": 1,
+        "nombre": "Nelson",
+      },
+      "combustible": 15000,
+      "empresa": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "fechaFin": "2026-10-09",
+      "fechaInicio": "2026-10-09",
+      "gastos": [],
+      "id": 1,
+      "montoViaje": 280,
+      "pagoChofer": 5000,
+      "peajes": 10000,
+      "puntoLlegada": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "puntoSalida": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "tasa": 850.12,
+      "totalBs": 283533.6,
+      "totalUsd": 333.52,
+      "viaticos": 15500,
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes gasto-sin-descripcion 1`] = `
+{
+  "body": {
+    "message": "Cada gasto varios necesita una descripcion",
+    "status": 400,
+  },
+  "status": 400,
+}
+`;
+
+exports[`backend Node viajes listar 1`] = `
+{
+  "body": [
+    {
+      "carga": "Demo gastos varios",
+      "chofer": {
+        "apellido": "Muñoz",
+        "cedula": "30696510",
+        "id": 1,
+        "nombre": "Nelson",
+      },
+      "combustible": 200,
+      "empresa": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "fechaFin": "2026-10-21",
+      "fechaInicio": "2026-10-20",
+      "gastos": [
+        {
+          "descripcion": "Peaje extra Cochabamba",
+          "id": 3,
+          "monto": 75.5,
+        },
+        {
+          "descripcion": "Estacionamiento",
+          "id": 4,
+          "monto": 24.5,
+        },
+      ],
+      "id": 2,
+      "montoViaje": 100,
+      "pagoChofer": 100,
+      "peajes": 30,
+      "puntoLlegada": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "puntoSalida": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "tasa": 850,
+      "totalBs": 85480,
+      "totalUsd": 100.56,
+      "viaticos": 50,
+    },
+    {
+      "carga": "FRIGORIFICOS",
+      "chofer": {
+        "apellido": "Muñoz",
+        "cedula": "30696510",
+        "id": 1,
+        "nombre": "Nelson",
+      },
+      "combustible": 15000,
+      "empresa": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "fechaFin": "2026-10-09",
+      "fechaInicio": "2026-10-09",
+      "gastos": [],
+      "id": 1,
+      "montoViaje": 280,
+      "pagoChofer": 5000,
+      "peajes": 10000,
+      "puntoLlegada": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "puntoSalida": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "tasa": 850.12,
+      "totalBs": 283533.6,
+      "totalUsd": 333.52,
+      "viaticos": 15500,
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes listar-final 1`] = `
+{
+  "body": [
+    {
+      "carga": "Neveras",
+      "chofer": {
+        "apellido": "Muñoz",
+        "cedula": "30696510",
+        "id": 1,
+        "nombre": "Nelson",
+      },
+      "combustible": 20,
+      "empresa": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "fechaFin": "2026-10-22",
+      "fechaInicio": "2026-10-21",
+      "gastos": [
+        {
+          "descripcion": "Peaje extra",
+          "id": 6,
+          "monto": 45.5,
+        },
+        {
+          "descripcion": "Lavado",
+          "id": 7,
+          "monto": 12.25,
+        },
+      ],
+      "id": 2,
+      "montoViaje": 100,
+      "pagoChofer": 50,
+      "peajes": 5,
+      "puntoLlegada": {
+        "id": 2,
+        "nombre": "FERROMINERA",
+      },
+      "puntoSalida": {
+        "id": 1,
+        "nombre": "CABELUM",
+      },
+      "recorrido": "Ruta Nova",
+      "tasa": 875.65,
+      "totalBs": 87707.75,
+      "totalUsd": 100.16,
+      "viaticos": 10,
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes recorrido-autocompletado 1`] = `
+{
+  "body": [
+    {
+      "id": 1,
+      "nombre": "CABELUM - FERROMINERA via Guatire",
+    },
+    {
+      "id": 3,
+      "nombre": "Ruta Nova",
+    },
+    {
+      "id": 2,
+      "nombre": "canaima",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node viajes validacion-vacio 1`] = `
+{
+  "body": {
+    "fields": {
+      "carga": "La carga es obligatoria",
+      "choferId": "El chofer es obligatorio",
+      "empresaId": "La empresa es obligatoria",
+      "fechaFin": "La fecha de finalizacion es obligatoria",
+      "fechaInicio": "La fecha de inicio es obligatoria",
+    },
+    "message": undefined,
+    "status": 400,
+  },
+  "status": 400,
+}
+`;

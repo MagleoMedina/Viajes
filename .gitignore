@@ -1,2 +1,8 @@
 # Secretos locales
 .env
+
+# Dependencias
+node_modules/
+
+# Base de datos local del backend
+backend-node/data/

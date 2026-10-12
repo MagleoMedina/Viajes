@@ -1,4 +1,3 @@
-import { spawn, ChildProcess, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -8,9 +7,6 @@ import { AppModule } from '../src/app.module';
 
 const ROOT = path.resolve(__dirname, '..');
 const SEED = path.join(ROOT, 'test', 'seed.db');
-const JAR = path.resolve(ROOT, '..', 'backend', 'target', 'viajes-0.0.1-SNAPSHOT.jar');
-
-export const JAVA_BASE = 'http://127.0.0.1:8099';
 
 export type Politica = {
   name?: string;
@@ -22,8 +18,9 @@ export type Politica = {
 
 export type Respuesta = { status: number; body: any };
 
+/** Copia la siembra a un archivo temporal para no tocar la base real. */
 export function tmpDb(nombre: string): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'viajes-paridad-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'viajes-test-'));
   const p = path.join(dir, `${nombre}.db`);
   fs.copyFileSync(SEED, p);
   return p;
@@ -37,7 +34,7 @@ export function limpiarTmp(dbPath: string) {
   }
 }
 
-/** Borra las tasas del archivo para que el GET vacio y el historial partan iguales. */
+/** Borra las tasas del archivo para partir de un estado vacio conocido. */
 export async function wipeTasas(dbPath: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const initSqlJs = require('sql.js');
@@ -46,63 +43,6 @@ export async function wipeTasas(dbPath: string): Promise<void> {
   db.run('DELETE FROM tasas');
   fs.writeFileSync(dbPath, Buffer.from(db.export()));
   db.close();
-}
-
-/**
- * Deja la tabla de tasas de Java vacia. Java puede insertar una tasa de
- * GoCambio DESPUES de responder "listo"; se borra en bucle hasta que el GET
- * quede realmente vacio.
- */
-export async function javaSinTasas(javaDb: string): Promise<void> {
-  const limite = Date.now() + 50000;
-  let limpias = 0;
-  while (Date.now() < limite) {
-    await wipeTasas(javaDb);
-    try {
-      const r = await fetch(JAVA_BASE + '/api/tasa', { signal: AbortSignal.timeout(2000) });
-      const body = await r.json();
-      // La insercion de GoCambio puede llegar despues del boot; exige
-      // confirmaciones seguidas para no arrancar los tests con una tasa viva.
-      if (Object.keys(body).length === 0) {
-        limpias += 1;
-        if (limpias >= 3) return;
-      } else {
-        limpias = 0;
-      }
-    } catch {
-      /* sigue esperando */
-    }
-    await new Promise((r) => setTimeout(r, 2500));
-  }
-  throw new Error('Java no deja la tabla de tasas vacia');
-}
-
-/** Arranca el jar de Java con una copia de la base; espera a que responda. */
-export async function startJava(dbPath: string): Promise<ChildProcess> {
-  // Un java huerfano de una corrida previa puede conservar el puerto y servir
-  // una base vieja; se elimina antes de levantar el nuestro.
-  try {
-    execSync("pkill -f '[v]iajes-0.0.1-SNAPSHOT.jar'");
-  } catch {
-    /* no habia ninguno */
-  }
-  const child = spawn(
-    'java',
-    ['-jar', JAR, `--server.port=8099`, `--spring.datasource.url=jdbc:sqlite:${dbPath}`],
-    { stdio: 'ignore' },
-  );
-  const limite = Date.now() + 120000;
-  while (Date.now() < limite) {
-    try {
-      const r = await fetch(JAVA_BASE + '/api/choferes', { signal: AbortSignal.timeout(2000) });
-      if (r.ok) return child;
-    } catch {
-      /* sigue esperando */
-    }
-    await new Promise((r) => setTimeout(r, 1500));
-  }
-  child.kill();
-  throw new Error('El backend Java no arranco en 120s');
 }
 
 /** Levanta la app Nest apuntando a la copia de base indicada. */
@@ -128,46 +68,10 @@ export async function pasoNest(app: INestApplication, p: Politica): Promise<Resp
   return { status: res.status, body: res.body };
 }
 
-export async function pasoJava(p: Politica): Promise<Respuesta> {
-  const res = await fetch(JAVA_BASE + p.path, {
-    method: p.method,
-    headers: { 'Content-Type': 'application/json' },
-    body: p.body != null ? JSON.stringify(p.body) : undefined,
-  });
-  const text = await res.text();
-  let body: any = null;
-  if (text) {
-    try {
-      body = JSON.parse(text);
-    } catch {
-      body = text;
-    }
-  }
-  return { status: res.status, body };
-}
-
-/** Termina Java y espera a que el proceso muera, para no dejar huerfanos en el puerto. */
-export async function matarJava(java: ChildProcess): Promise<void> {
-  if (!java || java.exitCode != null) return;
-  java.kill('SIGTERM');
-  await new Promise((r) => {
-    const t = setTimeout(() => {
-      java.kill('SIGKILL');
-      r(undefined);
-    }, 5000);
-    java.once('exit', () => {
-      clearTimeout(t);
-      r(undefined);
-    });
-  });
-}
-
 /**
- * Normaliza respuestas antes de comparar:
- * - tasa: quita fecha/id (Java y Node generan "ahora" distinto).
- * - validacion con varios campos: quita message (Java elige el primero en su
- *   orden interno de Bean Validation, no replicable con class-validator;
- *   el frontend solo muestra el message, cualquier campo vale).
+ * Normaliza antes de comparar con el snapshot:
+ * - tasa: quita fecha/id (se generan en cada corrida).
+ * - validacion con varios campos: quita message (el orden interno no aporta).
  */
 export function normalizar(resp: Respuesta, p: Politica): Respuesta {
   if (resp.body && typeof resp.body === 'object') {
