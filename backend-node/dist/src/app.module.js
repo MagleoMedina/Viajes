@@ -33,6 +33,7 @@ const viaje_repository_1 = require("./repo/viaje.repository");
 const tasa_service_1 = require("./service/tasa.service");
 const export_service_1 = require("./service/export.service");
 const reporte_empresa_service_1 = require("./service/reporte-empresa.service");
+const turso_sync_service_1 = require("./service/turso-sync.service");
 const choferes_controller_1 = require("./web/choferes.controller");
 const empresas_controller_1 = require("./web/empresas.controller");
 const puntos_controller_1 = require("./web/puntos.controller");
@@ -99,6 +100,7 @@ exports.AppModule = AppModule = __decorate([
             tasa_service_1.TasaService,
             export_service_1.ExportService,
             reporte_empresa_service_1.ReporteEmpresaService,
+            turso_sync_service_1.TursoSyncService,
             {
                 provide: core_1.APP_PIPE,
                 useValue: new common_2.ValidationPipe({

@@ -24,6 +24,7 @@ import { ViajeRepository } from './repo/viaje.repository';
 import { TasaService } from './service/tasa.service';
 import { ExportService } from './service/export.service';
 import { ReporteEmpresaService } from './service/reporte-empresa.service';
+import { TursoSyncService } from './service/turso-sync.service';
 import { ChoferController } from './web/choferes.controller';
 import { EmpresaController } from './web/empresas.controller';
 import { PuntoController } from './web/puntos.controller';
@@ -88,6 +89,7 @@ const ENTIDADES = [
     TasaService,
     ExportService,
     ReporteEmpresaService,
+    TursoSyncService,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({

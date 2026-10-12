@@ -15,7 +15,7 @@ exports.choferes = [
 ];
 exports.empresas = [
     { name: 'listar', method: 'GET', path: '/api/empresas' },
-    { name: 'crear', method: 'POST', path: '/api/empresas', body: { nombre: 'MINERA DEL SUR' } },
+    { name: 'crear', method: 'POST', path: '/api/empresas', body: { nombre: 'MINERA DEL SUR', direccion: 'Av. Guayana, Galpón 1, Sector Centro, Ciudad Guayana, Bolívar' } },
     { name: 'duplicado-ignore-case', method: 'POST', path: '/api/empresas', body: { nombre: 'minera del sur' } },
     { name: 'validacion', method: 'POST', path: '/api/empresas', body: {} },
     { name: 'actualizar', method: 'PUT', path: '/api/empresas/4', body: { nombre: 'MINERA DEL SUR C.A.' } },
