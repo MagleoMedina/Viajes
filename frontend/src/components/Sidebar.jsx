@@ -9,6 +9,7 @@ import {
   FiDownload,
   FiNavigation,
   FiDollarSign,
+  FiFileText,
   FiChevronDown,
   FiChevronRight,
 } from 'react-icons/fi'
@@ -21,6 +22,7 @@ const SUBMENU = [
   { id: 'crear', label: 'Crear viajes', Icono: FiPlusCircle },
   { id: 'viajes', label: 'Viajes', Icono: FiList },
   { id: 'exportar', label: 'Exportar', Icono: FiDownload },
+  { id: 'reporte', label: 'Reporte por empresa', Icono: FiFileText },
   { id: 'recorridos', label: 'Recorridos', Icono: FiNavigation },
 ]
 

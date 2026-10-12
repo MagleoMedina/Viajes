@@ -23,7 +23,7 @@ export function choferJson(c: Chofer) {
 }
 
 export function empresaJson(e: Empresa) {
-  return { id: e.id, nombre: text(e.nombre) };
+  return { id: e.id, nombre: text(e.nombre), direccion: text(e.direccion) };
 }
 
 export function puntoJson(p: Punto) {

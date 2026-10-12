@@ -23,6 +23,7 @@ import { VehiculoRepository } from './repo/vehiculo.repository';
 import { ViajeRepository } from './repo/viaje.repository';
 import { TasaService } from './service/tasa.service';
 import { ExportService } from './service/export.service';
+import { ReporteEmpresaService } from './service/reporte-empresa.service';
 import { ChoferController } from './web/choferes.controller';
 import { EmpresaController } from './web/empresas.controller';
 import { PuntoController } from './web/puntos.controller';
@@ -86,6 +87,7 @@ const ENTIDADES = [
     ViajeRepository,
     TasaService,
     ExportService,
+    ReporteEmpresaService,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({

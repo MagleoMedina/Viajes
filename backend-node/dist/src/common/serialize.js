@@ -20,7 +20,7 @@ function choferJson(c) {
     };
 }
 function empresaJson(e) {
-    return { id: e.id, nombre: text(e.nombre) };
+    return { id: e.id, nombre: text(e.nombre), direccion: text(e.direccion) };
 }
 function puntoJson(p) {
     return { id: p.id, nombre: text(p.nombre) };

@@ -108,6 +108,7 @@ exports[`backend Node choferes validacion 1`] = `
 exports[`backend Node empresas actualizar 1`] = `
 {
   "body": {
+    "direccion": "Av. Guayana, Galpón 1, Sector Centro, Ciudad Guayana, Bolívar",
     "id": 4,
     "nombre": "MINERA DEL SUR C.A.",
   },
@@ -128,6 +129,7 @@ exports[`backend Node empresas actualizar-409 1`] = `
 exports[`backend Node empresas crear 1`] = `
 {
   "body": {
+    "direccion": "Av. Guayana, Galpón 1, Sector Centro, Ciudad Guayana, Bolívar",
     "id": 4,
     "nombre": "MINERA DEL SUR",
   },

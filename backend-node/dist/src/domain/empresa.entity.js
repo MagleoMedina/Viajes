@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 let Empresa = class Empresa {
     id;
     nombre;
+    direccion;
 };
 exports.Empresa = Empresa;
 __decorate([
@@ -24,6 +25,10 @@ __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
 ], Empresa.prototype, "nombre", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 200, nullable: true }),
+    __metadata("design:type", Object)
+], Empresa.prototype, "direccion", void 0);
 exports.Empresa = Empresa = __decorate([
     (0, typeorm_1.Entity)('empresas')
 ], Empresa);

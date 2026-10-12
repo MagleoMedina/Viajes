@@ -51,42 +51,29 @@ const GRUPOS = [
     ['viajes', escenarios.viajes],
     ['tasa', escenarios.tasa],
 ];
-describe('paridad con backend Java', () => {
+describe('backend Node', () => {
     let app;
-    let java;
     let nodeDb;
-    let javaDb;
     beforeAll(async () => {
         nodeDb = (0, harness_1.tmpDb)('node');
-        javaDb = (0, harness_1.tmpDb)('java');
         await (0, harness_1.wipeTasas)(nodeDb);
-        java = await (0, harness_1.startJava)(javaDb);
-        await (0, harness_1.javaSinTasas)(javaDb);
         app = await (0, harness_1.crearNest)(nodeDb);
-    }, 240000);
+    }, 120000);
     afterAll(async () => {
         await app?.close();
-        await (0, harness_1.matarJava)(java);
         if (nodeDb)
             (0, harness_1.limpiarTmp)(nodeDb);
-        if (javaDb)
-            (0, harness_1.limpiarTmp)(javaDb);
     });
     for (const [grupo, pasos] of GRUPOS) {
         describe(grupo, () => {
             for (const paso of pasos) {
                 it(paso.name ?? paso.path, async () => {
-                    const [deNest, deJava] = await Promise.all([
-                        (0, harness_1.pasoNest)(app, paso),
-                        (0, harness_1.pasoJava)(paso),
-                    ]);
-                    const a = (0, harness_1.normalizar)(deNest, paso);
-                    const b = (0, harness_1.normalizar)(deJava, paso);
+                    const res = (0, harness_1.normalizar)(await (0, harness_1.pasoNest)(app, paso), paso);
                     if (paso.ignoreBody) {
-                        expect(a.status).toBe(b.status);
+                        expect({ status: res.status }).toMatchSnapshot();
                     }
                     else {
-                        expect(a).toEqual(b);
+                        expect(res).toMatchSnapshot();
                     }
                 });
             }
@@ -101,19 +88,24 @@ describe('paridad con backend Java', () => {
         ];
         for (const caso of casos) {
             it(caso.name, async () => {
-                const esPdf = caso.path.includes('/pdf');
-                const [deNest, deJava] = await Promise.all([
-                    traerBinario(app, caso.path),
-                    fetch('http://127.0.0.1:8099' + caso.path).then(async (r) => Buffer.from(await r.arrayBuffer())),
-                ]);
-                if (esPdf) {
-                    await compararPdf(deNest, deJava);
+                const buf = await traerBinario(app, caso.path);
+                if (caso.path.includes('/pdf')) {
+                    await verificarPdf(buf);
                 }
                 else {
-                    await compararXlsx(deNest, deJava);
+                    expect(await matrizXlsx(buf)).toMatchSnapshot();
                 }
             });
         }
+        it('reporte-empresa', async () => {
+            const buf = await traerBinario(app, '/api/export/reporte?empresaId=2&desde=2026-09-01&hasta=2026-09-30');
+            expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+            const pdfParse = require('pdf-parse');
+            const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
+            expect(texto).toContain('REPORTE VIAJES DESDE EL');
+            expect(texto).toContain('DESCRIPCIÓN / CONCEPTO');
+            expect(texto).toContain('MONTO ($)');
+        });
     });
 });
 async function traerBinario(app, path) {
@@ -131,9 +123,14 @@ async function traerBinario(app, path) {
     }
     return res.body;
 }
-async function compararXlsx(a, b) {
-    const [ma, mb] = await Promise.all([matrizXlsx(a), matrizXlsx(b)]);
-    expect(JSON.stringify(ma)).toBe(JSON.stringify(mb));
+async function verificarPdf(buf) {
+    expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    const pdfParse = require('pdf-parse');
+    const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
+    for (const header of HEADERS_PDF) {
+        expect(texto).toContain(header);
+    }
+    expect(tokensPdf(texto)).toMatchSnapshot();
 }
 async function matrizXlsx(buf) {
     const wb = new ExcelJS.Workbook();
@@ -149,20 +146,6 @@ async function matrizXlsx(buf) {
         matriz.push(fila);
     });
     return matriz;
-}
-async function compararPdf(a, b) {
-    const pdfParse = require('pdf-parse');
-    const [rawA, rawB] = await Promise.all([
-        pdfParse(a).then((r) => r.text),
-        pdfParse(b).then((r) => r.text),
-    ]);
-    const textoA = rawA.replace(/\s+/g, ' ');
-    const textoB = rawB.replace(/\s+/g, ' ');
-    for (const header of HEADERS_PDF) {
-        expect(textoA).toContain(header);
-        expect(textoB).toContain(header);
-    }
-    expect(tokensPdf(textoA)).toEqual(tokensPdf(textoB));
 }
 function tokensPdf(texto) {
     const compacto = texto.replace(/\s+/g, ' ');

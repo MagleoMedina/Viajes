@@ -78,6 +78,20 @@ describe('backend Node', () => {
         }
       });
     }
+
+    it('reporte-empresa', async () => {
+      const buf = await traerBinario(
+        app,
+        '/api/export/reporte?empresaId=2&desde=2026-09-01&hasta=2026-09-30',
+      );
+      expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const pdfParse = require('pdf-parse');
+      const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
+      expect(texto).toContain('REPORTE VIAJES DESDE EL');
+      expect(texto).toContain('DESCRIPCIÓN / CONCEPTO');
+      expect(texto).toContain('MONTO ($)');
+    });
   });
 });
 

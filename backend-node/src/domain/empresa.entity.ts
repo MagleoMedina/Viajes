@@ -7,4 +7,7 @@ export class Empresa {
 
   @Column({ unique: true })
   nombre: string;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  direccion: string | null;
 }

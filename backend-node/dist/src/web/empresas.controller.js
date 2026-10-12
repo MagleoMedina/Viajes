@@ -22,12 +22,19 @@ const serialize_1 = require("../common/serialize");
 const api_exception_1 = require("./api-exception");
 class EmpresaRequest {
     nombre;
+    direccion;
 }
 exports.EmpresaRequest = EmpresaRequest;
 __decorate([
     (0, class_validator_1.IsNotEmpty)({ message: 'El nombre es obligatorio' }),
     __metadata("design:type", String)
 ], EmpresaRequest.prototype, "nombre", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(200),
+    __metadata("design:type", String)
+], EmpresaRequest.prototype, "direccion", void 0);
 let EmpresaController = class EmpresaController {
     repo;
     viajes;
@@ -43,6 +50,7 @@ let EmpresaController = class EmpresaController {
         return this.validarDuplicado(nombre).then(() => {
             const empresa = new empresa_entity_1.Empresa();
             empresa.nombre = nombre;
+            empresa.direccion = req.direccion?.trim() || null;
             return this.repo.save(empresa).then(serialize_1.empresaJson);
         });
     }
@@ -53,6 +61,9 @@ let EmpresaController = class EmpresaController {
             const nombre = req.nombre.trim();
             return this.validarDuplicado(nombre, nombre.toLowerCase() === empresa.nombre?.toLowerCase()).then(() => {
                 empresa.nombre = nombre;
+                if (req.direccion !== undefined) {
+                    empresa.direccion = req.direccion?.trim() || null;
+                }
                 return this.repo.save(empresa).then(serialize_1.empresaJson);
             });
         });

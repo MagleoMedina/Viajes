@@ -15,10 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExportController = void 0;
 const common_1 = require("@nestjs/common");
 const export_service_1 = require("../service/export.service");
+const reporte_empresa_service_1 = require("../service/reporte-empresa.service");
 let ExportController = class ExportController {
     servicio;
-    constructor(servicio) {
+    reporteServicio;
+    constructor(servicio, reporteServicio) {
         this.servicio = servicio;
+        this.reporteServicio = reporteServicio;
     }
     xlsx(res, empresaId, desde, hasta) {
         return this.servicio.crearXlsx(empresaId ? Number(empresaId) : null, desde, hasta).then((buffer) => {
@@ -32,6 +35,21 @@ let ExportController = class ExportController {
         return this.servicio.crearPdf(empresaId ? Number(empresaId) : null, desde, hasta).then((buffer) => {
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename="viajes.pdf"');
+            res.setHeader('Content-Length', String(buffer.length));
+            res.end(buffer);
+        });
+    }
+    reporte(res, empresaId, desde, hasta, direccion) {
+        return this.reporteServicio
+            .generarPdf({
+            empresaId: empresaId ? Number(empresaId) : 0,
+            desde,
+            hasta,
+            direccion,
+        })
+            .then((buffer) => {
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename="reporte.pdf"');
             res.setHeader('Content-Length', String(buffer.length));
             res.end(buffer);
         });
@@ -58,8 +76,20 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String, String]),
     __metadata("design:returntype", void 0)
 ], ExportController.prototype, "pdf", null);
+__decorate([
+    (0, common_1.Get)('reporte'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('empresaId')),
+    __param(2, (0, common_1.Query)('desde')),
+    __param(3, (0, common_1.Query)('hasta')),
+    __param(4, (0, common_1.Query)('direccion')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String, String]),
+    __metadata("design:returntype", void 0)
+], ExportController.prototype, "reporte", null);
 exports.ExportController = ExportController = __decorate([
     (0, common_1.Controller)('api/export'),
-    __metadata("design:paramtypes", [export_service_1.ExportService])
+    __metadata("design:paramtypes", [export_service_1.ExportService,
+        reporte_empresa_service_1.ReporteEmpresaService])
 ], ExportController);
 //# sourceMappingURL=export.controller.js.map

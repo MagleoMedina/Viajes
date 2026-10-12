@@ -10,7 +10,7 @@ Param,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Empresa } from '../domain/empresa.entity';
 import { EmpresaRepository } from '../repo/empresa.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
@@ -20,6 +20,11 @@ import { ApiException } from './api-exception';
 export class EmpresaRequest {
   @IsNotEmpty({ message: 'El nombre es obligatorio' })
   nombre: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  direccion?: string;
 }
 
 @Controller('api/empresas')
@@ -41,6 +46,7 @@ export class EmpresaController {
     return this.validarDuplicado(nombre).then(() => {
       const empresa = new Empresa();
       empresa.nombre = nombre;
+      empresa.direccion = req.direccion?.trim() || null;
       return this.repo.save(empresa).then(empresaJson);
     });
   }
@@ -53,6 +59,9 @@ export class EmpresaController {
       return this.validarDuplicado(nombre, nombre.toLowerCase() === empresa.nombre?.toLowerCase()).then(
         () => {
           empresa.nombre = nombre;
+          if (req.direccion !== undefined) {
+            empresa.direccion = req.direccion?.trim() || null;
+          }
           return this.repo.save(empresa).then(empresaJson);
         },
       );
