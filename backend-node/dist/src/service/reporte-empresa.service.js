@@ -48,28 +48,66 @@ const puppeteer = __importStar(require("puppeteer"));
 const fs_1 = require("fs");
 const path_1 = require("path");
 const empresa_repository_1 = require("../repo/empresa.repository");
+const viaje_repository_1 = require("../repo/viaje.repository");
+const COLS_CON_MONTO = 8;
 let ReporteEmpresaService = class ReporteEmpresaService {
     empresaRepo;
-    constructor(empresaRepo) {
+    viajeRepo;
+    constructor(empresaRepo, viajeRepo) {
         this.empresaRepo = empresaRepo;
+        this.viajeRepo = viajeRepo;
     }
     async generarPdf(params) {
-        const { empresaId, desde, hasta, direccion: direccionParam } = params;
-        const empresa = Number.isFinite(empresaId)
+        const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, color } = params;
+        const empresa = Number.isFinite(empresaId) && empresaId > 0
             ? await this.empresaRepo.findById(empresaId)
             : null;
-        const nombreEmpresa = empresa?.nombre ?? 'EMPRESA NO ENCONTRADA';
+        const nombreEmpresa = empresa?.nombre ?? 'TODAS LAS EMPRESAS';
         const direccionEmpresa = empresa?.direccion?.trim() ||
             direccionParam ||
             'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
         const rangoFechas = this.formatearRangoFechas(desde, hasta);
+        const viajes = await this.consultar(empresaId, desde, hasta);
         const logoUri = this.obtenerLogoDataUri();
-        const cabeceras = ['FECHA', 'DESCRIPCIÓN / CONCEPTO', 'MONTO ($)'];
-        const filasEjemplo = [
-            { fecha: '22/09/2026', concepto: 'Transporte de bobinas de aluminio a planta', monto: '350,00' },
-            { fecha: '26/09/2026', concepto: 'Flete de carga pesada y logística de retorno', monto: '520,00' },
-            { fecha: '30/09/2026', concepto: 'Despacho de material y apoyo operativo', monto: '210,00' },
-        ];
+        const filas = viajes.map((v) => ({
+            fecha: this.fechaCorta(v.fechaInicio),
+            vehiculo: this.vehiculo(v),
+            chofer: this.chofer(v),
+            recorrido: v.recorrido?.trim() || '—',
+            desde: v.puntoSalida?.nombre?.trim() || '—',
+            hasta: v.puntoLlegada?.nombre?.trim() || '—',
+            carga: v.carga?.trim() || '—',
+            monto: this.dinero(v.montoViaje ?? 0),
+        }));
+        const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
+        const columnas = conMonto
+            ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
+            : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
+        const anchos = conMonto ? [10, 17, 15, 17, 11, 11, 12, 7] : [11, 18, 16, 18, 12, 12, 13];
+        const ths = columnas
+            .map((c, i) => `<th style="width: ${anchos[i]}%;" class="${i === columnas.length - 1 && conMonto ? 'num' : ''}">${c}</th>`)
+            .join('');
+        const cuerpo = filas.length
+            ? filas
+                .map((f, i) => `
+            <tr class="${i % 2 ? 'par' : ''}">
+              <td>${f.fecha}</td>
+              <td>${this.esc(f.vehiculo)}</td>
+              <td>${this.esc(f.chofer)}</td>
+              <td>${this.esc(f.recorrido)}</td>
+              <td>${this.esc(f.desde)}</td>
+              <td>${this.esc(f.hasta)}</td>
+              <td>${this.esc(f.carga)}</td>
+              ${conMonto ? `<td class="num">${f.monto}</td>` : ''}
+            </tr>`)
+                .join('')
+            : `<tr><td colspan="${columnas.length}" class="vacio">Sin viajes en este intervalo.</td></tr>`;
+        const pie = conMonto && filas.length
+            ? `<tr class="total">
+             <td colspan="${COLS_CON_MONTO - 1}">TOTAL</td>
+             <td class="num">$ ${this.dinero(total)}</td>
+           </tr>`
+            : '';
         const html = `
       <!DOCTYPE html>
       <html lang="es">
@@ -77,8 +115,8 @@ let ReporteEmpresaService = class ReporteEmpresaService {
         <meta charset="utf-8" />
         <style>
           @page {
-            size: A4 portrait;
-            margin: 15mm 12mm 15mm 12mm;
+            size: A4 landscape;
+            margin: 12mm 10mm 12mm 10mm;
           }
           * {
             box-sizing: border-box;
@@ -94,10 +132,10 @@ let ReporteEmpresaService = class ReporteEmpresaService {
           /* Contenedor central de la cabecera */
           .header-container {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
           }
           .logo {
-            max-width: 170px;
+            max-width: 150px;
             height: auto;
             margin-bottom: 6px;
           }
@@ -118,7 +156,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
           .nombre-empresa {
             font-size: 15px;
             font-weight: 900;
-            color: #8c3b87; /* Tono magenta / púrpura corporativo */
+            color: ${color ?? '#8c3b87'};
             letter-spacing: 0.8px;
             margin: 0 0 4px 0;
             text-transform: uppercase;
@@ -129,16 +167,17 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             margin: 0;
           }
 
-          /* Tabla con 3 columnas */
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 6px;
+            table-layout: fixed;
           }
           th, td {
             border: 1px solid #c9d2e0;
-            padding: 7px 10px;
-            font-size: 8.5px;
+            padding: 5px 6px;
+            font-size: 8px;
+            overflow-wrap: break-word;
           }
           th {
             background-color: #26324a;
@@ -151,8 +190,20 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             text-align: right;
             white-space: nowrap;
           }
-          tbody tr:nth-child(even) {
-            background-color: #f4f6fa;
+          thead { display: table-header-group; }
+          tbody tr { page-break-inside: avoid; }
+          tbody tr.par td { background-color: #f4f6fa; }
+          tbody td.vacio {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 14px;
+          }
+          tr.total td {
+            background-color: #26324a;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 9px;
           }
         </style>
       </head>
@@ -167,25 +218,13 @@ let ReporteEmpresaService = class ReporteEmpresaService {
           <div class="direccion-empresa">${this.esc(direccionEmpresa)}</div>
         </div>
 
-        <!-- Tabla de 3 columnas -->
         <table>
           <thead>
-            <tr>
-              <th style="width: 20%;">${cabeceras[0]}</th>
-              <th style="width: 55%;">${cabeceras[1]}</th>
-              <th style="width: 25%;" class="num">${cabeceras[2]}</th>
-            </tr>
+            <tr>${ths}</tr>
           </thead>
           <tbody>
-            ${filasEjemplo
-            .map((f) => `
-                <tr>
-                  <td>${f.fecha}</td>
-                  <td>${this.esc(f.concepto)}</td>
-                  <td class="num">$ ${f.monto}</td>
-                </tr>
-              `)
-            .join('')}
+            ${cuerpo}
+            ${pie}
           </tbody>
         </table>
 
@@ -201,7 +240,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             await page.setContent(html, { waitUntil: 'load' });
             const pdfUint8 = await page.pdf({
                 format: 'A4',
-                landscape: false,
+                landscape: true,
                 printBackground: true,
                 preferCSSPageSize: true,
             });
@@ -210,6 +249,48 @@ let ReporteEmpresaService = class ReporteEmpresaService {
         finally {
             await browser.close();
         }
+    }
+    consultar(empresaId, desde, hasta) {
+        const conEmpresa = Number.isFinite(empresaId) && empresaId > 0;
+        const conFechas = Boolean(desde && hasta);
+        if (conEmpresa && conFechas) {
+            return this.viajeRepo.findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(empresaId, desde, hasta);
+        }
+        if (conEmpresa)
+            return this.viajeRepo.findByEmpresaIdOrderByFechaInicioDesc(empresaId);
+        if (conFechas)
+            return this.viajeRepo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde, hasta);
+        return this.viajeRepo.findAllByOrderByFechaInicioDesc();
+    }
+    fechaCorta(fecha) {
+        if (!fecha)
+            return '—';
+        const d = new Date(fecha);
+        const dd = String(d.getUTCDate()).padStart(2, '0');
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        return `${dd}/${mm}/${d.getUTCFullYear()}`;
+    }
+    vehiculo(v) {
+        const veh = v.vehiculo;
+        if (!veh)
+            return '—';
+        const partes = [veh.marca, veh.modelo].filter((x) => x && x.trim()).join(' ').trim();
+        const placa = veh.placa?.trim();
+        if (partes && placa)
+            return `${partes} (${placa})`;
+        return partes || placa || '—';
+    }
+    chofer(v) {
+        const c = v.chofer;
+        if (!c)
+            return '—';
+        return [c.nombre, c.apellido].filter((x) => x && x.trim()).join(' ').trim() || '—';
+    }
+    dinero(valor) {
+        return Number(valor || 0).toLocaleString('es-VE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
     }
     formatearRangoFechas(desde, hasta) {
         if (!desde && !hasta)
@@ -252,6 +333,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
 exports.ReporteEmpresaService = ReporteEmpresaService;
 exports.ReporteEmpresaService = ReporteEmpresaService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [empresa_repository_1.EmpresaRepository])
+    __metadata("design:paramtypes", [empresa_repository_1.EmpresaRepository,
+        viaje_repository_1.ViajeRepository])
 ], ReporteEmpresaService);
 //# sourceMappingURL=reporte-empresa.service.js.map

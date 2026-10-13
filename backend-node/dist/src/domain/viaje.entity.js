@@ -15,6 +15,7 @@ const chofer_entity_1 = require("./chofer.entity");
 const empresa_entity_1 = require("./empresa.entity");
 const gasto_entity_1 = require("./gasto.entity");
 const punto_entity_1 = require("./punto.entity");
+const vehiculo_entity_1 = require("./vehiculo.entity");
 const epoch_transformer_1 = require("../common/epoch.transformer");
 let Viaje = class Viaje {
     id;
@@ -22,6 +23,7 @@ let Viaje = class Viaje {
     fechaFin;
     chofer;
     empresa;
+    vehiculo;
     carga;
     recorrido;
     puntoSalida;
@@ -59,6 +61,11 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'empresa_id' }),
     __metadata("design:type", Object)
 ], Viaje.prototype, "empresa", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => vehiculo_entity_1.Vehiculo, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'vehiculo_id' }),
+    __metadata("design:type", Object)
+], Viaje.prototype, "vehiculo", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)

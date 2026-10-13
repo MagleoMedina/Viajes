@@ -7,6 +7,7 @@ import { dateOnlyToMillis } from '../common/dates';
 const RELATIONS: FindOptionsRelations<Viaje> = {
   chofer: true,
   empresa: true,
+  vehiculo: true,
   puntoSalida: true,
   puntoLlegada: true,
   gastos: true,

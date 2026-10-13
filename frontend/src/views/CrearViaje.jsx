@@ -12,6 +12,7 @@ const VACIO = {
   carga: '',
   puntoSalidaId: '',
   puntoLlegadaId: '',
+  vehiculoId: '',
   montoViaje: '',
   combustible: '',
   viaticos: '',
@@ -36,6 +37,7 @@ function desdeViaje(viaje) {
     carga: viaje.carga,
     puntoSalidaId: aTexto(viaje.puntoSalida?.id),
     puntoLlegadaId: aTexto(viaje.puntoLlegada?.id),
+    vehiculoId: aTexto(viaje.vehiculo?.id),
     montoViaje: aTexto(viaje.montoViaje),
     combustible: aTexto(viaje.combustible),
     viaticos: aTexto(viaje.viaticos),
@@ -60,6 +62,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const [choferes, setChoferes] = useState([])
   const [empresas, setEmpresas] = useState([])
   const [puntos, setPuntos] = useState([])
+  const [vehiculos, setVehiculos] = useState([])
   const [recorridos, setRecorridos] = useState([])
   const [finManual, setFinManual] = useState(() => Boolean(viaje && viaje.fechaFin !== viaje.fechaInicio))
   const [cargando, setCargando] = useState(true)
@@ -73,13 +76,15 @@ export default function CrearViaje({ viaje, onGuardado }) {
       api.get('/choferes'),
       api.get('/empresas'),
       api.get('/puntos'),
+      api.get('/vehiculos'),
       api.get('/tasa'),
       api.get('/recorridos'),
     ])
-      .then(([c, e, p, t, r]) => {
+      .then(([c, e, p, vh, t, r]) => {
         setChoferes(c)
         setEmpresas(e)
         setPuntos(p)
+        setVehiculos(vh)
         setRecorridos(r)
         if (t?.valor != null) {
           setForm((f) => (f.tasa ? f : { ...f, tasa: String(t.valor) }))
@@ -154,6 +159,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
       carga: form.carga,
       puntoSalidaId: form.puntoSalidaId ? Number(form.puntoSalidaId) : null,
       puntoLlegadaId: form.puntoLlegadaId ? Number(form.puntoLlegadaId) : null,
+      vehiculoId: form.vehiculoId ? Number(form.vehiculoId) : null,
       montoViaje: numero(form.montoViaje),
       combustible: numero(form.combustible),
       viaticos: numero(form.viaticos),
@@ -309,6 +315,17 @@ export default function CrearViaje({ viaje, onGuardado }) {
                 onChange={(v) => set('carga', v)}
                 placeholder="Hortalizas, neveras, Mani"
               />
+            </label>
+            <label>
+              Vehículo
+              <select value={form.vehiculoId} onChange={(e) => set('vehiculoId', e.target.value)}>
+                <option value="">Sin vehículo</option>
+                {vehiculos.map((vh) => (
+                  <option key={vh.id} value={vh.id}>
+                    {[vh.marca, vh.modelo].filter(Boolean).join(' ')} · {vh.placa}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="ancho-completo">
               Recorrido

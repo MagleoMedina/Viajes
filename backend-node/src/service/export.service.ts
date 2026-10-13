@@ -168,7 +168,12 @@ export class ExportService {
 
   /* ----------------------------- PDF CON MOTOR HTML (IDÉNTICO A JAVA) ----------------------------- */
 
-  async crearPdf(empresaId: number | null, desde?: string, hasta?: string): Promise<Buffer> {
+  async crearPdf(
+    empresaId: number | null,
+    desde?: string,
+    hasta?: string,
+    colorTitulo = '#26324a',
+  ): Promise<Buffer> {
     const viajes = await this.buscar(empresaId, desde, hasta);
     const sumas = this.sumar(viajes);
 
@@ -263,7 +268,7 @@ export class ExportService {
           .cab { margin-bottom: 6px; }
           .logo { height: 32px; vertical-align: middle; }
           .cab-texto { display: inline-block; vertical-align: middle; margin-left: 8px; }
-          h1 { font-size: 15px; margin: 0 0 2px; color: #26324a; font-family: 'DejaVu Sans', sans-serif; }
+          h1 { font-size: 15px; margin: 0 0 2px; color: ${colorTitulo}; font-family: 'DejaVu Sans', sans-serif; }
           .rango { color: #6b7280; font-size: 8.5px; }
           .resumen { margin: 0 0 8px; }
           .dato { display: inline-block; border: 1px solid #2f6fed; background: #eef3fb;

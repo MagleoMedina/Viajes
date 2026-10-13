@@ -173,7 +173,7 @@ export default function Viajes({ onEditar }) {
                     <td className="derecha">{money(viaje.tasa)}</td>
                     <td className="derecha">{money(viaje.totalUsd)}</td>
                     <td className="centro">
-                      <button type="button" className="btn pequeno" onClick={() => onEditar(viaje)}>
+                      <button type="button" className="btn-pequeno" onClick={() => onEditar(viaje)}>
                         <FiEdit2 aria-hidden="true" /> Editar
                       </button>
                       <button

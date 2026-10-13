@@ -162,7 +162,7 @@ export default function Vehiculos() {
                       <td>{vehiculo.tipo}</td>
                       <td>{vehiculo.placa}</td>
                       <td className="centro">
-                        <button type="button" className="btn pequeno" onClick={() => editar(vehiculo)}>
+                        <button type="button" className="btn-pequeno"  onClick={() => editar(vehiculo)}>
                           <FiEdit2 aria-hidden="true" /> Editar
                         </button>
                         <button

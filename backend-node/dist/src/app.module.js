@@ -42,6 +42,7 @@ const vehiculos_controller_1 = require("./web/vehiculos.controller");
 const viajes_controller_1 = require("./web/viajes.controller");
 const tasa_controller_1 = require("./web/tasa.controller");
 const export_controller_1 = require("./web/export.controller");
+const sync_controller_1 = require("./web/sync.controller");
 const api_exception_filter_1 = require("./web/api-exception.filter");
 const json_nonnull_interceptor_1 = require("./common/json-nonnull.interceptor");
 const api_exception_1 = require("./web/api-exception");
@@ -88,6 +89,7 @@ exports.AppModule = AppModule = __decorate([
             viajes_controller_1.ViajeController,
             tasa_controller_1.TasaController,
             export_controller_1.ExportController,
+            sync_controller_1.SyncController,
         ],
         providers: [
             chofer_repository_1.ChoferRepository,

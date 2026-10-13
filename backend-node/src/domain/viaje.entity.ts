@@ -10,6 +10,7 @@ import { Chofer } from './chofer.entity';
 import { Empresa } from './empresa.entity';
 import { Gasto } from './gasto.entity';
 import { Punto } from './punto.entity';
+import { Vehiculo } from './vehiculo.entity';
 import { epochMs } from '../common/epoch.transformer';
 
 @Entity('viajes')
@@ -30,6 +31,10 @@ export class Viaje {
   @ManyToOne(() => Empresa, { nullable: true })
   @JoinColumn({ name: 'empresa_id' })
   empresa: Empresa | null;
+
+  @ManyToOne(() => Vehiculo, { nullable: true })
+  @JoinColumn({ name: 'vehiculo_id' })
+  vehiculo: Vehiculo | null;
 
   @Column()
   carga: string;

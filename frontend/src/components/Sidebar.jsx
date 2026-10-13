@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   FiUsers,
   FiTruck,
@@ -12,7 +12,9 @@ import {
   FiFileText,
   FiChevronDown,
   FiChevronRight,
+  FiRefreshCw,
 } from 'react-icons/fi'
+import { api } from '../api/client.js'
 
 const SUBMENU = [
   { id: 'choferes', label: 'Choferes', Icono: FiUsers },
@@ -21,13 +23,42 @@ const SUBMENU = [
   { id: 'empresas', label: 'Empresas', Icono: FiBriefcase },
   { id: 'crear', label: 'Crear viajes', Icono: FiPlusCircle },
   { id: 'viajes', label: 'Viajes', Icono: FiList },
-  { id: 'exportar', label: 'Exportar', Icono: FiDownload },
-  { id: 'reporte', label: 'Reporte por empresa', Icono: FiFileText },
+  { id: 'exportar', label: 'Reporte detallado', Icono: FiDownload },
+  { id: 'reporte', label: 'Reporte general', Icono: FiFileText },
   { id: 'recorridos', label: 'Recorridos', Icono: FiNavigation },
 ]
 
+/** "2026-10-13T15:04:00.000Z" -> "13/10/2026 11:04" (hora local). */
+function fechaLocal(iso) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
 export default function Sidebar({ vista, onNavigate, onTasa }) {
   const [abierto, setAbierto] = useState(true)
+  const [sync, setSync] = useState(null)
+  const [sincronizando, setSincronizando] = useState(false)
+  const [errorSync, setErrorSync] = useState('')
+
+  function cargarEstado() {
+    api.get('/sync').then(setSync).catch((e) => setErrorSync(e.message))
+  }
+
+  useEffect(cargarEstado, [])
+
+  async function sincronizarAhora() {
+    setSincronizando(true)
+    setErrorSync('')
+    try {
+      const nuevo = await api.post('/sync')
+      setSync(nuevo)
+    } catch (e) {
+      setErrorSync(e.message)
+    } finally {
+      setSincronizando(false)
+    }
+  }
 
   return (
     <aside className="sidebar">
@@ -73,6 +104,30 @@ export default function Sidebar({ vista, onNavigate, onTasa }) {
           </span>
           <span className="etiqueta">manual</span>
         </button>
+
+        <section className="sidebar-sync" aria-live="polite">
+          <p className="etiqueta">Turso</p>
+          {sync?.fecha ? (
+            <p className={`estado-sync${sync.exito ? '' : ' fallo'}`}>
+              {sync.exito ? 'Sincronizado' : 'Último intento falló'}:{' '}
+              {fechaLocal(sync.fecha)}
+            </p>
+          ) : (
+            <p className="estado-sync">Sin sincronizar aún</p>
+          )}
+          {errorSync && <p className="estado-sync fallo">{errorSync}</p>}
+          <button
+            type="button"
+            className="nav-tasa btn-sync"
+            onClick={sincronizarAhora}
+            disabled={sincronizando}
+          >
+            <span className="nav-padre-eti">
+              <FiRefreshCw className={sincronizando ? 'girando' : ''} aria-hidden="true" />
+              <span>{sincronizando ? 'Sincronizando…' : 'Sincronizar ahora'}</span>
+            </span>
+          </button>
+        </section>
       </nav>
 
       <footer className="sidebar-pie">SpeedGroup · {new Date().getFullYear()}</footer>

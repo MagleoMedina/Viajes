@@ -33,6 +33,7 @@ import { VehiculoController } from './web/vehiculos.controller';
 import { ViajeController } from './web/viajes.controller';
 import { TasaController } from './web/tasa.controller';
 import { ExportController } from './web/export.controller';
+import { SyncController } from './web/sync.controller';
 import { ApiExceptionFilter } from './web/api-exception.filter';
 import { JsonNonNullInterceptor } from './common/json-nonnull.interceptor';
 import { ApiValidationException } from './web/api-exception';
@@ -77,6 +78,7 @@ const ENTIDADES = [
     ViajeController,
     TasaController,
     ExportController,
+    SyncController,
   ],
   providers: [
     ChoferRepository,

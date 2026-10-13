@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiGrid, FiFileText, FiCheck } from 'react-icons/fi'
+import { FiGrid, FiFileText, FiFile, FiCheck } from 'react-icons/fi'
 import { api, urlDescarga } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
 
@@ -8,6 +8,7 @@ export default function Exportar() {
   const [empresaId, setEmpresaId] = useState('')
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
+  const [color, setColor] = useState('#26324a')
   const [error, setError] = useState('')
   const [sinViajes, setSinViajes] = useState(false)
 
@@ -21,7 +22,7 @@ export default function Exportar() {
   if (hasta) params.set('hasta', hasta)
   const sufijo = params.toString() ? `?${params.toString()}` : ''
 
-  async function descargar(tipo) {
+  async function descargar(tipo, extras = {}) {
     setError('')
     setSinViajes(false)
     try {
@@ -30,7 +31,13 @@ export default function Exportar() {
         setSinViajes(true)
         return
       }
-      window.location.href = urlDescarga(`/export/${tipo}${sufijo}`)
+      // El color solo aplica a los PDF (Excel no usa titulo coloreado).
+      const params2 = new URLSearchParams(params)
+      if (extras.conMonto !== undefined) {
+        params2.set('conMonto', extras.conMonto ? 'true' : 'false')
+      }
+      params2.set('color', color)
+      window.location.href = urlDescarga(`/export/${tipo}?${params2.toString()}`)
     } catch (err) {
       setError(err.message)
     }
@@ -72,12 +79,49 @@ export default function Exportar() {
           </label>
         </div>
 
+        <label className="campo-color">
+          Color del título de la empresa (PDF)
+          <span className="control-color">
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              aria-label="Color del nombre de la empresa en el PDF"
+            />
+            <code>{color}</code>
+          </span>
+        </label>
+
         <div className="acciones">
           <button type="button" className="btn primario" onClick={() => descargar('xlsx')}>
             <FiGrid aria-hidden="true" /> Exportar a Excel
           </button>
           <button type="button" className="btn" onClick={() => descargar('pdf')}>
             <FiFileText aria-hidden="true" /> Exportar a PDF
+          </button>
+        </div>
+      </section>
+
+      <section className="tarjeta ancho-medio">
+        <h2>Reporte histórico (PDF)</h2>
+        <p className="ayuda">
+          Usa los mismos filtros de arriba. Escoja el formato: con la columna MONTO y el total, o
+          sin ella.
+        </p>
+        <div className="acciones">
+          <button
+            type="button"
+            className="btn primario"
+            onClick={() => descargar('reporte', { conMonto: true })}
+          >
+            <FiFileText aria-hidden="true" /> Reporte con montos
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => descargar('reporte', { conMonto: false })}
+          >
+            <FiFile aria-hidden="true" /> Reporte sin montos
           </button>
         </div>
       </section>

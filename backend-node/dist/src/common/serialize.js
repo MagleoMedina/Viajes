@@ -59,6 +59,7 @@ function viajeJson(v) {
         fechaFin: v.fechaFin == null ? undefined : (0, dates_1.toIsoDate)(v.fechaFin),
         chofer: v.chofer ? choferJson(v.chofer) : undefined,
         empresa: v.empresa ? empresaJson(v.empresa) : undefined,
+        vehiculo: v.vehiculo ? vehiculoJson(v.vehiculo) : undefined,
         carga: text(v.carga),
         recorrido: text(v.recorrido),
         puntoSalida: v.puntoSalida ? puntoJson(v.puntoSalida) : undefined,

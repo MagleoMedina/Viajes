@@ -21,6 +21,7 @@ const dates_1 = require("../common/dates");
 const RELATIONS = {
     chofer: true,
     empresa: true,
+    vehiculo: true,
     puntoSalida: true,
     puntoLlegada: true,
     gastos: true,

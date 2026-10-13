@@ -25,6 +25,7 @@ const empresa_repository_1 = require("../repo/empresa.repository");
 const punto_repository_1 = require("../repo/punto.repository");
 const recorrido_repository_1 = require("../repo/recorrido.repository");
 const tasa_repository_1 = require("../repo/tasa.repository");
+const vehiculo_repository_1 = require("../repo/vehiculo.repository");
 const viaje_repository_1 = require("../repo/viaje.repository");
 const serialize_1 = require("../common/serialize");
 const dates_1 = require("../common/dates");
@@ -42,6 +43,7 @@ class ViajeRequest {
     carga;
     puntoSalidaId;
     puntoLlegadaId;
+    vehiculoId;
     montoViaje;
     combustible;
     viaticos;
@@ -80,14 +82,16 @@ let ViajeController = class ViajeController {
     puntoRepo;
     tasaRepo;
     recorridoRepo;
+    vehiculoRepo;
     gastoRepo;
-    constructor(repo, choferRepo, empresaRepo, puntoRepo, tasaRepo, recorridoRepo, gastoRepo) {
+    constructor(repo, choferRepo, empresaRepo, puntoRepo, tasaRepo, recorridoRepo, vehiculoRepo, gastoRepo) {
         this.repo = repo;
         this.choferRepo = choferRepo;
         this.empresaRepo = empresaRepo;
         this.puntoRepo = puntoRepo;
         this.tasaRepo = tasaRepo;
         this.recorridoRepo = recorridoRepo;
+        this.vehiculoRepo = vehiculoRepo;
         this.gastoRepo = gastoRepo;
     }
     listar(empresaId, desde, hasta) {
@@ -155,6 +159,7 @@ let ViajeController = class ViajeController {
         await this.guardarRecorrido(viaje.recorrido ?? '');
         viaje.puntoSalida = await this.punto(req.puntoSalidaId);
         viaje.puntoLlegada = await this.punto(req.puntoLlegadaId);
+        viaje.vehiculo = await this.vehiculo(req.vehiculoId);
         viaje.montoViaje = cero(req.montoViaje);
         viaje.combustible = cero(req.combustible);
         viaje.viaticos = cero(req.viaticos);
@@ -211,6 +216,14 @@ let ViajeController = class ViajeController {
             throw new api_exception_1.ApiException(404, 'Punto no encontrado');
         return punto;
     }
+    async vehiculo(id) {
+        if (id == null)
+            return null;
+        const vehiculo = await this.vehiculoRepo.findById(id);
+        if (!vehiculo)
+            throw new api_exception_1.ApiException(404, 'Vehiculo no encontrado');
+        return vehiculo;
+    }
     async empresa(id) {
         const empresa = await this.empresaRepo.findById(id);
         if (!empresa)
@@ -253,13 +266,14 @@ __decorate([
 ], ViajeController.prototype, "eliminar", null);
 exports.ViajeController = ViajeController = __decorate([
     (0, common_1.Controller)('api/viajes'),
-    __param(6, (0, typeorm_1.InjectRepository)(gasto_entity_1.Gasto)),
+    __param(7, (0, typeorm_1.InjectRepository)(gasto_entity_1.Gasto)),
     __metadata("design:paramtypes", [viaje_repository_1.ViajeRepository,
         chofer_repository_1.ChoferRepository,
         empresa_repository_1.EmpresaRepository,
         punto_repository_1.PuntoRepository,
         tasa_repository_1.TasaRepository,
         recorrido_repository_1.RecorridoRepository,
+        vehiculo_repository_1.VehiculoRepository,
         typeorm_2.Repository])
 ], ViajeController);
 const cero = (valor) => (valor == null ? 0 : valor);

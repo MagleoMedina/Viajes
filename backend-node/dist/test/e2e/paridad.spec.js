@@ -98,13 +98,29 @@ describe('backend Node', () => {
             });
         }
         it('reporte-empresa', async () => {
-            const buf = await traerBinario(app, '/api/export/reporte?empresaId=2&desde=2026-09-01&hasta=2026-09-30');
+            const buf = await traerBinario(app, '/api/export/reporte?empresaId=2&desde=2026-10-01&hasta=2026-10-31');
             expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
             const pdfParse = require('pdf-parse');
             const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
             expect(texto).toContain('REPORTE VIAJES DESDE EL');
-            expect(texto).toContain('DESCRIPCIÓN / CONCEPTO');
+            for (const header of ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA']) {
+                expect(texto).toContain(header);
+            }
             expect(texto).toContain('MONTO ($)');
+            expect(texto).toContain('Neveras');
+            expect(texto).toContain('TOTAL');
+        });
+        it('reporte-empresa-sin-monto', async () => {
+            const buf = await traerBinario(app, '/api/export/reporte?empresaId=2&desde=2026-10-01&hasta=2026-10-31&conMonto=false');
+            expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+            const pdfParse = require('pdf-parse');
+            const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
+            expect(texto).toContain('REPORTE VIAJES DESDE EL');
+            for (const header of ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA']) {
+                expect(texto).toContain(header);
+            }
+            expect(texto).not.toContain('MONTO ($)');
+            expect(texto).not.toContain('TOTAL');
         });
     });
 });

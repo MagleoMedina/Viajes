@@ -15,23 +15,62 @@ const common_1 = require("@nestjs/common");
 const schedule_1 = require("@nestjs/schedule");
 const node_child_process_1 = require("node:child_process");
 const node_util_1 = require("node:util");
+const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
+const api_exception_1 = require("../web/api-exception");
 const ejecutar = (0, node_util_1.promisify)(node_child_process_1.execFile);
 let TursoSyncService = TursoSyncService_1 = class TursoSyncService {
     logger = new common_1.Logger(TursoSyncService_1.name);
+    get archivo() {
+        const base = process.env.DB_PATH
+            ? (0, node_path_1.dirname)(process.env.DB_PATH)
+            : (0, node_path_1.join)(process.cwd(), 'data');
+        return (0, node_path_1.join)(base, 'sync-estado.json');
+    }
+    estado() {
+        const configurado = Boolean(process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN);
+        if (!(0, node_fs_1.existsSync)(this.archivo)) {
+            return { configurado, fecha: null, exito: null, mensaje: null };
+        }
+        try {
+            const guardado = JSON.parse((0, node_fs_1.readFileSync)(this.archivo, 'utf8'));
+            return { configurado, ...guardado };
+        }
+        catch {
+            return { configurado, fecha: null, exito: null, mensaje: null };
+        }
+    }
     async sincronizar() {
+        await this.ejecutarSync(false);
+    }
+    async sincronizarManual() {
+        return this.ejecutarSync(true);
+    }
+    async ejecutarSync(manual) {
         if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
-            this.logger.warn('Turso sin configurar: se omite el respaldo diario.');
-            return;
+            this.logger.warn('Turso sin configurar: se omite el respaldo.');
+            if (manual) {
+                throw new api_exception_1.ApiException(400, 'Turso sin configurar: defina TURSO_DATABASE_URL y TURSO_AUTH_TOKEN en .env');
+            }
+            return this.estado();
         }
         const script = (0, node_path_1.join)(process.cwd(), 'scripts', 'sync-turso.js');
         try {
             const { stdout } = await ejecutar('node', [script], { env: process.env });
             this.logger.log(stdout.trim());
+            return this.registrar(true, stdout.trim());
         }
         catch (e) {
-            this.logger.error(`Fallo el respaldo a Turso: ${e.message}`);
+            const mensaje = e.message;
+            this.logger.error(`Fallo el respaldo a Turso: ${mensaje}`);
+            return this.registrar(false, mensaje);
         }
+    }
+    registrar(exito, mensaje) {
+        (0, node_fs_1.mkdirSync)((0, node_path_1.dirname)(this.archivo), { recursive: true });
+        const guardado = { fecha: new Date().toISOString(), exito, mensaje };
+        (0, node_fs_1.writeFileSync)(this.archivo, JSON.stringify(guardado, null, 2));
+        return { configurado: true, ...guardado };
     }
 };
 exports.TursoSyncService = TursoSyncService;

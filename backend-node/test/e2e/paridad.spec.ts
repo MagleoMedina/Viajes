@@ -82,15 +82,39 @@ describe('backend Node', () => {
     it('reporte-empresa', async () => {
       const buf = await traerBinario(
         app,
-        '/api/export/reporte?empresaId=2&desde=2026-09-01&hasta=2026-09-30',
+        '/api/export/reporte?empresaId=2&desde=2026-10-01&hasta=2026-10-31',
       );
       expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const pdfParse = require('pdf-parse');
       const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
       expect(texto).toContain('REPORTE VIAJES DESDE EL');
-      expect(texto).toContain('DESCRIPCIÓN / CONCEPTO');
+      for (const header of ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA']) {
+        expect(texto).toContain(header);
+      }
       expect(texto).toContain('MONTO ($)');
+      // La fila del intervalo rellena sus campos...
+      expect(texto).toContain('Neveras');
+      // ...y al pie va la suma de los montos.
+      expect(texto).toContain('TOTAL');
+    });
+
+    it('reporte-empresa-sin-monto', async () => {
+      const buf = await traerBinario(
+        app,
+        '/api/export/reporte?empresaId=2&desde=2026-10-01&hasta=2026-10-31&conMonto=false',
+      );
+      expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const pdfParse = require('pdf-parse');
+      const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
+      expect(texto).toContain('REPORTE VIAJES DESDE EL');
+      for (const header of ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA']) {
+        expect(texto).toContain(header);
+      }
+      // Segundo formato: sin la columna MONTO ni la fila TOTAL.
+      expect(texto).not.toContain('MONTO ($)');
+      expect(texto).not.toContain('TOTAL');
     });
   });
 });

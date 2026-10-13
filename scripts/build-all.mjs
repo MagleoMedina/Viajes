@@ -150,6 +150,9 @@ try {
   copiar(TARGET_BACK, APP_DST);
   copiar(join(ELECTRON_SRC, 'main.js'), join(APP_DST, 'main.js'), true);
   copiar(join(ELECTRON_SRC, 'package.json'), join(APP_DST, 'package.json'), true);
+  // Icono de la app y de la ventana: va junto a main.js (lo lee ICONO en
+  // main.js) y electron-packager lo incrusta en el .exe con --icon.
+  copiar(join(ELECTRON_SRC, 'icono.ico'), join(APP_DST, 'icono.ico'), true);
   // electron-packager resuelve el modulo electron desde el dir de la app (para
   // conocer la version y el binario). Enlace a la instalacion local de electron/
   // para que no tenga que hallarlo dentro de la app empaquetada.
@@ -164,11 +167,15 @@ try {
   const SALIDA_ELECTRON = join(TARGET, 'electron-dist');
   const PLAT = process.platform;
   const ARCH = process.arch;
-  // --no-prune: el package.json de la app solo declara main/name; el node_modules
-  // copiado ya es solo produccion y debe conservarse tal cual.
-  // --ignore: el symlink temporal de electron no puede colarse en el paquete.
+  // --icon: electron-packager incrusta el .ico en el .exe (solo win32/macOS;
+  // en Linux se ignora). --no-prune: el package.json de la app solo declara
+  // main/name; el node_modules copiado ya es solo produccion y debe conservarse
+  // tal cual. --ignore: el symlink temporal de electron no puede colarse.
+  // Las rutas van entre comillas: execSync usa el shell y "Viajes Cabelum"
+  // tiene un espacio que parte los argumentos.
+  const argIcono = PLAT === 'win32' ? ` --icon="${join(ELECTRON_SRC, 'icono.ico')}"` : '';
   run(
-    `pnpm exec electron-packager ${APP_DST} viajes --out=${SALIDA_ELECTRON} --platform=${PLAT} --arch=${ARCH} --no-asar --no-prune --ignore=node_modules/electron --overwrite`,
+    `pnpm exec electron-packager "${APP_DST}" viajes --out="${SALIDA_ELECTRON}" --platform=${PLAT} --arch=${ARCH} --no-asar --no-prune --ignore=node_modules/electron --overwrite${argIcono}`,
     ELECTRON_SRC,
   );
   // ServeStatic del backend resuelve <__dirname>/../../../../frontend/dist: en
@@ -179,12 +186,13 @@ try {
 
   // 8. Criterios de aceptación
   console.log('\n=== BUILD COMPLETADO CON EXITO EN build_lista ===');
+  const nombreExe = PLAT === 'win32' ? 'viajes.exe' : 'viajes';
   const checks = [
     ['frontend', join(TARGET_FRONT, 'index.html')],
     ['frontend bundles', join(TARGET_FRONT, 'assets')],
     ['backend entrada', join(TARGET_BACK, 'dist', 'src', 'main.js')],
     ['backend node_modules', join(TARGET_BACK, 'node_modules')],
-    ['electron app', join(SALIDA_ELECTRON, `viajes-${PLAT}-${ARCH}`, 'viajes')],
+    ['electron app', join(SALIDA_ELECTRON, `viajes-${PLAT}-${ARCH}`, nombreExe)],
   ];
   for (const [nombre, p] of checks) {
     const ok = existsSync(p);

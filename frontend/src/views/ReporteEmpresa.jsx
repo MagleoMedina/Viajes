@@ -7,6 +7,7 @@ export default function ReporteEmpresa() {
   const [empresaId, setEmpresaId] = useState('')
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
+  const [color, setColor] = useState('#8c3b87')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -15,9 +16,12 @@ export default function ReporteEmpresa() {
 
   function descargar() {
     setError('')
-    const params = new URLSearchParams({ empresaId })
+    const params = new URLSearchParams()
+    // empresaId vacío -> el backend genera el reporte de todas las empresas.
+    if (empresaId) params.set('empresaId', empresaId)
     if (desde) params.set('desde', desde)
     if (hasta) params.set('hasta', hasta)
+    params.set('color', color)
     window.location.href = urlDescarga(`/export/reporte?${params.toString()}`)
   }
 
@@ -26,7 +30,7 @@ export default function ReporteEmpresa() {
       <header className="vista-cab">
         <div>
           <h1>Reporte por empresa</h1>
-          <p className="sub">Genere el reporte de viajes de una empresa en PDF.</p>
+          <p className="sub">Genere el reporte de viajes de una empresa o de todas, en PDF.</p>
         </div>
       </header>
 
@@ -35,11 +39,11 @@ export default function ReporteEmpresa() {
       <section className="tarjeta ancho-medio">
         <h2>Datos del reporte</h2>
         <p className="ayuda">Sin fechas se usa el histórico general.</p>
-        <div className="campos-3">
+        <div className="campos-4">
           <label>
             Empresa
             <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}>
-              <option value="">Seleccione una empresa</option>
+              <option value="">Todas las empresas</option>
               {empresas.map((em) => (
                 <option key={em.id} value={em.id}>
                   {em.nombre}
@@ -55,10 +59,22 @@ export default function ReporteEmpresa() {
             Hasta
             <input type="date" value={hasta} min={desde} onChange={(e) => setHasta(e.target.value)} />
           </label>
+          <label className="campo-color">
+            Color del título
+            <span className="control-color">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                aria-label="Color del nombre de la empresa"
+              />
+              <code>{color}</code>
+            </span>
+          </label>
         </div>
 
         <div className="acciones">
-          <button type="button" className="btn primario" onClick={descargar} disabled={!empresaId}>
+          <button type="button" className="btn primario" onClick={descargar}>
             <FiFileText aria-hidden="true" /> Generar reporte PDF
           </button>
         </div>

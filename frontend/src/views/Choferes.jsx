@@ -154,7 +154,7 @@ export default function Choferes() {
                       <td>{chofer.apellido}</td>
                       <td>{chofer.cedula}</td>
                       <td className="centro">
-                        <button type="button" className="btn pequeno" onClick={() => editar(chofer)}>
+                        <button type="button" className="btn-pequeno"  onClick={() => editar(chofer)}>
                           <FiEdit2 aria-hidden="true" /> Editar
                         </button>
                         <button

@@ -138,7 +138,7 @@ export default function Empresas() {
                       <td>{empresa.nombre}</td>
                       <td>{empresa.direccion}</td>
                       <td className="centro">
-                        <button type="button" className="btn pequeno" onClick={() => editar(empresa)}>
+                        <button type="button" className="btn-pequeno" onClick={() => editar(empresa)}>
                           <FiEdit2 aria-hidden="true" /> Editar
                         </button>
                         <button

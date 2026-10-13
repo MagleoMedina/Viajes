@@ -22,6 +22,7 @@ import { EmpresaRepository } from '../repo/empresa.repository';
 import { PuntoRepository } from '../repo/punto.repository';
 import { RecorridoRepository } from '../repo/recorrido.repository';
 import { TasaRepository } from '../repo/tasa.repository';
+import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
 import { viajeJson } from '../common/serialize';
 import { dateOnlyToMillis, round2 } from '../common/dates';
@@ -50,6 +51,7 @@ export class ViajeRequest {
 
   puntoSalidaId?: number;
   puntoLlegadaId?: number;
+  vehiculoId?: number;
   montoViaje?: number;
   combustible?: number;
   viaticos?: number;
@@ -71,6 +73,7 @@ export class ViajeController {
     private readonly puntoRepo: PuntoRepository,
     private readonly tasaRepo: TasaRepository,
     private readonly recorridoRepo: RecorridoRepository,
+    private readonly vehiculoRepo: VehiculoRepository,
     @InjectRepository(Gasto) private readonly gastoRepo: Repository<Gasto>,
   ) {}
 
@@ -159,6 +162,7 @@ export class ViajeController {
     await this.guardarRecorrido(viaje.recorrido ?? '');
     viaje.puntoSalida = await this.punto(req.puntoSalidaId);
     viaje.puntoLlegada = await this.punto(req.puntoLlegadaId);
+    viaje.vehiculo = await this.vehiculo(req.vehiculoId);
     viaje.montoViaje = cero(req.montoViaje);
     viaje.combustible = cero(req.combustible);
     viaje.viaticos = cero(req.viaticos);
@@ -220,6 +224,13 @@ export class ViajeController {
     const punto = await this.puntoRepo.findById(id);
     if (!punto) throw new ApiException(404, 'Punto no encontrado');
     return punto;
+  }
+
+  private async vehiculo(id?: number) {
+    if (id == null) return null;
+    const vehiculo = await this.vehiculoRepo.findById(id);
+    if (!vehiculo) throw new ApiException(404, 'Vehiculo no encontrado');
+    return vehiculo;
   }
 
   private async empresa(id: number) {
