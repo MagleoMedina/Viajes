@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as puppeteer from 'puppeteer';
+import { lanzarChrome } from '../common/chromium';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { EmpresaRepository } from '../repo/empresa.repository';
@@ -224,10 +224,7 @@ export class ReporteEmpresaService {
     `;
 
     // 6. Generación con Puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
+    const browser = await lanzarChrome();
 
     try {
       const page = await browser.newPage();

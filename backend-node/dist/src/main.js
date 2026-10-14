@@ -24,6 +24,7 @@ async function bootstrap() {
     }
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors();
+    app.enableShutdownHooks();
     const port = Number(process.env.PORT ?? 8080);
     const host = process.env.HOST ?? '0.0.0.0';
     await app.listen(port, host);

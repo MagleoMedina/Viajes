@@ -11,8 +11,10 @@
  *
  * Limites conocidos:
  * - Requiere Node.js en la maquina destino: usa el binario `node` como hijo.
- * - PDF (puppeteer) depende del cache de Chrome; si la maquina destino no lo
- *   tiene (~/.cache/puppeteer), esa parte falla. Embeber Chrome = tarea aparte.
+ * - PDF (puppeteer) usa el Chrome embebido: bin/chromium se copia a
+ *   resources/chromium en el empaquetado (--extra-resource en build-all.mjs) y
+ *   la ruta se le pasa al hijo via CHROMIUM_DIR. Sin binario, el backend cae al
+ *   cache ~/.cache/puppeteer del usuario.
  */
 const { app, BrowserWindow, dialog } = require('electron');
 const { spawn } = require('child_process');
@@ -24,6 +26,11 @@ const URL = `http://localhost:${PORT}`;
 const APP_DIR = app.isPackaged
   ? path.join(process.resourcesPath, 'app')
   : __dirname;
+// Chrome embebido para los PDF del backend: build-all.mjs copia bin/chromium
+// a resources/chromium (--extra-resource). En dev apunta a bin/chromium.
+const CHROMIUM_DIR = app.isPackaged
+  ? path.join(process.resourcesPath, 'chromium')
+  : path.join(APP_DIR, '..', 'bin', 'chromium');
 // Icono de la ventana (Windows usa .ico; en dev y en el paquete --no-asar
 // el archivo vive junto a main.js).
 const ICONO = path.join(APP_DIR, 'icono.ico');
@@ -74,7 +81,7 @@ function arrancarBackend() {
   const log = fs.openSync(LOG, 'a');
   backend = spawn('node', ['dist/src/main.js'], {
     cwd: APP_DIR,
-    env: { ...process.env, PORT },
+    env: { ...process.env, PORT, CHROMIUM_DIR },
     // Sin terminal: log a archivo y ventana de consola oculta en Windows.
     stdio: ['ignore', log, log],
     windowsHide: true,

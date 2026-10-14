@@ -3,6 +3,9 @@ import { FiEdit2, FiTrash2, FiX, FiCheck } from 'react-icons/fi'
 import { api, money, fecha } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
 
+/** Filas por bloque de la tabla: más de esto y la interfaz deja de responder. */
+const POR_PAGINA = 200
+
 export default function Viajes({ onEditar }) {
   const [lista, setLista] = useState([])
   const [empresas, setEmpresas] = useState([])
@@ -13,6 +16,9 @@ export default function Viajes({ onEditar }) {
   const [aviso, setAviso] = useState('')
   const [desglose, setDesglose] = useState(null)
   const [sinViajes, setSinViajes] = useState(false)
+  // Con miles de viajes la tabla entera deja la interfaz sin respuesta: se
+  // pintan bloques de POR_PAGINA filas y se pagina.
+  const [pagina, setPagina] = useState(0)
 
   function cargar() {
     const params = new URLSearchParams()
@@ -61,6 +67,11 @@ export default function Viajes({ onEditar }) {
   const totalBs = lista.reduce((suma, v) => suma + (Number(v.totalBs) || 0), 0)
   const totalUsd = lista.reduce((suma, v) => suma + (Number(v.totalUsd) || 0), 0)
 
+  // Bloque visible de la tabla (los totales del encabezado son de TODA la lista).
+  const totalPaginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA))
+  const paginaSegura = Math.min(pagina, totalPaginas - 1)
+  const filas = lista.slice(paginaSegura * POR_PAGINA, (paginaSegura + 1) * POR_PAGINA)
+
   function sumarGastos(viaje) {
     return (viaje.gastos || []).reduce((suma, g) => suma + (Number(g.monto) || 0), 0)
   }
@@ -86,7 +97,13 @@ export default function Viajes({ onEditar }) {
         <div className="campos-3">
           <label>
             Empresa
-            <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}>
+            <select
+              value={empresaId}
+              onChange={(e) => {
+                setEmpresaId(e.target.value)
+                setPagina(0)
+              }}
+            >
               <option value="">Todas las empresas</option>
               {empresas.map((em) => (
                 <option key={em.id} value={em.id}>
@@ -97,11 +114,26 @@ export default function Viajes({ onEditar }) {
           </label>
           <label>
             Desde
-            <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+            <input
+              type="date"
+              value={desde}
+              onChange={(e) => {
+                setDesde(e.target.value)
+                setPagina(0)
+              }}
+            />
           </label>
           <label>
             Hasta
-            <input type="date" value={hasta} min={desde} onChange={(e) => setHasta(e.target.value)} />
+            <input
+              type="date"
+              value={hasta}
+              min={desde}
+              onChange={(e) => {
+                setHasta(e.target.value)
+                setPagina(0)
+              }}
+            />
           </label>
         </div>
         <div className="acciones">
@@ -112,6 +144,7 @@ export default function Viajes({ onEditar }) {
               setEmpresaId('')
               setDesde('')
               setHasta('')
+              setPagina(0)
             }}
           >
             <FiX aria-hidden="true" /> Limpiar filtros
@@ -144,7 +177,7 @@ export default function Viajes({ onEditar }) {
                 </tr>
               </thead>
               <tbody>
-                {lista.map((viaje) => (
+                {filas.map((viaje) => (
                   <tr key={viaje.id}>
                     <td>{fecha(viaje.fechaInicio)}</td>
                     <td>{fecha(viaje.fechaFin)}</td>
@@ -189,6 +222,29 @@ export default function Viajes({ onEditar }) {
               </tbody>
             </table>
           </div>
+          {totalPaginas > 1 && (
+            <div className="acciones">
+              <button
+                type="button"
+                className="btn"
+                disabled={paginaSegura === 0}
+                onClick={() => setPagina(paginaSegura - 1)}
+              >
+                Anterior
+              </button>
+              <span className="contador">
+                Página {paginaSegura + 1} de {totalPaginas}
+              </span>
+              <button
+                type="button"
+                className="btn"
+                disabled={paginaSegura >= totalPaginas - 1}
+                onClick={() => setPagina(paginaSegura + 1)}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </section>
       )}
 

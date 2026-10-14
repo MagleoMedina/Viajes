@@ -1,9 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { execSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { DataSource } from 'typeorm';
+import { SqljsDriver } from 'typeorm/driver/sqljs/SqljsDriver';
+import { DbSaverService } from '../common/db-saver.service';
 import { ApiException } from '../web/api-exception';
 
 const ejecutar = promisify(execFile);
@@ -28,6 +31,11 @@ export interface EstadoSync {
 @Injectable()
 export class TursoSyncService {
   private readonly logger = new Logger(TursoSyncService.name);
+
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly dbSaver: DbSaverService,
+  ) {}
 
   /** data/sync-estado.json junto a la base local. */
   private get archivo(): string {
@@ -79,13 +87,43 @@ export class TursoSyncService {
     if (password !== '30696510') {
       return { exito: false, mensaje: 'Contraseña incorrecta' };
     }
+    const script = join(process.cwd(), 'scripts', 'pull-from-turso.js');
+    let stdout = '';
     try {
-      const script = join(process.cwd(), 'scripts', 'pull-from-turso.js');
-      execSync('node "' + script + '"', { env: process.env });
-      return { exito: true, mensaje: 'Pull completado' };
+      // Async a proposito: con execSync el backend entero deja de responder
+      // durante todo el pull (puede tardar minutos con bases grandes).
+      const salida = await ejecutar('node', [script], { env: process.env });
+      stdout = salida.stdout ?? '';
     } catch (e: any) {
       return { exito: false, mensaje: e.message };
     }
+    try {
+      await this.recargarBaseLocal();
+    } catch (e) {
+      return {
+        exito: false,
+        mensaje: `Pull guardado en disco, pero el backend no pudo recargarlo: ${(e as Error).message}`,
+      };
+    }
+    return { exito: true, mensaje: stdout.trim() || 'Pull completado' };
+  }
+
+  /**
+   * TypeORM corre sobre sqljs: la base vive en memoria y `autoSave` la escribe a
+   * data/viajes.db tras cada operacion. El pull solo reemplaza el archivo, asi
+   * que hay que importarlo otra vez en el driver; sin esto la interfaz seguira
+   * mostrando la copia vieja (y el autoSave la reescribiria encima) hasta
+   * reiniciar el backend.
+   */
+  private async recargarBaseLocal(): Promise<void> {
+    // Ningun volcar pendiente puede escribir la copia vieja encima del pull.
+    this.dbSaver.cancelar();
+    const driver = this.dataSource.driver as SqljsDriver;
+    const ubicacion = driver.options.location ?? 'data/viajes.db';
+    driver.databaseConnection.close();
+    // load() crea una conexion nueva desde el archivo y re-aplica foreign_keys.
+    await driver.load(ubicacion);
+    this.logger.log(`Base local recargada desde ${ubicacion}`);
   }
 
   private async ejecutarSync(manual: boolean): Promise<EstadoSync> {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import Choferes from './views/Choferes.jsx'
 import Vehiculos from './views/Vehiculos.jsx'
@@ -16,6 +16,9 @@ function App() {
   const [vista, setVista] = useState('choferes')
   const [tasaAbierta, setTasaAbierta] = useState(false)
   const [viajeEditando, setViajeEditando] = useState(null)
+  // Cambia al terminar un pull de Turso: remonta la vista activa para que
+  // vuelva a leer los datos del backend.
+  const [recarga, setRecarga] = useState(0)
 
   function editarViaje(viaje) {
     setViajeEditando(viaje)
@@ -37,6 +40,7 @@ function App() {
         vista={vista}
         onNavigate={navegar}
         onTasa={() => setTasaAbierta(true)}
+        onPullCompletado={() => setRecarga((n) => n + 1)}
       />
 
       <main className="contenido">
@@ -44,17 +48,19 @@ function App() {
           <img className="cabecera-logo" src="/logo.svg" alt="Cabelum" />
         </header>
 
-        {vista === 'choferes' && <Choferes />}
-        {vista === 'vehiculos' && <Vehiculos />}
-        {vista === 'puntos' && <Puntos />}
-        {vista === 'empresas' && <Empresas />}
-        {vista === 'crear' && (
-          <CrearViaje key={viajeEditando?.id ?? 'nuevo'} viaje={viajeEditando} onGuardado={viajeListo} />
-        )}
-        {vista === 'viajes' && <Viajes onEditar={editarViaje} />}
-        {vista === 'exportar' && <Exportar />}
-        {vista === 'reporte' && <ReporteEmpresa />}
-        {vista === 'recorridos' && <Recorridos />}
+        <Fragment key={recarga}>
+          {vista === 'choferes' && <Choferes />}
+          {vista === 'vehiculos' && <Vehiculos />}
+          {vista === 'puntos' && <Puntos />}
+          {vista === 'empresas' && <Empresas />}
+          {vista === 'crear' && (
+            <CrearViaje key={viajeEditando?.id ?? 'nuevo'} viaje={viajeEditando} onGuardado={viajeListo} />
+          )}
+          {vista === 'viajes' && <Viajes onEditar={editarViaje} />}
+          {vista === 'exportar' && <Exportar />}
+          {vista === 'reporte' && <ReporteEmpresa />}
+          {vista === 'recorridos' && <Recorridos />}
+        </Fragment>
       </main>
 
       {tasaAbierta && <Tasa onClose={() => setTasaAbierta(false)} />}

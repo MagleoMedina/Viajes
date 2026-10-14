@@ -12,7 +12,10 @@
  * - En runtime el backend lee del CWD: assets/, data/viajes.db (base real, ignorada
  *   en git), scripts/sync-turso.js (cron Turso) y .env. Todo se copia junto a dist.
  * - puppeteer necesita su postinstall (descarga Chrome): NO usar --ignore-scripts.
- *   Chrome queda en ~/.cache/puppeteer del usuario (no dentro de build_lista).
+ *   Ese cache (~/.cache/puppeteer) es solo para correr el backend suelto. La app
+ *   empaquetada lleva su propio Chrome: bin/chromium -> resources/chromium
+ *   (--extra-resource). Si bin/chromium no existe, se copia del cache local o se
+ *   baja con npx @puppeteer/browsers.
  * - Paso final: empaquetar la app de escritorio con Electron (electron/main.js),
  *   shell que levanta el backend y abre la UI. Requiere Node en la maquina
  *   destino y electron + electron-packager en electron/ (se instalan solos).
@@ -27,6 +30,22 @@ const FRONTEND = join(ROOT, 'frontend');
 const BACKEND = join(ROOT, 'backend-node');
 const TARGET_FRONT = join(TARGET, 'frontend', 'dist');
 const TARGET_BACK = join(TARGET, 'backend');
+// Version de Chrome embebida para PDFs. Debe coincidir con la que resuelve
+// puppeteer en backend-node/package.json y con CHROMIUM_VERSION de
+// backend-node/src/common/chromium.ts.
+const CHROMIUM_VERSION = '127.0.6533.88';
+const CHROMIUM_REL = join('chrome', `win64-${CHROMIUM_VERSION}`, 'chrome-win64', 'chrome.exe');
+const CHROMIUM_DIR = join(ROOT, 'bin', 'chromium');
+const CHROMIUM_EXE = join(CHROMIUM_DIR, CHROMIUM_REL);
+const CACHE_CHROMIUM = join(
+  process.env.USERPROFILE ?? process.env.HOME ?? '',
+  '.cache',
+  'puppeteer',
+  'chrome',
+  `win64-${CHROMIUM_VERSION}`,
+  'chrome-win64',
+  'chrome.exe',
+);
 
 function run(cmd, cwd, env = {}) {
   console.log(`\n> [${cmd}] (cwd: ${cwd})`);
@@ -142,6 +161,22 @@ try {
   // 6. Smoke test
   await smokeTest();
 
+  // 6.5 Chrome embebido para los PDFs del backend. Sin el, la maquina destino
+  //     necesitaria ~/.cache/puppeteer con esa misma version. Origen: el cache
+  //     local de puppeteer si existe; si no, descarga con @puppeteer/browsers.
+  console.log('\n--- PREPARANDO CHROMIUM EMBEBIDO ---');
+  if (existsSync(CHROMIUM_EXE)) {
+    console.log(`  ya presente: ${CHROMIUM_EXE}`);
+  } else if (existsSync(CACHE_CHROMIUM)) {
+    mkdirSync(CHROMIUM_DIR, { recursive: true });
+    cpSync(join(CACHE_CHROMIUM, '..'), join(CHROMIUM_DIR, 'chrome', `win64-${CHROMIUM_VERSION}`), {
+      recursive: true,
+    });
+    console.log(`  copiado del cache de puppeteer: ${CACHE_CHROMIUM}`);
+  } else {
+    run(`npx --yes @puppeteer/browsers install chrome@${CHROMIUM_VERSION} --path "${CHROMIUM_DIR}"`, ROOT);
+  }
+
   // 7. Empaquetado de escritorio (Electron): app = backend + main.js + package.json
   console.log('\n--- EMPAQUETANDO APP DE ESCRITORIO (Electron) ---');
   const ELECTRON_SRC = join(ROOT, 'electron');
@@ -174,8 +209,11 @@ try {
   // Las rutas van entre comillas: execSync usa el shell y "Viajes Cabelum"
   // tiene un espacio que parte los argumentos.
   const argIcono = PLAT === 'win32' ? ` --icon="${join(ELECTRON_SRC, 'icono.ico')}"` : '';
+  // --extra-resource: copia bin/chromium tal cual a resources/chromium (fuera
+  // de app.asar y de resources/app). main.js le pasa esa ruta al backend via
+  // CHROMIUM_DIR; el backend tambien la infiere desde CWD (resources/app).
   run(
-    `pnpm exec electron-packager "${APP_DST}" viajes --out="${SALIDA_ELECTRON}" --platform=${PLAT} --arch=${ARCH} --no-asar --no-prune --ignore=node_modules/electron --overwrite${argIcono}`,
+    `pnpm exec electron-packager "${APP_DST}" viajes --out="${SALIDA_ELECTRON}" --platform=${PLAT} --arch=${ARCH} --no-asar --no-prune --ignore=node_modules/electron --extra-resource="${CHROMIUM_DIR}" --overwrite${argIcono}`,
     ELECTRON_SRC,
   );
   // ServeStatic del backend resuelve <__dirname>/../../../../frontend/dist: en
@@ -192,6 +230,7 @@ try {
     ['frontend bundles', join(TARGET_FRONT, 'assets')],
     ['backend entrada', join(TARGET_BACK, 'dist', 'src', 'main.js')],
     ['backend node_modules', join(TARGET_BACK, 'node_modules')],
+    ['chromium embebido', join(SALIDA_APP, 'resources', 'chromium', CHROMIUM_REL)],
     ['electron app', join(SALIDA_ELECTRON, `viajes-${PLAT}-${ARCH}`, nombreExe)],
   ];
   for (const [nombre, p] of checks) {

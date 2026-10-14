@@ -25,6 +25,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // Cualquier origen (otra PC, el celular) puede llamar /api sin CORS.
   app.enableCors();
+  // Volcar la base local al recibir SIGTERM/CTRL+C (DbSaverService.onApplicationShutdown).
+  app.enableShutdownHooks();
   // 0.0.0.0 escucha en localhost y en la IP de la red local.
   const port = Number(process.env.PORT ?? 8080);
   const host = process.env.HOST ?? '0.0.0.0';

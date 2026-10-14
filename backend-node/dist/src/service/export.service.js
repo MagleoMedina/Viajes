@@ -45,7 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExportService = void 0;
 const common_1 = require("@nestjs/common");
 const ExcelJS = __importStar(require("exceljs"));
-const puppeteer = __importStar(require("puppeteer"));
+const chromium_1 = require("../common/chromium");
 const fs_1 = require("fs");
 const path_1 = require("path");
 const viaje_repository_1 = require("../repo/viaje.repository");
@@ -306,10 +306,7 @@ let ExportService = class ExportService {
       </body>
       </html>
     `;
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-        });
+        const browser = await (0, chromium_1.lanzarChrome)();
         try {
             const page = await browser.newPage();
             await page.setContent(htmlContent, { waitUntil: 'load' });

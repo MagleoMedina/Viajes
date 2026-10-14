@@ -45,6 +45,7 @@ const export_controller_1 = require("./web/export.controller");
 const sync_controller_1 = require("./web/sync.controller");
 const api_exception_filter_1 = require("./web/api-exception.filter");
 const json_nonnull_interceptor_1 = require("./common/json-nonnull.interceptor");
+const db_saver_service_1 = require("./common/db-saver.service");
 const api_exception_1 = require("./web/api-exception");
 const ENTIDADES = [
     chofer_entity_1.Chofer,
@@ -68,7 +69,7 @@ exports.AppModule = AppModule = __decorate([
                 useFactory: (config) => ({
                     type: 'sqljs',
                     location: config.get('DB_PATH') ?? 'data/viajes.db',
-                    autoSave: true,
+                    autoSave: false,
                     entities: ENTIDADES,
                     synchronize: false,
                 }),
@@ -103,6 +104,7 @@ exports.AppModule = AppModule = __decorate([
             export_service_1.ExportService,
             reporte_empresa_service_1.ReporteEmpresaService,
             turso_sync_service_1.TursoSyncService,
+            db_saver_service_1.DbSaverService,
             {
                 provide: core_1.APP_PIPE,
                 useValue: new common_2.ValidationPipe({

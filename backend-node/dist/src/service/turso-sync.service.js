@@ -13,14 +13,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TursoSyncService = void 0;
 const common_1 = require("@nestjs/common");
 const schedule_1 = require("@nestjs/schedule");
-const node_child_process_1 = require("node:child_process");
 const node_util_1 = require("node:util");
+const node_child_process_1 = require("node:child_process");
 const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
+const typeorm_1 = require("typeorm");
+const db_saver_service_1 = require("../common/db-saver.service");
 const api_exception_1 = require("../web/api-exception");
 const ejecutar = (0, node_util_1.promisify)(node_child_process_1.execFile);
 let TursoSyncService = TursoSyncService_1 = class TursoSyncService {
+    dataSource;
+    dbSaver;
     logger = new common_1.Logger(TursoSyncService_1.name);
+    constructor(dataSource, dbSaver) {
+        this.dataSource = dataSource;
+        this.dbSaver = dbSaver;
+    }
     get archivo() {
         const base = process.env.DB_PATH
             ? (0, node_path_1.dirname)(process.env.DB_PATH)
@@ -61,14 +69,33 @@ let TursoSyncService = TursoSyncService_1 = class TursoSyncService {
         if (password !== '30696510') {
             return { exito: false, mensaje: 'Contraseña incorrecta' };
         }
+        const script = (0, node_path_1.join)(process.cwd(), 'scripts', 'pull-from-turso.js');
+        let stdout = '';
         try {
-            const script = (0, node_path_1.join)(process.cwd(), 'scripts', 'pull-from-turso.js');
-            (0, node_child_process_1.execSync)('node "' + script + '"', { env: process.env });
-            return { exito: true, mensaje: 'Pull completado' };
+            const salida = await ejecutar('node', [script], { env: process.env });
+            stdout = salida.stdout ?? '';
         }
         catch (e) {
             return { exito: false, mensaje: e.message };
         }
+        try {
+            await this.recargarBaseLocal();
+        }
+        catch (e) {
+            return {
+                exito: false,
+                mensaje: `Pull guardado en disco, pero el backend no pudo recargarlo: ${e.message}`,
+            };
+        }
+        return { exito: true, mensaje: stdout.trim() || 'Pull completado' };
+    }
+    async recargarBaseLocal() {
+        this.dbSaver.cancelar();
+        const driver = this.dataSource.driver;
+        const ubicacion = driver.options.location ?? 'data/viajes.db';
+        driver.databaseConnection.close();
+        await driver.load(ubicacion);
+        this.logger.log(`Base local recargada desde ${ubicacion}`);
     }
     async ejecutarSync(manual) {
         if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
@@ -105,6 +132,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TursoSyncService.prototype, "sincronizar", null);
 exports.TursoSyncService = TursoSyncService = TursoSyncService_1 = __decorate([
-    (0, common_1.Injectable)()
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeorm_1.DataSource,
+        db_saver_service_1.DbSaverService])
 ], TursoSyncService);
 //# sourceMappingURL=turso-sync.service.js.map

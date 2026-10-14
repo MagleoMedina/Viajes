@@ -36,6 +36,7 @@ import { ExportController } from './web/export.controller';
 import { SyncController } from './web/sync.controller';
 import { ApiExceptionFilter } from './web/api-exception.filter';
 import { JsonNonNullInterceptor } from './common/json-nonnull.interceptor';
+import { DbSaverService } from './common/db-saver.service';
 import { ApiValidationException } from './web/api-exception';
 
 const ENTIDADES = [
@@ -57,7 +58,10 @@ const ENTIDADES = [
       useFactory: (config: ConfigService) => ({
         type: 'sqljs',
         location: config.get<string>('DB_PATH') ?? 'data/viajes.db',
-        autoSave: true,
+        // Sin autoSave: exporta la base COMPLETA y la escribe de forma sincrona
+        // tras CADA operacion, lo que satura el backend con bases grandes.
+        // El volcado agrupado lo hace DbSaverService (ver tambien pull de Turso).
+        autoSave: false,
         entities: ENTIDADES,
         synchronize: false,
       }),
@@ -92,6 +96,7 @@ const ENTIDADES = [
     ExportService,
     ReporteEmpresaService,
     TursoSyncService,
+    DbSaverService,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
