@@ -17,6 +17,26 @@ const initSqlJs = require('sql.js');
 /** Columnas nuevas que el esquema base no trae. */
 const MIGRACIONES = [
   { tabla: 'viajes', columna: 'vehiculo_id', ddl: 'ALTER TABLE viajes ADD COLUMN vehiculo_id bigint' },
+  {
+    tabla: 'empresas',
+    columna: 'eliminado',
+    ddl: 'ALTER TABLE empresas ADD COLUMN eliminado integer NOT NULL DEFAULT 0',
+  },
+  {
+    tabla: 'choferes',
+    columna: 'eliminado',
+    ddl: 'ALTER TABLE choferes ADD COLUMN eliminado integer NOT NULL DEFAULT 0',
+  },
+  {
+    tabla: 'puntos',
+    columna: 'eliminado',
+    ddl: 'ALTER TABLE puntos ADD COLUMN eliminado integer NOT NULL DEFAULT 0',
+  },
+  {
+    tabla: 'vehiculos',
+    columna: 'eliminado',
+    ddl: 'ALTER TABLE vehiculos ADD COLUMN eliminado integer NOT NULL DEFAULT 0',
+  },
 ];
 
 async function main() {

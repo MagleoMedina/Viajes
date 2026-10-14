@@ -96,6 +96,13 @@ export class ViajeRepository {
       .getExists();
   }
 
+  existsByVehiculoId(vehiculoId: number): Promise<boolean> {
+    return this.repo
+      .createQueryBuilder('v')
+      .where('vehiculo_id = :id', { id: vehiculoId })
+      .getExists();
+  }
+
   async save(viaje: Viaje): Promise<Viaje> {
     await this.repo.save(viaje);
     return (await this.findById(viaje.id))!;

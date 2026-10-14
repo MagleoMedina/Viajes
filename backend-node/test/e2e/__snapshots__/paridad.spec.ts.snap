@@ -68,7 +68,7 @@ exports[`backend Node choferes eliminar-404 1`] = `
 
 exports[`backend Node choferes eliminar-en-uso 1`] = `
 {
-  "status": 409,
+  "status": 200,
 }
 `;
 
@@ -81,6 +81,20 @@ exports[`backend Node choferes listar 1`] = `
       "id": 1,
       "nombre": "Nelson",
     },
+    {
+      "apellido": "Nuñez",
+      "cedula": "20587874",
+      "id": 2,
+      "nombre": "Juan Carlos",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node choferes listar-tras-ocultar 1`] = `
+{
+  "body": [
     {
       "apellido": "Nuñez",
       "cedula": "20587874",
@@ -161,7 +175,7 @@ exports[`backend Node empresas eliminar-404 1`] = `
 
 exports[`backend Node empresas eliminar-en-uso 1`] = `
 {
-  "status": 409,
+  "status": 200,
 }
 `;
 
@@ -179,6 +193,22 @@ exports[`backend Node empresas listar 1`] = `
     {
       "id": 2,
       "nombre": "FERROMINERA",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node empresas listar-tras-ocultar 1`] = `
+{
+  "body": [
+    {
+      "id": 1,
+      "nombre": "CABELUM",
+    },
+    {
+      "id": 3,
+      "nombre": "CARBONORCA",
     },
   ],
   "status": 200,
@@ -606,7 +636,7 @@ exports[`backend Node puntos eliminar-404 1`] = `
 
 exports[`backend Node puntos eliminar-en-uso 1`] = `
 {
-  "status": 409,
+  "status": 200,
 }
 `;
 
@@ -617,6 +647,18 @@ exports[`backend Node puntos listar 1`] = `
       "id": 1,
       "nombre": "CABELUM",
     },
+    {
+      "id": 2,
+      "nombre": "FERROMINERA",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`backend Node puntos listar-tras-ocultar 1`] = `
+{
+  "body": [
     {
       "id": 2,
       "nombre": "FERROMINERA",

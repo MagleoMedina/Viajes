@@ -60,6 +60,33 @@ export default function Sidebar({ vista, onNavigate, onTasa }) {
     }
   }
 
+  async function manejarPullTurso() {
+    const pwd = prompt('Clave de seguridad para extraer datos de Turso:')
+    if (pwd === null) return
+    if (pwd !== '30696510') {
+      setErrorSync('Clave incorrecta')
+      return
+    }
+    setErrorSync('')
+    setSincronizando(true)
+    try {
+      const res = await api.post('/sync/pull', { password: pwd })
+      if (res.exito) {
+        setSync({
+          fecha: new Date().toISOString(),
+          exito: true,
+          mensaje: res.mensaje,
+        })
+      } else {
+        setErrorSync(res.mensaje)
+      }
+    } catch (e) {
+      setErrorSync('Error al conectar con el backend')
+    } finally {
+      setSincronizando(false)
+    }
+  }
+
   return (
     <aside className="sidebar">
       <nav className="nav">
@@ -125,6 +152,17 @@ export default function Sidebar({ vista, onNavigate, onTasa }) {
             <span className="nav-padre-eti">
               <FiRefreshCw className={sincronizando ? 'girando' : ''} aria-hidden="true" />
               <span>{sincronizando ? 'Sincronizando…' : 'Sincronizar ahora'}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="nav-tasa btn-sync pull-btn"
+            onClick={manejarPullTurso}
+            disabled={sincronizando}
+          >
+            <span className="nav-padre-eti">
+              <FiDownload className={sincronizando ? 'girando' : ''} aria-hidden="true" />
+              <span>{sincronizando ? 'Extrayendo…' : 'Pull Turso'}</span>
             </span>
           </button>
         </section>

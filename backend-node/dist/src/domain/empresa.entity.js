@@ -15,6 +15,7 @@ let Empresa = class Empresa {
     id;
     nombre;
     direccion;
+    eliminado;
 };
 exports.Empresa = Empresa;
 __decorate([
@@ -29,6 +30,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 200, nullable: true }),
     __metadata("design:type", Object)
 ], Empresa.prototype, "direccion", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], Empresa.prototype, "eliminado", void 0);
 exports.Empresa = Empresa = __decorate([
     (0, typeorm_1.Entity)('empresas')
 ], Empresa);

@@ -10,4 +10,8 @@ export class Empresa {
 
   @Column({ type: 'varchar', length: 200, nullable: true })
   direccion: string | null;
+
+  /** true = oculta del frontend, conservada para los viajes historicos. */
+  @Column({ type: 'boolean', default: false })
+  eliminado: boolean;
 }

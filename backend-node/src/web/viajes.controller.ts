@@ -116,6 +116,12 @@ export class ViajeController {
     if (!(await this.repo.existsById(id))) {
       throw new ApiException(404, 'Viaje no encontrado');
     }
+    // Los gastos dependen del viaje: se borran primero para no dejar filas huerfanas.
+    await this.gastoRepo
+      .createQueryBuilder()
+      .delete()
+      .where('viaje_id = :id', { id })
+      .execute();
     await this.repo.deleteById(id);
   }
 

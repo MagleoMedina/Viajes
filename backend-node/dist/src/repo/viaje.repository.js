@@ -91,6 +91,12 @@ let ViajeRepository = class ViajeRepository {
             .where('punto_llegada_id = :id', { id: puntoId })
             .getExists();
     }
+    existsByVehiculoId(vehiculoId) {
+        return this.repo
+            .createQueryBuilder('v')
+            .where('vehiculo_id = :id', { id: vehiculoId })
+            .getExists();
+    }
     async save(viaje) {
         await this.repo.save(viaje);
         return (await this.findById(viaje.id));

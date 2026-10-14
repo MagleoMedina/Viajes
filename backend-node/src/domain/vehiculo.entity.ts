@@ -16,4 +16,8 @@ export class Vehiculo {
 
   @Column({ unique: true })
   placa: string;
+
+  /** true = oculto del frontend, conservado para los viajes historicos. */
+  @Column({ type: 'boolean', default: false })
+  eliminado: boolean;
 }

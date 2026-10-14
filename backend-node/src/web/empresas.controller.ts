@@ -74,10 +74,9 @@ export class EmpresaController {
       throw new ApiException(404, 'Empresa no encontrada');
     }
     if (await this.viajes.existsByEmpresaId(id)) {
-      throw new ApiException(
-        409,
-        'No se puede eliminar: la empresa se usa en viajes registrados',
-      );
+      // Esta en uso: se oculta del frontend y se conserva para los viajes historicos.
+      await this.repo.ocultar(id);
+      return;
     }
     await this.repo.deleteById(id);
   }

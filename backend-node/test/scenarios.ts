@@ -16,6 +16,7 @@ export const choferes: Politica[] = [
   { name: 'eliminar', method: 'DELETE', path: '/api/choferes/3', ignoreBody: true },
   { name: 'eliminar-404', method: 'DELETE', path: '/api/choferes/3', ignoreBody: true },
   { name: 'eliminar-en-uso', method: 'DELETE', path: '/api/choferes/1', ignoreBody: true },
+  { name: 'listar-tras-ocultar', method: 'GET', path: '/api/choferes' },
 ];
 
 export const empresas: Politica[] = [
@@ -28,6 +29,7 @@ export const empresas: Politica[] = [
   { name: 'eliminar', method: 'DELETE', path: '/api/empresas/4', ignoreBody: true },
   { name: 'eliminar-en-uso', method: 'DELETE', path: '/api/empresas/2', ignoreBody: true },
   { name: 'eliminar-404', method: 'DELETE', path: '/api/empresas/4', ignoreBody: true },
+  { name: 'listar-tras-ocultar', method: 'GET', path: '/api/empresas' },
 ];
 
 export const puntos: Politica[] = [
@@ -40,6 +42,7 @@ export const puntos: Politica[] = [
   { name: 'eliminar', method: 'DELETE', path: '/api/puntos/3', ignoreBody: true },
   { name: 'eliminar-en-uso', method: 'DELETE', path: '/api/puntos/1', ignoreBody: true },
   { name: 'eliminar-404', method: 'DELETE', path: '/api/puntos/3', ignoreBody: true },
+  { name: 'listar-tras-ocultar', method: 'GET', path: '/api/puntos' },
 ];
 
 export const vehiculos: Politica[] = [

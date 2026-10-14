@@ -12,6 +12,7 @@ exports.choferes = [
     { name: 'eliminar', method: 'DELETE', path: '/api/choferes/3', ignoreBody: true },
     { name: 'eliminar-404', method: 'DELETE', path: '/api/choferes/3', ignoreBody: true },
     { name: 'eliminar-en-uso', method: 'DELETE', path: '/api/choferes/1', ignoreBody: true },
+    { name: 'listar-tras-ocultar', method: 'GET', path: '/api/choferes' },
 ];
 exports.empresas = [
     { name: 'listar', method: 'GET', path: '/api/empresas' },
@@ -23,6 +24,7 @@ exports.empresas = [
     { name: 'eliminar', method: 'DELETE', path: '/api/empresas/4', ignoreBody: true },
     { name: 'eliminar-en-uso', method: 'DELETE', path: '/api/empresas/2', ignoreBody: true },
     { name: 'eliminar-404', method: 'DELETE', path: '/api/empresas/4', ignoreBody: true },
+    { name: 'listar-tras-ocultar', method: 'GET', path: '/api/empresas' },
 ];
 exports.puntos = [
     { name: 'listar', method: 'GET', path: '/api/puntos' },
@@ -34,6 +36,7 @@ exports.puntos = [
     { name: 'eliminar', method: 'DELETE', path: '/api/puntos/3', ignoreBody: true },
     { name: 'eliminar-en-uso', method: 'DELETE', path: '/api/puntos/1', ignoreBody: true },
     { name: 'eliminar-404', method: 'DELETE', path: '/api/puntos/3', ignoreBody: true },
+    { name: 'listar-tras-ocultar', method: 'GET', path: '/api/puntos' },
 ];
 exports.vehiculos = [
     { name: 'listar', method: 'GET', path: '/api/vehiculos' },

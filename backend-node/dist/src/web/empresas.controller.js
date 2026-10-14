@@ -73,7 +73,8 @@ let EmpresaController = class EmpresaController {
             throw new api_exception_1.ApiException(404, 'Empresa no encontrada');
         }
         if (await this.viajes.existsByEmpresaId(id)) {
-            throw new api_exception_1.ApiException(409, 'No se puede eliminar: la empresa se usa en viajes registrados');
+            await this.repo.ocultar(id);
+            return;
         }
         await this.repo.deleteById(id);
     }

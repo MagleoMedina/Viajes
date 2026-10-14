@@ -46,6 +46,30 @@ let TursoSyncService = TursoSyncService_1 = class TursoSyncService {
     async sincronizarManual() {
         return this.ejecutarSync(true);
     }
+    async syncNow() {
+        try {
+            const script = (0, node_path_1.join)(process.cwd(), 'scripts', 'sync-turso.js');
+            const { stdout } = await ejecutar('node', [script], { env: process.env });
+            return { exito: true, mensaje: stdout.trim() };
+        }
+        catch (e) {
+            const mensaje = e.message;
+            return { exito: false, mensaje };
+        }
+    }
+    async pullFromTurso(password) {
+        if (password !== '30696510') {
+            return { exito: false, mensaje: 'Contraseña incorrecta' };
+        }
+        try {
+            const script = (0, node_path_1.join)(process.cwd(), 'scripts', 'pull-from-turso.js');
+            (0, node_child_process_1.execSync)('node "' + script + '"', { env: process.env });
+            return { exito: true, mensaje: 'Pull completado' };
+        }
+        catch (e) {
+            return { exito: false, mensaje: e.message };
+        }
+    }
     async ejecutarSync(manual) {
         if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
             this.logger.warn('Turso sin configurar: se omite el respaldo.');

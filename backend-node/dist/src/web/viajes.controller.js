@@ -122,6 +122,11 @@ let ViajeController = class ViajeController {
         if (!(await this.repo.existsById(id))) {
             throw new api_exception_1.ApiException(404, 'Viaje no encontrado');
         }
+        await this.gastoRepo
+            .createQueryBuilder()
+            .delete()
+            .where('viaje_id = :id', { id })
+            .execute();
         await this.repo.deleteById(id);
     }
     validarFechas(desde, hasta) {

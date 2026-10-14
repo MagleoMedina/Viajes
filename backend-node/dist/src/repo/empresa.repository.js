@@ -23,7 +23,7 @@ let EmpresaRepository = class EmpresaRepository {
         this.repo = repo;
     }
     findAllByOrderByNombreAsc() {
-        return this.repo.find({ order: { nombre: 'ASC' } });
+        return this.repo.find({ where: { eliminado: false }, order: { nombre: 'ASC' } });
     }
     findById(id) {
         return this.repo.findOneBy({ id });
@@ -38,7 +38,11 @@ let EmpresaRepository = class EmpresaRepository {
         return this.repo
             .createQueryBuilder('e')
             .where('id = :id', { id })
+            .andWhere('eliminado = 0')
             .getExists();
+    }
+    ocultar(id) {
+        return this.repo.update(id, { eliminado: true }).then(() => undefined);
     }
     save(empresa) {
         return this.repo.save(empresa);

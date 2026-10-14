@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 let Punto = class Punto {
     id;
     nombre;
+    eliminado;
 };
 exports.Punto = Punto;
 __decorate([
@@ -24,6 +25,10 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Punto.prototype, "nombre", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], Punto.prototype, "eliminado", void 0);
 exports.Punto = Punto = __decorate([
     (0, typeorm_1.Entity)('puntos')
 ], Punto);

@@ -23,7 +23,7 @@ let PuntoRepository = class PuntoRepository {
         this.repo = repo;
     }
     findAllByOrderByNombreAsc() {
-        return this.repo.find({ order: { nombre: 'ASC' } });
+        return this.repo.find({ where: { eliminado: false }, order: { nombre: 'ASC' } });
     }
     findById(id) {
         return this.repo.findOneBy({ id });
@@ -38,7 +38,11 @@ let PuntoRepository = class PuntoRepository {
         return this.repo
             .createQueryBuilder('p')
             .where('id = :id', { id })
+            .andWhere('eliminado = 0')
             .getExists();
+    }
+    ocultar(id) {
+        return this.repo.update(id, { eliminado: true }).then(() => undefined);
     }
     save(punto) {
         return this.repo.save(punto);

@@ -10,7 +10,7 @@ export class EmpresaRepository {
   ) {}
 
   findAllByOrderByNombreAsc(): Promise<Empresa[]> {
-    return this.repo.find({ order: { nombre: 'ASC' } });
+    return this.repo.find({ where: { eliminado: false }, order: { nombre: 'ASC' } });
   }
 
   findById(id: number): Promise<Empresa | null> {
@@ -28,7 +28,13 @@ export class EmpresaRepository {
     return this.repo
       .createQueryBuilder('e')
       .where('id = :id', { id })
+      .andWhere('eliminado = 0')
       .getExists();
+  }
+
+  /** Oculta la empresa del frontend sin borrarla de la base. */
+  ocultar(id: number): Promise<void> {
+    return this.repo.update(id, { eliminado: true }).then(() => undefined);
   }
 
   save(empresa: Empresa): Promise<Empresa> {

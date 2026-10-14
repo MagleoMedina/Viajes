@@ -23,7 +23,7 @@ let VehiculoRepository = class VehiculoRepository {
         this.repo = repo;
     }
     findAll() {
-        return this.repo.find();
+        return this.repo.find({ where: { eliminado: false } });
     }
     findById(id) {
         return this.repo.findOneBy({ id });
@@ -38,7 +38,11 @@ let VehiculoRepository = class VehiculoRepository {
         return this.repo
             .createQueryBuilder('v')
             .where('id = :id', { id })
+            .andWhere('eliminado = 0')
             .getExists();
+    }
+    ocultar(id) {
+        return this.repo.update(id, { eliminado: true }).then(() => undefined);
     }
     save(vehiculo) {
         return this.repo.save(vehiculo);

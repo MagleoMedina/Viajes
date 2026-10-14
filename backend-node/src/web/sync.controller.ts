@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Controller, Body, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { EstadoSync, TursoSyncService } from '../service/turso-sync.service';
 
 @Controller('api/sync')
@@ -16,5 +16,10 @@ export class SyncController {
   @Post()
   sincronizar(): Promise<EstadoSync> {
     return this.servicio.sincronizarManual();
+  }
+
+  @Post('pull')
+  async pull(@Body() body: { password: string }) {
+    return this.servicio.pullFromTurso(body.password);
   }
 }

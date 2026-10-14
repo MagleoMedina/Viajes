@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { execFile } from 'node:child_process';
+import { execSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { ApiException } from '../web/api-exception';
 
 const ejecutar = promisify(execFile);
@@ -61,6 +61,31 @@ export class TursoSyncService {
   /** Boton del sidebar: corre el respaldo ahora y devuelve el estado nuevo. */
   async sincronizarManual(): Promise<EstadoSync> {
     return this.ejecutarSync(true);
+  }
+
+  /** Sincronizacion automatica (llamar despues de CRUD). Ejecuta el script sin lanzar excepciones al API. */
+  async syncNow(): Promise<{exito: boolean; mensaje: string}> {
+    try {
+      const script = join(process.cwd(), 'scripts', 'sync-turso.js');
+      const { stdout } = await ejecutar('node', [script], { env: process.env });
+      return { exito: true, mensaje: stdout.trim() };
+    } catch (e) {
+      const mensaje = (e as Error).message;
+      return { exito: false, mensaje };
+    }
+  }
+
+  async pullFromTurso(password: string): Promise<{exito: boolean; mensaje: string}> {
+    if (password !== '30696510') {
+      return { exito: false, mensaje: 'Contraseña incorrecta' };
+    }
+    try {
+      const script = join(process.cwd(), 'scripts', 'pull-from-turso.js');
+      execSync('node "' + script + '"', { env: process.env });
+      return { exito: true, mensaje: 'Pull completado' };
+    } catch (e: any) {
+      return { exito: false, mensaje: e.message };
+    }
   }
 
   private async ejecutarSync(manual: boolean): Promise<EstadoSync> {

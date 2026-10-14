@@ -16,6 +16,7 @@ let Chofer = class Chofer {
     nombre;
     apellido;
     cedula;
+    eliminado;
 };
 exports.Chofer = Chofer;
 __decorate([
@@ -34,6 +35,10 @@ __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
 ], Chofer.prototype, "cedula", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], Chofer.prototype, "eliminado", void 0);
 exports.Chofer = Chofer = __decorate([
     (0, typeorm_1.Entity)('choferes')
 ], Chofer);

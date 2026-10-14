@@ -13,6 +13,7 @@ Param,
 import { IsNotEmpty } from 'class-validator';
 import { Vehiculo } from '../domain/vehiculo.entity';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
+import { ViajeRepository } from '../repo/viaje.repository';
 import { vehiculoJson } from '../common/serialize';
 import { ApiException } from './api-exception';
 
@@ -32,7 +33,10 @@ export class VehiculoRequest {
 
 @Controller('api/vehiculos')
 export class VehiculoController {
-  constructor(private readonly repo: VehiculoRepository) {}
+  constructor(
+    private readonly repo: VehiculoRepository,
+    private readonly viajes: ViajeRepository,
+  ) {}
 
   @Get()
   listar() {
@@ -66,6 +70,11 @@ export class VehiculoController {
   async eliminar(@Param('id', ParseIntPipe) id: number) {
     if (!(await this.repo.existsById(id))) {
       throw new ApiException(404, 'Vehiculo no encontrado');
+    }
+    if (await this.viajes.existsByVehiculoId(id)) {
+      // Esta en uso: se oculta del frontend y se conserva para los viajes historicos.
+      await this.repo.ocultar(id);
+      return;
     }
     await this.repo.deleteById(id);
   }

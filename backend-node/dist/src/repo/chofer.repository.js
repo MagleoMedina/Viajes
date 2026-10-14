@@ -23,7 +23,7 @@ let ChoferRepository = class ChoferRepository {
         this.repo = repo;
     }
     findAll() {
-        return this.repo.find();
+        return this.repo.find({ where: { eliminado: false } });
     }
     findById(id) {
         return this.repo.findOneBy({ id });
@@ -35,7 +35,10 @@ let ChoferRepository = class ChoferRepository {
         return this.existsWhere('cedula = :cedula', { cedula });
     }
     existsById(id) {
-        return this.existsWhere('id = :id', { id });
+        return this.existsWhere('id = :id AND eliminado = 0', { id });
+    }
+    ocultar(id) {
+        return this.repo.update(id, { eliminado: true }).then(() => undefined);
     }
     save(chofer) {
         return this.repo.save(chofer);

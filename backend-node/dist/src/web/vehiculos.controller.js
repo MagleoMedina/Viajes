@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const class_validator_1 = require("class-validator");
 const vehiculo_entity_1 = require("../domain/vehiculo.entity");
 const vehiculo_repository_1 = require("../repo/vehiculo.repository");
+const viaje_repository_1 = require("../repo/viaje.repository");
 const serialize_1 = require("../common/serialize");
 const api_exception_1 = require("./api-exception");
 class VehiculoRequest {
@@ -44,8 +45,10 @@ __decorate([
 ], VehiculoRequest.prototype, "placa", void 0);
 let VehiculoController = class VehiculoController {
     repo;
-    constructor(repo) {
+    viajes;
+    constructor(repo, viajes) {
         this.repo = repo;
+        this.viajes = viajes;
     }
     listar() {
         return this.repo.findAll().then((lista) => lista.map(serialize_1.vehiculoJson));
@@ -72,6 +75,10 @@ let VehiculoController = class VehiculoController {
     async eliminar(id) {
         if (!(await this.repo.existsById(id))) {
             throw new api_exception_1.ApiException(404, 'Vehiculo no encontrado');
+        }
+        if (await this.viajes.existsByVehiculoId(id)) {
+            await this.repo.ocultar(id);
+            return;
         }
         await this.repo.deleteById(id);
     }
@@ -121,6 +128,7 @@ __decorate([
 ], VehiculoController.prototype, "eliminar", null);
 exports.VehiculoController = VehiculoController = __decorate([
     (0, common_1.Controller)('api/vehiculos'),
-    __metadata("design:paramtypes", [vehiculo_repository_1.VehiculoRepository])
+    __metadata("design:paramtypes", [vehiculo_repository_1.VehiculoRepository,
+        viaje_repository_1.ViajeRepository])
 ], VehiculoController);
 //# sourceMappingURL=vehiculos.controller.js.map

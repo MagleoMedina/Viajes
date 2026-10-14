@@ -68,10 +68,9 @@ export class PuntoController {
       (await this.viajes.existsByPuntoSalidaId(id)) ||
       (await this.viajes.existsByPuntoLlegadaId(id))
     ) {
-      throw new ApiException(
-        409,
-        'No se puede eliminar: el punto se usa en viajes registrados',
-      );
+      // Esta en uso: se oculta del frontend y se conserva para los viajes historicos.
+      await this.repo.ocultar(id);
+      return;
     }
     await this.repo.deleteById(id);
   }

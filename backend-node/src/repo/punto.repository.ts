@@ -10,7 +10,7 @@ export class PuntoRepository {
   ) {}
 
   findAllByOrderByNombreAsc(): Promise<Punto[]> {
-    return this.repo.find({ order: { nombre: 'ASC' } });
+    return this.repo.find({ where: { eliminado: false }, order: { nombre: 'ASC' } });
   }
 
   findById(id: number): Promise<Punto | null> {
@@ -28,7 +28,13 @@ export class PuntoRepository {
     return this.repo
       .createQueryBuilder('p')
       .where('id = :id', { id })
+      .andWhere('eliminado = 0')
       .getExists();
+  }
+
+  /** Oculta el punto del frontend sin borrarlo de la base. */
+  ocultar(id: number): Promise<void> {
+    return this.repo.update(id, { eliminado: true }).then(() => undefined);
   }
 
   save(punto: Punto): Promise<Punto> {

@@ -10,7 +10,7 @@ export class VehiculoRepository {
   ) {}
 
   findAll(): Promise<Vehiculo[]> {
-    return this.repo.find();
+    return this.repo.find({ where: { eliminado: false } });
   }
 
   findById(id: number): Promise<Vehiculo | null> {
@@ -28,7 +28,13 @@ export class VehiculoRepository {
     return this.repo
       .createQueryBuilder('v')
       .where('id = :id', { id })
+      .andWhere('eliminado = 0')
       .getExists();
+  }
+
+  /** Oculta el vehiculo del frontend sin borrarlo de la base. */
+  ocultar(id: number): Promise<void> {
+    return this.repo.update(id, { eliminado: true }).then(() => undefined);
   }
 
   save(vehiculo: Vehiculo): Promise<Vehiculo> {

@@ -69,10 +69,9 @@ export class ChoferController {
       throw new ApiException(404, 'Chofer no encontrado');
     }
     if (await this.viajes.existsByChoferId(id)) {
-      throw new ApiException(
-        409,
-        'No se puede eliminar: el chofer tiene viajes registrados',
-      );
+      // Esta en uso: se oculta del frontend y se conserva para los viajes historicos.
+      await this.repo.ocultar(id);
+      return;
     }
     await this.repo.deleteById(id);
   }

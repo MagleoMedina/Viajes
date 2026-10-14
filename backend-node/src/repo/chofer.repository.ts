@@ -10,7 +10,7 @@ export class ChoferRepository {
   ) {}
 
   findAll(): Promise<Chofer[]> {
-    return this.repo.find();
+    return this.repo.find({ where: { eliminado: false } });
   }
 
   findById(id: number): Promise<Chofer | null> {
@@ -26,7 +26,12 @@ export class ChoferRepository {
   }
 
   existsById(id: number): Promise<boolean> {
-    return this.existsWhere('id = :id', { id });
+    return this.existsWhere('id = :id AND eliminado = 0', { id });
+  }
+
+  /** Oculta el chofer del frontend sin borrarlo de la base. */
+  ocultar(id: number): Promise<void> {
+    return this.repo.update(id, { eliminado: true }).then(() => undefined);
   }
 
   save(chofer: Chofer): Promise<Chofer> {

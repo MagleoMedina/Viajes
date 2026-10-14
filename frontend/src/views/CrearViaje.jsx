@@ -27,6 +27,15 @@ function aTexto(valor) {
   return valor == null || valor === '' ? '' : String(valor)
 }
 
+/**
+ * Une el registro ya elegido cuando la lista ya no lo trae: un registro
+ * oculto (eliminacion logica) sigue siendo valido para los viajes historicos.
+ */
+function conElegido(lista, elegido) {
+  if (!elegido || lista.some((x) => x.id === elegido.id)) return lista
+  return [...lista, elegido]
+}
+
 /** Estado inicial a partir del viaje en edición. El padre remonta con `key`. */
 function desdeViaje(viaje) {
   return {
@@ -81,10 +90,10 @@ export default function CrearViaje({ viaje, onGuardado }) {
       api.get('/recorridos'),
     ])
       .then(([c, e, p, vh, t, r]) => {
-        setChoferes(c)
-        setEmpresas(e)
-        setPuntos(p)
-        setVehiculos(vh)
+        setChoferes(conElegido(c, viaje?.chofer))
+        setEmpresas(conElegido(e, viaje?.empresa))
+        setPuntos(conElegido(conElegido(p, viaje?.puntoSalida), viaje?.puntoLlegada))
+        setVehiculos(conElegido(vh, viaje?.vehiculo))
         setRecorridos(r)
         if (t?.valor != null) {
           setForm((f) => (f.tasa ? f : { ...f, tasa: String(t.valor) }))
@@ -146,6 +155,30 @@ export default function CrearViaje({ viaje, onGuardado }) {
       return
     }
     guardar()
+  }
+
+  /**
+   * Si el usuario escribio un recorrido que no existe, lo crea en el backend y
+   * lo agrega a la lista de sugerencias.
+   */
+  async function guardarRecorridoSiNuevo() {
+    const nombre = form.recorrido.trim()
+    if (!nombre) return
+    const yaExiste = recorridos.some((r) => r.nombre.toLowerCase() === nombre.toLowerCase())
+    if (yaExiste) return
+    try {
+      const nuevo = await api.post('/recorridos', { nombre })
+      setRecorridos((lista) =>
+        [...lista, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+      )
+    } catch {
+      // Puede que ya exista en el backend: recargar la lista de sugerencias.
+      try {
+        setRecorridos(await api.get('/recorridos'))
+      } catch {
+        /* se conserva el texto escrito en el viaje */
+      }
+    }
   }
 
   async function guardar() {
@@ -333,6 +366,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
                 list="lista-recorridos"
                 value={form.recorrido}
                 onChange={(e) => set('recorrido', e.target.value)}
+                onBlur={guardarRecorridoSiNuevo}
                 placeholder="Escriba o elija un recorrido"
                 autoComplete="off"
               />
