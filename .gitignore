@@ -10,5 +10,7 @@ backend-node/data/
 # Build unificado de produccion
 build_lista/
 
+electron/
+
 # Chrome embebido para PDFs (se copia del cache de puppeteer o se baja en el build)
 bin/chromium/
