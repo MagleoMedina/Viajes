@@ -10,7 +10,10 @@ backend-node/data/
 # Build unificado de produccion
 build_lista/
 
-electron/
+# Solo las dependencias de Electron: main.js, package.json, icono y locks
+# electron/ SI se versiona (el commit 9403a466 los borro y sin git no hay
+# donde recuperarlos).
+electron/node_modules/
 
 # Chrome embebido para PDFs (se copia del cache de puppeteer o se baja en el build)
 bin/chromium/
