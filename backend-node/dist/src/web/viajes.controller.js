@@ -49,6 +49,11 @@ class ViajeRequest {
     viaticos;
     peajes;
     pagoChofer;
+    litros;
+    refCombustible;
+    refViaticos;
+    refPeajes;
+    refPagoChofer;
     gastos;
     tasa;
     recorrido;
@@ -170,6 +175,11 @@ let ViajeController = class ViajeController {
         viaje.viaticos = cero(req.viaticos);
         viaje.peajes = cero(req.peajes);
         viaje.pagoChofer = cero(req.pagoChofer);
+        viaje.litros = cero(req.litros);
+        viaje.refCombustible = referencia(req.refCombustible);
+        viaje.refViaticos = referencia(req.refViaticos);
+        viaje.refPeajes = referencia(req.refPeajes);
+        viaje.refPagoChofer = referencia(req.refPagoChofer);
         viaje.tasa = cero(req.tasa);
         const plan = [];
         let gastosVarios = 0;
@@ -282,4 +292,8 @@ exports.ViajeController = ViajeController = __decorate([
         typeorm_2.Repository])
 ], ViajeController);
 const cero = (valor) => (valor == null ? 0 : valor);
+const referencia = (valor) => {
+    const texto = valor == null ? '' : String(valor).trim();
+    return texto === '' ? '0' : texto;
+};
 //# sourceMappingURL=viajes.controller.js.map

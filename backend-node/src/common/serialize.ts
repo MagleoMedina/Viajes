@@ -78,6 +78,11 @@ export function viajeJson(v: Viaje) {
     viaticos: num(v.viaticos),
     peajes: num(v.peajes),
     pagoChofer: num(v.pagoChofer),
+    litros: num(v.litros),
+    refCombustible: text(v.refCombustible),
+    refViaticos: text(v.refViaticos),
+    refPeajes: text(v.refPeajes),
+    refPagoChofer: text(v.refPagoChofer),
     gastos: (v.gastos ?? [])
       .slice()
       .sort((a, b) => a.id - b.id)

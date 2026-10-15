@@ -33,6 +33,11 @@ let Viaje = class Viaje {
     viaticos;
     peajes;
     pagoChofer;
+    litros;
+    refCombustible;
+    refViaticos;
+    refPeajes;
+    refPagoChofer;
     gastos;
     totalBs;
     tasa;
@@ -104,6 +109,26 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'pago_chofer', type: 'float', nullable: true }),
     __metadata("design:type", Number)
 ], Viaje.prototype, "pagoChofer", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'float', nullable: true, default: 0 }),
+    __metadata("design:type", Number)
+], Viaje.prototype, "litros", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'ref_combustible', type: 'varchar', length: 100, nullable: true, default: '0' }),
+    __metadata("design:type", Object)
+], Viaje.prototype, "refCombustible", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'ref_viaticos', type: 'varchar', length: 100, nullable: true, default: '0' }),
+    __metadata("design:type", Object)
+], Viaje.prototype, "refViaticos", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'ref_peajes', type: 'varchar', length: 100, nullable: true, default: '0' }),
+    __metadata("design:type", Object)
+], Viaje.prototype, "refPeajes", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'ref_pago_chofer', type: 'varchar', length: 100, nullable: true, default: '0' }),
+    __metadata("design:type", Object)
+], Viaje.prototype, "refPagoChofer", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => gasto_entity_1.Gasto, (gasto) => gasto.viaje, { cascade: true }),
     __metadata("design:type", Array)

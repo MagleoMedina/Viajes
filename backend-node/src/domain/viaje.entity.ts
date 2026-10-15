@@ -65,6 +65,21 @@ export class Viaje {
   @Column({ name: 'pago_chofer', type: 'float', nullable: true })
   pagoChofer?: number;
 
+  @Column({ type: 'float', nullable: true, default: 0 })
+  litros?: number;
+
+  @Column({ name: 'ref_combustible', type: 'varchar', length: 100, nullable: true, default: '0' })
+  refCombustible?: string | null;
+
+  @Column({ name: 'ref_viaticos', type: 'varchar', length: 100, nullable: true, default: '0' })
+  refViaticos?: string | null;
+
+  @Column({ name: 'ref_peajes', type: 'varchar', length: 100, nullable: true, default: '0' })
+  refPeajes?: string | null;
+
+  @Column({ name: 'ref_pago_chofer', type: 'varchar', length: 100, nullable: true, default: '0' })
+  refPagoChofer?: string | null;
+
   @OneToMany(() => Gasto, (gasto) => gasto.viaje, { cascade: true })
   gastos: Gasto[];
 

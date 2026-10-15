@@ -15,9 +15,14 @@ const VACIO = {
   vehiculoId: '',
   montoViaje: '',
   combustible: '',
+  refCombustible: '',
   viaticos: '',
+  refViaticos: '',
   peajes: '',
+  refPeajes: '',
   pagoChofer: '',
+  refPagoChofer: '',
+  litros: '',
   gastos: [],
   tasa: '',
   recorrido: '',
@@ -49,9 +54,14 @@ function desdeViaje(viaje) {
     vehiculoId: aTexto(viaje.vehiculo?.id),
     montoViaje: aTexto(viaje.montoViaje),
     combustible: aTexto(viaje.combustible),
+    refCombustible: aTexto(viaje.refCombustible),
     viaticos: aTexto(viaje.viaticos),
+    refViaticos: aTexto(viaje.refViaticos),
     peajes: aTexto(viaje.peajes),
+    refPeajes: aTexto(viaje.refPeajes),
     pagoChofer: aTexto(viaje.pagoChofer),
+    refPagoChofer: aTexto(viaje.refPagoChofer),
+    litros: aTexto(viaje.litros),
     gastos: (viaje.gastos || []).map((g) => ({
       monto: aTexto(g.monto),
       descripcion: g.descripcion ?? '',
@@ -195,9 +205,14 @@ export default function CrearViaje({ viaje, onGuardado }) {
       vehiculoId: form.vehiculoId ? Number(form.vehiculoId) : null,
       montoViaje: numero(form.montoViaje),
       combustible: numero(form.combustible),
+      refCombustible: form.refCombustible.trim(),
       viaticos: numero(form.viaticos),
+      refViaticos: form.refViaticos.trim(),
       peajes: numero(form.peajes),
+      refPeajes: form.refPeajes.trim(),
       pagoChofer: numero(form.pagoChofer),
+      refPagoChofer: form.refPagoChofer.trim(),
+      litros: numero(form.litros),
       gastos: (form.gastos || [])
         .filter((g) => numero(g.monto) > 0 || g.descripcion.trim())
         .map((g) => ({ monto: numero(g.monto), descripcion: g.descripcion.trim() })),
@@ -404,6 +419,16 @@ export default function CrearViaje({ viaje, onGuardado }) {
                 />
               </label>
               <label>
+                Ref. combustible
+                <input
+                  type="text"
+                  maxLength="100"
+                  value={form.refCombustible}
+                  onChange={(e) => set('refCombustible', e.target.value)}
+                  placeholder="Nro. transacción"
+                />
+              </label>
+              <label>
                 Viáticos (Bs)
                 <input
                   type="number"
@@ -411,6 +436,16 @@ export default function CrearViaje({ viaje, onGuardado }) {
                   min="0"
                   value={form.viaticos}
                   onChange={(e) => set('viaticos', e.target.value)}
+                />
+              </label>
+              <label>
+                Ref. viáticos
+                <input
+                  type="text"
+                  maxLength="100"
+                  value={form.refViaticos}
+                  onChange={(e) => set('refViaticos', e.target.value)}
+                  placeholder="Nro. transacción"
                 />
               </label>
               <label>
@@ -424,6 +459,16 @@ export default function CrearViaje({ viaje, onGuardado }) {
                 />
               </label>
               <label>
+                Ref. peajes
+                <input
+                  type="text"
+                  maxLength="100"
+                  value={form.refPeajes}
+                  onChange={(e) => set('refPeajes', e.target.value)}
+                  placeholder="Nro. transacción"
+                />
+              </label>
+              <label>
                 Pago a choferes (Bs)
                 <input
                   type="number"
@@ -431,6 +476,26 @@ export default function CrearViaje({ viaje, onGuardado }) {
                   min="0"
                   value={form.pagoChofer}
                   onChange={(e) => set('pagoChofer', e.target.value)}
+                />
+              </label>
+              <label>
+                Ref. pago a choferes
+                <input
+                  type="text"
+                  maxLength="100"
+                  value={form.refPagoChofer}
+                  onChange={(e) => set('refPagoChofer', e.target.value)}
+                  placeholder="Nro. transacción"
+                />
+              </label>
+              <label>
+                Litros
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.litros}
+                  onChange={(e) => set('litros', e.target.value)}
                 />
               </label>
               <label>

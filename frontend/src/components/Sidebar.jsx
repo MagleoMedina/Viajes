@@ -9,7 +9,6 @@ import {
   FiDownload,
   FiNavigation,
   FiDollarSign,
-  FiFileText,
   FiChevronDown,
   FiChevronRight,
   FiRefreshCw,
@@ -26,7 +25,6 @@ const SUBMENU = [
   { id: 'crear', label: 'Crear viajes', Icono: FiPlusCircle },
   { id: 'viajes', label: 'Viajes', Icono: FiList },
   { id: 'exportar', label: 'Reporte detallado', Icono: FiDownload },
-  { id: 'reporte', label: 'Reporte general', Icono: FiFileText },
   { id: 'recorridos', label: 'Recorridos', Icono: FiNavigation },
 ]
 

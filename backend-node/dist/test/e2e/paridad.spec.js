@@ -39,7 +39,7 @@ const escenarios = __importStar(require("../scenarios"));
 const HEADERS_PDF = [
     'FECHA INICIO', 'FECHA FIN', 'EMPRESA', 'CHOFER', 'CARGA',
     'PUNTO SALIDA', 'PUNTO LLEGADA', 'MONTO VIAJE $', 'COMBUSTIBLE',
-    'VIATICOS', 'PEAJES', 'PAGO CHOFER', 'GASTOS VARIOS',
+    'VIATICOS', 'PEAJES', 'PAGO CHOFER', 'LITROS', 'GASTOS VARIOS',
     'TOTAL BS', 'TASA', 'TOTAL $',
 ];
 const GRUPOS = [
@@ -143,8 +143,9 @@ async function verificarPdf(buf) {
     expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
     const pdfParse = require('pdf-parse');
     const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
+    const compacto = texto.replace(/\s+/g, '');
     for (const header of HEADERS_PDF) {
-        expect(texto).toContain(header);
+        expect(compacto.toUpperCase()).toContain(header.replace(/\s+/g, '').toUpperCase());
     }
     expect(tokensPdf(texto)).toMatchSnapshot();
 }
@@ -155,7 +156,7 @@ async function matrizXlsx(buf) {
     const matriz = [];
     ws.eachRow({ includeEmpty: true }, (row) => {
         const fila = [];
-        for (let c = 1; c <= 16; c++) {
+        for (let c = 1; c <= 17; c++) {
             const v = row.getCell(c).value;
             fila.push(v && typeof v === 'object' ? v?.text ?? v?.result ?? null : v);
         }

@@ -18,95 +18,84 @@ export interface ParametrosReporte {
 /** Cantidad de columnas del cuerpo: 8 con MONTO, 7 sin él. */
 const COLS_CON_MONTO = 8;
 
-@Injectable()
-export class ReporteEmpresaService {
-  constructor(
-    private readonly empresaRepo: EmpresaRepository,
-    private readonly viajeRepo: ViajeRepository,
-  ) {}
+/** Datos ya resueltos para armar el HTML del reporte (función pura). */
+export interface ReporteHtmlParams {
+  nombreEmpresa: string;
+  direccionEmpresa: string;
+  rangoFechas: string;
+  columnas: string[];
+  filas: string[][];
+  conMonto: boolean;
+  anchos?: number[];
+  total?: number;
+  color?: string;
+  logoUri?: string;
+}
 
-  async generarPdf(params: ParametrosReporte): Promise<Buffer> {
-    const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, color } = params;
+const escapar = (str: string): string =>
+  String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 
-    // 1. Obtener la información de la empresa
-    const empresa = Number.isFinite(empresaId) && empresaId > 0
-      ? await this.empresaRepo.findById(empresaId)
-      : null;
-    const nombreEmpresa = empresa?.nombre ?? 'TODAS LAS EMPRESAS';
-    const direccionEmpresa =
-      empresa?.direccion?.trim() ||
-      direccionParam ||
-      'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
+const formatearDinero = (valor: number): string =>
+  Number(valor || 0).toLocaleString('es-VE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-    // 2. Intervalo dinámico de fechas
-    const rangoFechas = this.formatearRangoFechas(desde, hasta);
+/** Construye el HTML del reporte por empresa (función pura, testeable). */
+export function htmlReporte(params: ReporteHtmlParams): string {
+  const {
+    nombreEmpresa,
+    direccionEmpresa,
+    rangoFechas,
+    columnas,
+    filas,
+    conMonto,
+    anchos,
+    total = 0,
+    color,
+    logoUri,
+  } = params;
 
-    // 3. Viajes del intervalo/empresa (mismo filtro que el listado de la app)
-    const viajes = await this.consultar(empresaId, desde, hasta);
+  const ths = columnas
+    .map(
+      (c, i) =>
+        `<th style="width: ${anchos ? anchos[i] : 100 / columnas.length}%;" class="${
+          i === columnas.length - 1 && conMonto ? 'num' : ''
+        }">${c}</th>`,
+    )
+    .join('');
 
-    // 4. Logo en Base64
-    const logoUri = this.obtenerLogoDataUri();
-
-    const filas = viajes.map((v) => ({
-      fecha: this.fechaCorta(v.fechaInicio),
-      vehiculo: this.vehiculo(v),
-      chofer: this.chofer(v),
-      recorrido: v.recorrido?.trim() || '—',
-      desde: v.puntoSalida?.nombre?.trim() || '—',
-      hasta: v.puntoLlegada?.nombre?.trim() || '—',
-      carga: v.carga?.trim() || '—',
-      monto: this.dinero(v.montoViaje ?? 0),
-    }));
-
-    const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
-    const columnas = conMonto
-      ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
-      : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
-    // Anchos en % del ancho de pagina: suman 100.
-    const anchos = conMonto ? [10, 17, 15, 17, 11, 11, 12, 7] : [11, 18, 16, 18, 12, 12, 13];
-
-    const ths = columnas
-      .map(
-        (c, i) =>
-          `<th style="width: ${anchos[i]}%;" class="${i === columnas.length - 1 && conMonto ? 'num' : ''}">${c}</th>`,
-      )
-      .join('');
-
-    const cuerpo = filas.length
-      ? filas
-          .map(
-            (f, i) => `
+  const cuerpo = filas.length
+    ? filas
+        .map(
+          (celdas, i) => `
             <tr class="${i % 2 ? 'par' : ''}">
-              <td>${f.fecha}</td>
-              <td>${this.esc(f.vehiculo)}</td>
-              <td>${this.esc(f.chofer)}</td>
-              <td>${this.esc(f.recorrido)}</td>
-              <td>${this.esc(f.desde)}</td>
-              <td>${this.esc(f.hasta)}</td>
-              <td>${this.esc(f.carga)}</td>
-              ${conMonto ? `<td class="num">${f.monto}</td>` : ''}
+              ${celdas.map((c, j) => `<td${j === celdas.length - 1 && conMonto ? ' class="num"' : ''}>${escapar(c)}</td>`).join('')}
             </tr>`,
-          )
-          .join('')
-      : `<tr><td colspan="${columnas.length}" class="vacio">Sin viajes en este intervalo.</td></tr>`;
+        )
+        .join('')
+    : `<tr><td colspan="${columnas.length}" class="vacio">Sin viajes en este intervalo.</td></tr>`;
 
-    const pie =
-      conMonto && filas.length
-        ? `<tr class="total">
+  const pie =
+    conMonto && filas.length
+      ? `<tr class="total">
              <td colspan="${COLS_CON_MONTO - 1}">TOTAL</td>
-             <td class="num">$ ${this.dinero(total)}</td>
+             <td class="num">$ ${formatearDinero(total)}</td>
            </tr>`
-        : '';
+      : '';
 
-    // 5. Plantilla HTML con estilos idénticos al formato solicitado
-    const html = `
+  return `
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="utf-8" />
         <style>
           @page {
-            size: A4 landscape;
+            size: letter landscape;
             margin: 12mm 10mm 12mm 10mm;
           }
           * {
@@ -162,17 +151,19 @@ export class ReporteEmpresaService {
             width: 100%;
             border-collapse: collapse;
             margin-top: 6px;
-            table-layout: fixed;
+            table-layout: auto;
           }
           th, td {
             border: 1px solid #c9d2e0;
             padding: 5px 6px;
-            font-size: 8px;
+            font-size: 10pt;
             overflow-wrap: break-word;
+            word-break: break-word;
           }
           th {
             background-color: #26324a;
             color: #ffffff;
+            font-size: 10pt;
             font-weight: bold;
             text-align: left;
             text-transform: uppercase;
@@ -194,7 +185,7 @@ export class ReporteEmpresaService {
             background-color: #26324a;
             color: #ffffff;
             font-weight: bold;
-            font-size: 9px;
+            font-size: 10pt;
           }
         </style>
       </head>
@@ -205,8 +196,8 @@ export class ReporteEmpresaService {
           ${logoUri ? `<img class="logo" src="${logoUri}" alt="Logo" />` : ''}
           <div class="slogan">Sin pausa, sin excusas, sin limites</div>
           <div class="titulo-reporte">REPORTE VIAJES DESDE EL ${rangoFechas}</div>
-          <div class="nombre-empresa">${this.esc(nombreEmpresa)}</div>
-          <div class="direccion-empresa">${this.esc(direccionEmpresa)}</div>
+          <div class="nombre-empresa">${escapar(nombreEmpresa)}</div>
+          <div class="direccion-empresa">${escapar(direccionEmpresa)}</div>
         </div>
 
         <table>
@@ -222,8 +213,72 @@ export class ReporteEmpresaService {
       </body>
       </html>
     `;
+}
 
-    // 6. Generación con Puppeteer
+@Injectable()
+export class ReporteEmpresaService {
+  constructor(
+    private readonly empresaRepo: EmpresaRepository,
+    private readonly viajeRepo: ViajeRepository,
+  ) {}
+
+  async generarPdf(params: ParametrosReporte): Promise<Buffer> {
+    const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, color } = params;
+
+    // 1. Obtener la información de la empresa
+    const empresa = Number.isFinite(empresaId) && empresaId > 0
+      ? await this.empresaRepo.findById(empresaId)
+      : null;
+    const nombreEmpresa = empresa?.nombre ?? 'TODAS LAS EMPRESAS';
+    const direccionEmpresa =
+      empresa?.direccion?.trim() ||
+      direccionParam ||
+      'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
+
+    // 2. Intervalo dinámico de fechas
+    const rangoFechas = this.formatearRangoFechas(desde, hasta);
+
+    // 3. Viajes del intervalo/empresa (mismo filtro que el listado de la app)
+    const viajes = await this.consultar(empresaId, desde, hasta);
+
+    // 4. Logo en Base64
+    const logoUri = this.obtenerLogoDataUri();
+
+    const filas = viajes.map((v) => {
+      const celdas = [
+        this.fechaCorta(v.fechaInicio),
+        this.vehiculo(v),
+        this.chofer(v),
+        v.recorrido?.trim() || '—',
+        v.puntoSalida?.nombre?.trim() || '—',
+        v.puntoLlegada?.nombre?.trim() || '—',
+        v.carga?.trim() || '—',
+      ];
+      if (conMonto) celdas.push(this.dinero(v.montoViaje ?? 0));
+      return celdas;
+    });
+
+    const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
+    const columnas = conMonto
+      ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
+      : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
+    // Anchos en % del ancho de pagina: suman 100.
+    const anchos = conMonto ? [10, 17, 15, 17, 11, 11, 12, 7] : [11, 18, 16, 18, 12, 12, 13];
+
+    const html = htmlReporte({
+      nombreEmpresa,
+      direccionEmpresa,
+      rangoFechas,
+      columnas,
+      filas,
+      conMonto,
+      anchos,
+      total,
+      color,
+      logoUri,
+    });
+
+    // 5. Generación con Puppeteer
     const browser = await lanzarChrome();
 
     try {
@@ -231,8 +286,6 @@ export class ReporteEmpresaService {
       await page.setContent(html, { waitUntil: 'load' });
 
       const pdfUint8 = await page.pdf({
-        format: 'A4',
-        landscape: true,
         printBackground: true,
         preferCSSPageSize: true,
       });
@@ -284,10 +337,7 @@ export class ReporteEmpresaService {
   }
 
   private dinero(valor: number): string {
-    return Number(valor || 0).toLocaleString('es-VE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    return formatearDinero(valor);
   }
 
   /**
@@ -326,13 +376,5 @@ export class ReporteEmpresaService {
       return `data:image/jpeg;base64,${buffer.toString('base64')}`;
     }
     return '';
-  }
-
-  private esc(str: string): string {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
   }
 }

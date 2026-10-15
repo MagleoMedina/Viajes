@@ -7,7 +7,6 @@ import Empresas from './views/Empresas.jsx'
 import CrearViaje from './views/CrearViaje.jsx'
 import Viajes from './views/Viajes.jsx'
 import Exportar from './views/Exportar.jsx'
-import ReporteEmpresa from './views/ReporteEmpresa.jsx'
 import Tasa from './views/Tasa.jsx'
 import Recorridos from './views/Recorridos.jsx'
 import './App.css'
@@ -58,7 +57,6 @@ function App() {
           )}
           {vista === 'viajes' && <Viajes onEditar={editarViaje} />}
           {vista === 'exportar' && <Exportar />}
-          {vista === 'reporte' && <ReporteEmpresa />}
           {vista === 'recorridos' && <Recorridos />}
         </Fragment>
       </main>

@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReporteEmpresaService = void 0;
+exports.htmlReporte = htmlReporte;
 const common_1 = require("@nestjs/common");
 const chromium_1 = require("../common/chromium");
 const fs_1 = require("fs");
@@ -17,72 +18,42 @@ const path_1 = require("path");
 const empresa_repository_1 = require("../repo/empresa.repository");
 const viaje_repository_1 = require("../repo/viaje.repository");
 const COLS_CON_MONTO = 8;
-let ReporteEmpresaService = class ReporteEmpresaService {
-    empresaRepo;
-    viajeRepo;
-    constructor(empresaRepo, viajeRepo) {
-        this.empresaRepo = empresaRepo;
-        this.viajeRepo = viajeRepo;
-    }
-    async generarPdf(params) {
-        const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, color } = params;
-        const empresa = Number.isFinite(empresaId) && empresaId > 0
-            ? await this.empresaRepo.findById(empresaId)
-            : null;
-        const nombreEmpresa = empresa?.nombre ?? 'TODAS LAS EMPRESAS';
-        const direccionEmpresa = empresa?.direccion?.trim() ||
-            direccionParam ||
-            'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
-        const rangoFechas = this.formatearRangoFechas(desde, hasta);
-        const viajes = await this.consultar(empresaId, desde, hasta);
-        const logoUri = this.obtenerLogoDataUri();
-        const filas = viajes.map((v) => ({
-            fecha: this.fechaCorta(v.fechaInicio),
-            vehiculo: this.vehiculo(v),
-            chofer: this.chofer(v),
-            recorrido: v.recorrido?.trim() || '—',
-            desde: v.puntoSalida?.nombre?.trim() || '—',
-            hasta: v.puntoLlegada?.nombre?.trim() || '—',
-            carga: v.carga?.trim() || '—',
-            monto: this.dinero(v.montoViaje ?? 0),
-        }));
-        const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
-        const columnas = conMonto
-            ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
-            : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
-        const anchos = conMonto ? [10, 17, 15, 17, 11, 11, 12, 7] : [11, 18, 16, 18, 12, 12, 13];
-        const ths = columnas
-            .map((c, i) => `<th style="width: ${anchos[i]}%;" class="${i === columnas.length - 1 && conMonto ? 'num' : ''}">${c}</th>`)
-            .join('');
-        const cuerpo = filas.length
-            ? filas
-                .map((f, i) => `
+const escapar = (str) => String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+const formatearDinero = (valor) => Number(valor || 0).toLocaleString('es-VE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+});
+function htmlReporte(params) {
+    const { nombreEmpresa, direccionEmpresa, rangoFechas, columnas, filas, conMonto, anchos, total = 0, color, logoUri, } = params;
+    const ths = columnas
+        .map((c, i) => `<th style="width: ${anchos ? anchos[i] : 100 / columnas.length}%;" class="${i === columnas.length - 1 && conMonto ? 'num' : ''}">${c}</th>`)
+        .join('');
+    const cuerpo = filas.length
+        ? filas
+            .map((celdas, i) => `
             <tr class="${i % 2 ? 'par' : ''}">
-              <td>${f.fecha}</td>
-              <td>${this.esc(f.vehiculo)}</td>
-              <td>${this.esc(f.chofer)}</td>
-              <td>${this.esc(f.recorrido)}</td>
-              <td>${this.esc(f.desde)}</td>
-              <td>${this.esc(f.hasta)}</td>
-              <td>${this.esc(f.carga)}</td>
-              ${conMonto ? `<td class="num">${f.monto}</td>` : ''}
+              ${celdas.map((c, j) => `<td${j === celdas.length - 1 && conMonto ? ' class="num"' : ''}>${escapar(c)}</td>`).join('')}
             </tr>`)
-                .join('')
-            : `<tr><td colspan="${columnas.length}" class="vacio">Sin viajes en este intervalo.</td></tr>`;
-        const pie = conMonto && filas.length
-            ? `<tr class="total">
+            .join('')
+        : `<tr><td colspan="${columnas.length}" class="vacio">Sin viajes en este intervalo.</td></tr>`;
+    const pie = conMonto && filas.length
+        ? `<tr class="total">
              <td colspan="${COLS_CON_MONTO - 1}">TOTAL</td>
-             <td class="num">$ ${this.dinero(total)}</td>
+             <td class="num">$ ${formatearDinero(total)}</td>
            </tr>`
-            : '';
-        const html = `
+        : '';
+    return `
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="utf-8" />
         <style>
           @page {
-            size: A4 landscape;
+            size: letter landscape;
             margin: 12mm 10mm 12mm 10mm;
           }
           * {
@@ -143,12 +114,14 @@ let ReporteEmpresaService = class ReporteEmpresaService {
           th, td {
             border: 1px solid #c9d2e0;
             padding: 5px 6px;
-            font-size: 8px;
+            font-size: 10pt;
             overflow-wrap: break-word;
+            word-break: break-word;
           }
           th {
             background-color: #26324a;
             color: #ffffff;
+            font-size: 10pt;
             font-weight: bold;
             text-align: left;
             text-transform: uppercase;
@@ -170,7 +143,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             background-color: #26324a;
             color: #ffffff;
             font-weight: bold;
-            font-size: 9px;
+            font-size: 10pt;
           }
         </style>
       </head>
@@ -181,8 +154,8 @@ let ReporteEmpresaService = class ReporteEmpresaService {
           ${logoUri ? `<img class="logo" src="${logoUri}" alt="Logo" />` : ''}
           <div class="slogan">Sin pausa, sin excusas, sin limites</div>
           <div class="titulo-reporte">REPORTE VIAJES DESDE EL ${rangoFechas}</div>
-          <div class="nombre-empresa">${this.esc(nombreEmpresa)}</div>
-          <div class="direccion-empresa">${this.esc(direccionEmpresa)}</div>
+          <div class="nombre-empresa">${escapar(nombreEmpresa)}</div>
+          <div class="direccion-empresa">${escapar(direccionEmpresa)}</div>
         </div>
 
         <table>
@@ -198,13 +171,62 @@ let ReporteEmpresaService = class ReporteEmpresaService {
       </body>
       </html>
     `;
+}
+let ReporteEmpresaService = class ReporteEmpresaService {
+    empresaRepo;
+    viajeRepo;
+    constructor(empresaRepo, viajeRepo) {
+        this.empresaRepo = empresaRepo;
+        this.viajeRepo = viajeRepo;
+    }
+    async generarPdf(params) {
+        const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, color } = params;
+        const empresa = Number.isFinite(empresaId) && empresaId > 0
+            ? await this.empresaRepo.findById(empresaId)
+            : null;
+        const nombreEmpresa = empresa?.nombre ?? 'TODAS LAS EMPRESAS';
+        const direccionEmpresa = empresa?.direccion?.trim() ||
+            direccionParam ||
+            'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
+        const rangoFechas = this.formatearRangoFechas(desde, hasta);
+        const viajes = await this.consultar(empresaId, desde, hasta);
+        const logoUri = this.obtenerLogoDataUri();
+        const filas = viajes.map((v) => {
+            const celdas = [
+                this.fechaCorta(v.fechaInicio),
+                this.vehiculo(v),
+                this.chofer(v),
+                v.recorrido?.trim() || '—',
+                v.puntoSalida?.nombre?.trim() || '—',
+                v.puntoLlegada?.nombre?.trim() || '—',
+                v.carga?.trim() || '—',
+            ];
+            if (conMonto)
+                celdas.push(this.dinero(v.montoViaje ?? 0));
+            return celdas;
+        });
+        const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
+        const columnas = conMonto
+            ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
+            : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
+        const anchos = conMonto ? [10, 17, 15, 17, 11, 11, 12, 7] : [11, 18, 16, 18, 12, 12, 13];
+        const html = htmlReporte({
+            nombreEmpresa,
+            direccionEmpresa,
+            rangoFechas,
+            columnas,
+            filas,
+            conMonto,
+            anchos,
+            total,
+            color,
+            logoUri,
+        });
         const browser = await (0, chromium_1.lanzarChrome)();
         try {
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'load' });
             const pdfUint8 = await page.pdf({
-                format: 'A4',
-                landscape: true,
                 printBackground: true,
                 preferCSSPageSize: true,
             });
@@ -251,10 +273,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
         return [c.nombre, c.apellido].filter((x) => x && x.trim()).join(' ').trim() || '—';
     }
     dinero(valor) {
-        return Number(valor || 0).toLocaleString('es-VE', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
+        return formatearDinero(valor);
     }
     formatearRangoFechas(desde, hasta) {
         if (!desde && !hasta)
@@ -285,13 +304,6 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             return `data:image/jpeg;base64,${buffer.toString('base64')}`;
         }
         return '';
-    }
-    esc(str) {
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
     }
 };
 exports.ReporteEmpresaService = ReporteEmpresaService;

@@ -169,6 +169,7 @@ export default function Viajes({ onEditar }) {
                   <th>Carga</th>
                   <th>Salida</th>
                   <th>Llegada</th>
+                  <th className="derecha">Litros</th>
                   <th className="derecha">Gastos varios</th>
                   <th className="derecha">Total BS</th>
                   <th className="derecha">Tasa</th>
@@ -188,6 +189,7 @@ export default function Viajes({ onEditar }) {
                     <td>{viaje.carga}</td>
                     <td>{viaje.puntoSalida?.nombre || '—'}</td>
                     <td>{viaje.puntoLlegada?.nombre || '—'}</td>
+                    <td className="derecha">{money(viaje.litros)}</td>
                     <td className="derecha">
                       {(viaje.gastos || []).length > 0 ? (
                         <button

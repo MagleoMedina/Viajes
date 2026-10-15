@@ -18,6 +18,31 @@ const initSqlJs = require('sql.js');
 const MIGRACIONES = [
   { tabla: 'viajes', columna: 'vehiculo_id', ddl: 'ALTER TABLE viajes ADD COLUMN vehiculo_id bigint' },
   {
+    tabla: 'viajes',
+    columna: 'litros',
+    ddl: 'ALTER TABLE viajes ADD COLUMN litros real NOT NULL DEFAULT 0',
+  },
+  {
+    tabla: 'viajes',
+    columna: 'ref_combustible',
+    ddl: "ALTER TABLE viajes ADD COLUMN ref_combustible varchar(100) NOT NULL DEFAULT '0'",
+  },
+  {
+    tabla: 'viajes',
+    columna: 'ref_viaticos',
+    ddl: "ALTER TABLE viajes ADD COLUMN ref_viaticos varchar(100) NOT NULL DEFAULT '0'",
+  },
+  {
+    tabla: 'viajes',
+    columna: 'ref_peajes',
+    ddl: "ALTER TABLE viajes ADD COLUMN ref_peajes varchar(100) NOT NULL DEFAULT '0'",
+  },
+  {
+    tabla: 'viajes',
+    columna: 'ref_pago_chofer',
+    ddl: "ALTER TABLE viajes ADD COLUMN ref_pago_chofer varchar(100) NOT NULL DEFAULT '0'",
+  },
+  {
     tabla: 'empresas',
     columna: 'eliminado',
     ddl: 'ALTER TABLE empresas ADD COLUMN eliminado integer NOT NULL DEFAULT 0',

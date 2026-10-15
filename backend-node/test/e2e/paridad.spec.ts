@@ -14,7 +14,7 @@ import * as escenarios from '../scenarios';
 const HEADERS_PDF = [
   'FECHA INICIO', 'FECHA FIN', 'EMPRESA', 'CHOFER', 'CARGA',
   'PUNTO SALIDA', 'PUNTO LLEGADA', 'MONTO VIAJE $', 'COMBUSTIBLE',
-  'VIATICOS', 'PEAJES', 'PAGO CHOFER', 'GASTOS VARIOS',
+  'VIATICOS', 'PEAJES', 'PAGO CHOFER', 'LITROS', 'GASTOS VARIOS',
   'TOTAL BS', 'TASA', 'TOTAL $',
 ];
 
@@ -136,14 +136,16 @@ async function traerBinario(app: INestApplication, path: string): Promise<Buffer
   return res.body;
 }
 
-/** El PDF lo genera Puppeteer: debe ser valido, con las 16 columnas. */
+/** El PDF lo genera Puppeteer: debe ser valido, con las 21 columnas. */
 async function verificarPdf(buf: Buffer) {
   expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const pdfParse = require('pdf-parse');
   const texto = (await pdfParse(buf)).text.replace(/\s+/g, ' ');
+  // A 10pt las cabeceras se parten linea por linea: comparar sin espacios.
+  const compacto = texto.replace(/\s+/g, '');
   for (const header of HEADERS_PDF) {
-    expect(texto).toContain(header);
+    expect(compacto.toUpperCase()).toContain(header.replace(/\s+/g, '').toUpperCase());
   }
   expect(tokensPdf(texto)).toMatchSnapshot();
 }
@@ -155,7 +157,7 @@ async function matrizXlsx(buf: Buffer): Promise<any[][]> {
   const matriz: any[][] = [];
   ws.eachRow({ includeEmpty: true }, (row) => {
     const fila: any[] = [];
-    for (let c = 1; c <= 16; c++) {
+    for (let c = 1; c <= 17; c++) {
       const v = row.getCell(c).value;
       fila.push(v && typeof v === 'object' ? (v as any)?.text ?? (v as any)?.result ?? null : v);
     }

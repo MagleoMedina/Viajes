@@ -16,51 +16,71 @@ exports.ExportController = void 0;
 const common_1 = require("@nestjs/common");
 const export_service_1 = require("../service/export.service");
 const reporte_empresa_service_1 = require("../service/reporte-empresa.service");
+const empresa_repository_1 = require("../repo/empresa.repository");
 const COLOR_SEGURO = /^#[0-9a-fA-F]{6}$/;
 function colorDe(color, porDefecto) {
     return color && COLOR_SEGURO.test(color) ? color.toLowerCase() : porDefecto;
 }
+function slug(texto) {
+    return String(texto || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toLowerCase() || 'documento';
+}
+function fechaArchivo(valor, porDefecto) {
+    return valor && /^\d{4}-\d{2}-\d{2}$/.test(valor) ? valor : porDefecto;
+}
 let ExportController = class ExportController {
     servicio;
     reporteServicio;
-    constructor(servicio, reporteServicio) {
+    empresaRepo;
+    constructor(servicio, reporteServicio, empresaRepo) {
         this.servicio = servicio;
         this.reporteServicio = reporteServicio;
+        this.empresaRepo = empresaRepo;
     }
-    xlsx(res, empresaId, desde, hasta) {
-        return this.servicio.crearXlsx(empresaId ? Number(empresaId) : null, desde, hasta).then((buffer) => {
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            res.setHeader('Content-Disposition', 'attachment; filename="viajes.xlsx"');
-            res.setHeader('Content-Length', String(buffer.length));
-            res.end(buffer);
-        });
+    async nombre(empresaId, prefijo, desde, hasta) {
+        const empresa = empresaId != null ? await this.empresaRepo.findById(empresaId) : null;
+        const empresaSlug = slug(empresa?.nombre ?? 'todas');
+        const d = fechaArchivo(desde, 'inicio');
+        const h = fechaArchivo(hasta, 'hoy');
+        return `${prefijo}_${empresaSlug}_${d}_${h}`;
     }
-    pdf(res, empresaId, desde, hasta, color) {
-        return this.servicio
-            .crearPdf(empresaId ? Number(empresaId) : null, desde, hasta, colorDe(color, '#26324a'))
-            .then((buffer) => {
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename="viajes.pdf"');
-            res.setHeader('Content-Length', String(buffer.length));
-            res.end(buffer);
-        });
+    async xlsx(res, empresaId, desde, hasta) {
+        const idEmpresa = empresaId ? Number(empresaId) : null;
+        const buffer = await this.servicio.crearXlsx(idEmpresa, desde, hasta);
+        const nombre = await this.nombre(idEmpresa, 'viajes', desde, hasta);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombre}.xlsx"`);
+        res.setHeader('Content-Length', String(buffer.length));
+        res.end(buffer);
     }
-    reporte(res, empresaId, desde, hasta, direccion, conMonto, color) {
-        return this.reporteServicio
-            .generarPdf({
-            empresaId: empresaId ? Number(empresaId) : 0,
+    async pdf(res, empresaId, desde, hasta, color) {
+        const idEmpresa = empresaId ? Number(empresaId) : null;
+        const buffer = await this.servicio.crearPdf(idEmpresa, desde, hasta, colorDe(color, '#26324a'));
+        const nombre = await this.nombre(idEmpresa, 'viajes', desde, hasta);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+        res.setHeader('Content-Length', String(buffer.length));
+        res.end(buffer);
+    }
+    async reporte(res, empresaId, desde, hasta, direccion, conMonto, color) {
+        const idEmpresa = empresaId ? Number(empresaId) : 0;
+        const buffer = await this.reporteServicio.generarPdf({
+            empresaId: idEmpresa,
             desde,
             hasta,
             direccion,
             conMonto: conMonto !== 'false',
             color: colorDe(color, '#8c3b87'),
-        })
-            .then((buffer) => {
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename="reporte.pdf"');
-            res.setHeader('Content-Length', String(buffer.length));
-            res.end(buffer);
         });
+        const nombre = await this.nombre(idEmpresa > 0 ? idEmpresa : null, 'reporte', desde, hasta);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+        res.setHeader('Content-Length', String(buffer.length));
+        res.end(buffer);
     }
 };
 exports.ExportController = ExportController;
@@ -72,7 +92,7 @@ __decorate([
     __param(3, (0, common_1.Query)('hasta')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], ExportController.prototype, "xlsx", null);
 __decorate([
     (0, common_1.Get)('pdf'),
@@ -83,7 +103,7 @@ __decorate([
     __param(4, (0, common_1.Query)('color')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String, String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], ExportController.prototype, "pdf", null);
 __decorate([
     (0, common_1.Get)('reporte'),
@@ -96,11 +116,12 @@ __decorate([
     __param(6, (0, common_1.Query)('color')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String, String, String, String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], ExportController.prototype, "reporte", null);
 exports.ExportController = ExportController = __decorate([
     (0, common_1.Controller)('api/export'),
     __metadata("design:paramtypes", [export_service_1.ExportService,
-        reporte_empresa_service_1.ReporteEmpresaService])
+        reporte_empresa_service_1.ReporteEmpresaService,
+        empresa_repository_1.EmpresaRepository])
 ], ExportController);
 //# sourceMappingURL=export.controller.js.map

@@ -57,6 +57,11 @@ export class ViajeRequest {
   viaticos?: number;
   peajes?: number;
   pagoChofer?: number;
+  litros?: number;
+  refCombustible?: string;
+  refViaticos?: string;
+  refPeajes?: string;
+  refPagoChofer?: string;
   gastos?: GastoRequest[];
   tasa?: number;
   recorrido?: string;
@@ -174,6 +179,11 @@ export class ViajeController {
     viaje.viaticos = cero(req.viaticos);
     viaje.peajes = cero(req.peajes);
     viaje.pagoChofer = cero(req.pagoChofer);
+    viaje.litros = cero(req.litros);
+    viaje.refCombustible = referencia(req.refCombustible);
+    viaje.refViaticos = referencia(req.refViaticos);
+    viaje.refPeajes = referencia(req.refPeajes);
+    viaje.refPagoChofer = referencia(req.refPagoChofer);
     viaje.tasa = cero(req.tasa);
 
     // Se validan los gastos antes de tocar la base; el monto va en $.
@@ -247,3 +257,9 @@ export class ViajeController {
 }
 
 const cero = (valor: number | null | undefined): number => (valor == null ? 0 : valor);
+
+/** Referencia bancaria de texto libre: recorta y usa "0" por defecto. */
+const referencia = (valor: string | null | undefined): string => {
+  const texto = valor == null ? '' : String(valor).trim();
+  return texto === '' ? '0' : texto;
+};
