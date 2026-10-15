@@ -28,9 +28,6 @@ const COLUMNAS = [
   'TOTAL $',
 ];
 
-/** Anchos en % del ancho de página: suman 100 (tabla responsiva). */
-const ANCHOS_PDF = [6, 6, 7, 6, 6, 6, 6, 5, 7, 6, 6, 7, 5, 6, 6, 4, 5];
-
 const ASSETS = join(process.cwd(), 'assets');
 const LOGO_PATH = join(ASSETS, 'logo.jpg');
 const LOGO_BUFFER = existsSync(LOGO_PATH) ? readFileSync(LOGO_PATH) : Buffer.from([]);
@@ -183,9 +180,9 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
         <td class="num">${dolar(sumas.totalUsd)}</td>
       </tr>`;
 
-  const thsHtml = COLUMNAS.map(
-    (col, i) => `<th style="width: ${ANCHOS_PDF[i]}%;">${col}</th>`,
-  ).join('');
+  // Sin ancho fijo por columna: table-layout auto (ver CSS) reparte el ancho
+  // segun el contenido de cada celda.
+  const thsHtml = COLUMNAS.map((col) => `<th>${col}</th>`).join('');
   const pieTexto = `Generado el ${marca()} - ${cantidad} ${cantidad === 1 ? 'viaje' : 'viajes'}`;
 
   const fontStyles = `
@@ -225,13 +222,13 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
           .dato { display: inline-block; border: 1px solid #2f6fed; background: #eef3fb;
                   color: #26324a; font-size: 9px; font-weight: bold; padding: 3px 8px; margin-right: 6px; }
           .dato .k { color: #2f6fed; font-size: 7.5px; margin-right: 5px; }
-          table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-          th, td { border: 1px solid #c9d2e0; padding: 2px 3px; }
+          table { width: auto; border-collapse: collapse; table-layout: auto; }
+          th, td { border: 1px solid #c9d2e0; padding: 2px 3px; overflow-wrap: break-word; }
           th { background: #26324a; color: #ffffff; font-size: 6.5px; text-align: left; }
           thead { display: table-header-group; }
           tbody tr { page-break-inside: avoid; }
           td { font-size: 7px; }
-          td.num { text-align: right; }
+          td.num { text-align: right; white-space: nowrap; }
           tbody tr.par td { background: #f4f6fa; }
           tr.totales td { background: #dde6f5; font-weight: bold; border-top: 2px solid #26324a; }
           tr.suma td { background: #2f6fed; color: #ffffff; font-weight: bold; }

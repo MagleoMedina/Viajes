@@ -7,6 +7,7 @@ import { dirname, join, resolve } from 'node:path';
 import { DataSource } from 'typeorm';
 import { SqljsDriver } from 'typeorm/driver/sqljs/SqljsDriver';
 import { DbSaverService } from '../common/db-saver.service';
+import { TotalReparacionService } from './total-reparacion.service';
 import { ApiException } from '../web/api-exception';
 
 const ejecutar = promisify(execFile);
@@ -35,6 +36,7 @@ export class TursoSyncService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly dbSaver: DbSaverService,
+    private readonly totales: TotalReparacionService,
   ) {}
 
   /** data/sync-estado.json junto a la base local. */
@@ -105,6 +107,14 @@ export class TursoSyncService {
         mensaje: `Pull guardado en disco, pero el backend no pudo recargarlo: ${(e as Error).message}`,
       };
     }
+    // Reparacion unica ya aplicada (15/10/2026): sin recalculo tras el pull.
+    // try {
+    //   await this.totales.reparar();
+    // } catch (e) {
+    //   this.logger.warn(
+    //     `Pull completado, pero los totales no se pudieron recalcular: ${(e as Error).message}`,
+    //   );
+    // }
     return { exito: true, mensaje: stdout.trim() || 'Pull completado' };
   }
 

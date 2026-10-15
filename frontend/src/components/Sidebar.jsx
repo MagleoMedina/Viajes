@@ -50,6 +50,8 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
   const [claveAbierta, setClaveAbierta] = useState(false)
   const [clave, setClave] = useState('')
   const [errorClave, setErrorClave] = useState('')
+  const [servidor, setServidor] = useState(null)
+  const [copiada, setCopiada] = useState(false)
 
   function alternarColapsado() {
     setColapsado((c) => {
@@ -68,6 +70,24 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
   }
 
   useEffect(cargarEstado, [])
+
+  // IP + puerto del backend (para entrar desde otro equipo al servidor).
+  useEffect(() => {
+    api.get('/sistema').then(setServidor).catch(() => setServidor(null))
+  }, [])
+
+  const dirServidor = servidor ? `${servidor.ip}:${servidor.puerto}` : ''
+
+  function copiarDireccion() {
+    if (!dirServidor) return
+    navigator.clipboard
+      ?.writeText(dirServidor)
+      .then(() => {
+        setCopiada(true)
+        setTimeout(() => setCopiada(false), 1500)
+      })
+      .catch(() => {})
+  }
 
   async function sincronizarAhora() {
     setSincronizando(true)
@@ -221,7 +241,19 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
         </section>
       </nav>
 
-      <footer className="sidebar-pie">SpeedGroup · {new Date().getFullYear()}</footer>
+      <footer className="sidebar-pie">
+        <span>SpeedGroup · {new Date().getFullYear()}</span>
+        {dirServidor && (
+          <button
+            type="button"
+            className="dir-servidor"
+            onClick={copiarDireccion}
+            title="Copiar la dirección del servidor"
+          >
+            {copiada ? 'Dirección copiada' : dirServidor}
+          </button>
+        )}
+      </footer>
 
       {claveAbierta && (
         <Modal titulo="Clave de seguridad" onClose={cerrarClave}>

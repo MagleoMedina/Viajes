@@ -25,6 +25,7 @@ import { TasaService } from './service/tasa.service';
 import { ExportService } from './service/export.service';
 import { ReporteEmpresaService } from './service/reporte-empresa.service';
 import { TursoSyncService } from './service/turso-sync.service';
+import { TotalReparacionService } from './service/total-reparacion.service';
 import { ChoferController } from './web/choferes.controller';
 import { EmpresaController } from './web/empresas.controller';
 import { PuntoController } from './web/puntos.controller';
@@ -34,6 +35,7 @@ import { ViajeController } from './web/viajes.controller';
 import { TasaController } from './web/tasa.controller';
 import { ExportController } from './web/export.controller';
 import { SyncController } from './web/sync.controller';
+import { SistemaController } from './web/sistema.controller';
 import { ApiExceptionFilter } from './web/api-exception.filter';
 import { JsonNonNullInterceptor } from './common/json-nonnull.interceptor';
 import { DbSaverService } from './common/db-saver.service';
@@ -83,6 +85,7 @@ const ENTIDADES = [
     TasaController,
     ExportController,
     SyncController,
+    SistemaController,
   ],
   providers: [
     ChoferRepository,
@@ -96,6 +99,7 @@ const ENTIDADES = [
     ExportService,
     ReporteEmpresaService,
     TursoSyncService,
+    TotalReparacionService,
     DbSaverService,
     {
       provide: APP_PIPE,

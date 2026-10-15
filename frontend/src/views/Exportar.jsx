@@ -36,6 +36,9 @@ export default function Exportar() {
       if (extras.conMonto !== undefined) {
         params2.set('conMonto', extras.conMonto ? 'true' : 'false')
       }
+      if (extras.sinChofer) {
+        params2.set('sinChofer', 'true')
+      }
       params2.set('color', color)
       window.location.href = urlDescarga(`/export/${tipo}?${params2.toString()}`)
     } catch (err) {
@@ -105,8 +108,8 @@ export default function Exportar() {
       <section className="tarjeta ancho-medio">
         <h2>Reporte histórico (PDF)</h2>
         <p className="ayuda">
-          Usa los mismos filtros de arriba. Escoja el formato: con la columna MONTO y el total, o
-          sin ella.
+          Usa los mismos filtros de arriba. Escoja el formato: con la columna MONTO y el total,
+          sin ella, o sin montos ni chofer.
         </p>
         <div className="acciones">
           <button
@@ -122,6 +125,13 @@ export default function Exportar() {
             onClick={() => descargar('reporte', { conMonto: false })}
           >
             <FiFile aria-hidden="true" /> Reporte sin montos
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => descargar('reporte', { conMonto: false, sinChofer: true })}
+          >
+            <FiFile aria-hidden="true" /> Reporte sin monto y sin chofer
           </button>
         </div>
       </section>

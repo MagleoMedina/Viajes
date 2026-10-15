@@ -71,7 +71,6 @@ const COLUMNAS = [
     'TASA',
     'TOTAL $',
 ];
-const ANCHOS_PDF = [6, 6, 7, 6, 6, 6, 6, 5, 7, 6, 6, 7, 5, 6, 6, 4, 5];
 const ASSETS = (0, path_1.join)(process.cwd(), 'assets');
 const LOGO_PATH = (0, path_1.join)(ASSETS, 'logo.jpg');
 const LOGO_BUFFER = (0, fs_1.existsSync)(LOGO_PATH) ? (0, fs_1.readFileSync)(LOGO_PATH) : Buffer.from([]);
@@ -181,7 +180,7 @@ function htmlViajes(viajes, opts = {}) {
         <td colspan="16" class="etiqueta">SUMA TOTAL $</td>
         <td class="num">${dolar(sumas.totalUsd)}</td>
       </tr>`;
-    const thsHtml = COLUMNAS.map((col, i) => `<th style="width: ${ANCHOS_PDF[i]}%;">${col}</th>`).join('');
+    const thsHtml = COLUMNAS.map((col) => `<th>${col}</th>`).join('');
     const pieTexto = `Generado el ${marca()} - ${cantidad} ${cantidad === 1 ? 'viaje' : 'viajes'}`;
     const fontStyles = `
       ${FUENTE_BASE64 ? `
@@ -219,13 +218,13 @@ function htmlViajes(viajes, opts = {}) {
           .dato { display: inline-block; border: 1px solid #2f6fed; background: #eef3fb;
                   color: #26324a; font-size: 9px; font-weight: bold; padding: 3px 8px; margin-right: 6px; }
           .dato .k { color: #2f6fed; font-size: 7.5px; margin-right: 5px; }
-          table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-          th, td { border: 1px solid #c9d2e0; padding: 2px 3px; }
+          table { width: auto; border-collapse: collapse; table-layout: auto; }
+          th, td { border: 1px solid #c9d2e0; padding: 2px 3px; overflow-wrap: break-word; }
           th { background: #26324a; color: #ffffff; font-size: 6.5px; text-align: left; }
           thead { display: table-header-group; }
           tbody tr { page-break-inside: avoid; }
           td { font-size: 7px; }
-          td.num { text-align: right; }
+          td.num { text-align: right; white-space: nowrap; }
           tbody tr.par td { background: #f4f6fa; }
           tr.totales td { background: #dde6f5; font-weight: bold; border-top: 2px solid #26324a; }
           tr.suma td { background: #2f6fed; color: #ffffff; font-weight: bold; }

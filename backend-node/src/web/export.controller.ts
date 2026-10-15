@@ -83,6 +83,7 @@ export class ExportController {
     @Query('hasta') hasta?: string,
     @Query('direccion') direccion?: string,
     @Query('conMonto') conMonto?: string,
+    @Query('sinChofer') sinChofer?: string,
     @Query('color') color?: string,
   ) {
     const idEmpresa = empresaId ? Number(empresaId) : 0;
@@ -92,6 +93,7 @@ export class ExportController {
       hasta,
       direccion,
       conMonto: conMonto !== 'false',
+      sinChofer: sinChofer === 'true',
       color: colorDe(color, '#8c3b87'),
     });
     const nombre = await this.nombre(idEmpresa > 0 ? idEmpresa : null, 'reporte', desde, hasta);

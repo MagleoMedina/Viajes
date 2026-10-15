@@ -130,7 +130,9 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const tasa = numero(form.tasa)
   // El monto del viaje se digita en $ y se multiplica por la tasa para obtener Bs.
   const montoBs = numero(form.montoViaje) * tasa
-  const totalBs = montoBs + gastosBs + gastosVarios
+  // Total = (monto del viaje $ x tasa) - gastos (combustible, viáticos, peajes,
+  // pago a chofer y gastos varios).
+  const totalBs = montoBs - (gastosBs + gastosVarios)
   const totalUsd = tasa > 0 ? totalBs / tasa : 0
 
   const choferElegido = choferes.find((c) => String(c.id) === form.choferId)
@@ -560,17 +562,18 @@ export default function CrearViaje({ viaje, onGuardado }) {
 
           <section className="tarjeta resumen">
             <h2>Resumen</h2>
+            <p className="ayuda">Total = (monto del viaje $ × tasa) − todos los gastos.</p>
             <div className="fila-total">
               <span>Monto del viaje × tasa</span>
               <strong>{money(montoBs)} Bs</strong>
             </div>
             <div className="fila-total">
-              <span>Combustible + Viáticos + Peajes + Pago a choferes</span>
-              <strong>{money(gastosBs)} Bs</strong>
+              <span>Combustible + Viáticos + Peajes + Pago a choferes (se resta)</span>
+              <strong>− {money(gastosBs)} Bs</strong>
             </div>
             <div className="fila-total">
-              <span>Gastos varios</span>
-              <strong>{money(gastosVarios)} Bs</strong>
+              <span>Gastos varios (se restan)</span>
+              <strong>− {money(gastosVarios)} Bs</strong>
             </div>
             <div className="fila-total">
               <span>Tasa del día</span>

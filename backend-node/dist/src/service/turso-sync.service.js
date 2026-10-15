@@ -19,15 +19,18 @@ const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
 const typeorm_1 = require("typeorm");
 const db_saver_service_1 = require("../common/db-saver.service");
+const total_reparacion_service_1 = require("./total-reparacion.service");
 const api_exception_1 = require("../web/api-exception");
 const ejecutar = (0, node_util_1.promisify)(node_child_process_1.execFile);
 let TursoSyncService = TursoSyncService_1 = class TursoSyncService {
     dataSource;
     dbSaver;
+    totales;
     logger = new common_1.Logger(TursoSyncService_1.name);
-    constructor(dataSource, dbSaver) {
+    constructor(dataSource, dbSaver, totales) {
         this.dataSource = dataSource;
         this.dbSaver = dbSaver;
+        this.totales = totales;
     }
     get archivo() {
         const base = process.env.DB_PATH
@@ -134,6 +137,7 @@ __decorate([
 exports.TursoSyncService = TursoSyncService = TursoSyncService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeorm_1.DataSource,
-        db_saver_service_1.DbSaverService])
+        db_saver_service_1.DbSaverService,
+        total_reparacion_service_1.TotalReparacionService])
 ], TursoSyncService);
 //# sourceMappingURL=turso-sync.service.js.map

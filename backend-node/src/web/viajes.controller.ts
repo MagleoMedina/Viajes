@@ -201,16 +201,18 @@ export class ViajeController {
     }
 
     // El monto del viaje se digita en $: se multiplica por la tasa para pasarlo a Bs.
-    // Igual que Java: los totales se calculan en Bs (no en centimos).
+    // Total = (monto del viaje $ x tasa) - (combustible + viaticos + peajes +
+    // pago a chofer + gastos varios).
     const tasa = viaje.tasa ?? 0;
     const montoBs = tasa === 0 ? 0 : Math.round((viaje.montoViaje ?? 0) * tasa);
-    const totalBs =
-      montoBs +
+    const gastos =
       (viaje.combustible ?? 0) +
       (viaje.viaticos ?? 0) +
       (viaje.peajes ?? 0) +
       (viaje.pagoChofer ?? 0) +
       gastosVarios;
+
+    const totalBs = montoBs - gastos;
 
     viaje.totalBs = totalBs;
     viaje.totalUsd = totalBs === 0 || tasa === 0 ? 0 : round2(totalBs / tasa);

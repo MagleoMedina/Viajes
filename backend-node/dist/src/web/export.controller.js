@@ -66,7 +66,7 @@ let ExportController = class ExportController {
         res.setHeader('Content-Length', String(buffer.length));
         res.end(buffer);
     }
-    async reporte(res, empresaId, desde, hasta, direccion, conMonto, color) {
+    async reporte(res, empresaId, desde, hasta, direccion, conMonto, sinChofer, color) {
         const idEmpresa = empresaId ? Number(empresaId) : 0;
         const buffer = await this.reporteServicio.generarPdf({
             empresaId: idEmpresa,
@@ -74,6 +74,7 @@ let ExportController = class ExportController {
             hasta,
             direccion,
             conMonto: conMonto !== 'false',
+            sinChofer: sinChofer === 'true',
             color: colorDe(color, '#8c3b87'),
         });
         const nombre = await this.nombre(idEmpresa > 0 ? idEmpresa : null, 'reporte', desde, hasta);
@@ -113,9 +114,10 @@ __decorate([
     __param(3, (0, common_1.Query)('hasta')),
     __param(4, (0, common_1.Query)('direccion')),
     __param(5, (0, common_1.Query)('conMonto')),
-    __param(6, (0, common_1.Query)('color')),
+    __param(6, (0, common_1.Query)('sinChofer')),
+    __param(7, (0, common_1.Query)('color')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ExportController.prototype, "reporte", null);
 exports.ExportController = ExportController = __decorate([

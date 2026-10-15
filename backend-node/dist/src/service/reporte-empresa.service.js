@@ -28,9 +28,9 @@ const formatearDinero = (valor) => Number(valor || 0).toLocaleString('es-VE', {
     maximumFractionDigits: 2,
 });
 function htmlReporte(params) {
-    const { nombreEmpresa, direccionEmpresa, rangoFechas, columnas, filas, conMonto, anchos, total = 0, color, logoUri, } = params;
+    const { nombreEmpresa, direccionEmpresa, rangoFechas, columnas, filas, conMonto, cantidadViajes = filas.length, total = 0, color, logoUri, } = params;
     const ths = columnas
-        .map((c, i) => `<th style="width: ${anchos ? anchos[i] : 100 / columnas.length}%;" class="${i === columnas.length - 1 && conMonto ? 'num' : ''}">${c}</th>`)
+        .map((c, i) => `<th class="${i === columnas.length - 1 && conMonto ? 'num' : ''}">${c}</th>`)
         .join('');
     const cuerpo = filas.length
         ? filas
@@ -105,18 +105,38 @@ function htmlReporte(params) {
             margin: 0;
           }
 
+          /* Recuento de viajes del intervalo (mismo chip que el reporte detallado) */
+          .resumen {
+            margin: 8px 0 0;
+            text-align: center;
+          }
+          .dato {
+            display: inline-block;
+            border: 1px solid #2f6fed;
+            background: #eef3fb;
+            color: #26324a;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 3px 8px;
+            margin: 0 3px;
+          }
+          .dato .k {
+            color: #2f6fed;
+            font-size: 7.5px;
+            margin-right: 5px;
+          }
+
           table {
-            width: 100%;
+            width: auto;
             border-collapse: collapse;
             margin-top: 6px;
-            table-layout: fixed;
+            table-layout: auto;
           }
           th, td {
             border: 1px solid #c9d2e0;
             padding: 5px 6px;
             font-size: 10pt;
             overflow-wrap: break-word;
-            word-break: break-word;
           }
           th {
             background-color: #26324a;
@@ -158,6 +178,10 @@ function htmlReporte(params) {
           <div class="direccion-empresa">${escapar(direccionEmpresa)}</div>
         </div>
 
+        <div class="resumen">
+          <span class="dato"><span class="k">VIAJES</span>${cantidadViajes}</span>
+        </div>
+
         <table>
           <thead>
             <tr>${ths}</tr>
@@ -180,7 +204,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
         this.viajeRepo = viajeRepo;
     }
     async generarPdf(params) {
-        const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, color } = params;
+        const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color } = params;
         const empresa = Number.isFinite(empresaId) && empresaId > 0
             ? await this.empresaRepo.findById(empresaId)
             : null;
@@ -206,10 +230,15 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             return celdas;
         });
         const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
-        const columnas = conMonto
+        let columnas = conMonto
             ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
             : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
-        const anchos = conMonto ? [10, 17, 15, 17, 11, 11, 12, 7] : [11, 18, 16, 18, 12, 12, 13];
+        if (sinChofer) {
+            columnas = columnas.filter((_, i) => i !== 2);
+            filas.forEach((celdas, i) => {
+                filas[i] = celdas.filter((_, j) => j !== 2);
+            });
+        }
         const html = htmlReporte({
             nombreEmpresa,
             direccionEmpresa,
@@ -217,7 +246,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             columnas,
             filas,
             conMonto,
-            anchos,
+            cantidadViajes: viajes.length,
             total,
             color,
             logoUri,

@@ -12,6 +12,7 @@ export interface ParametrosReporte {
   hasta?: string; // Formato YYYY-MM-DD
   direccion?: string; // Dirección opcional si no existe en la base de datos
   conMonto?: boolean; // Segundo formato: sin la columna MONTO ni el TOTAL
+  sinChofer?: boolean; // Tercer formato: sin la columna CHOFER
   color?: string; // Color (#rrggbb) del nombre de la empresa en el encabezado
 }
 
@@ -26,7 +27,8 @@ export interface ReporteHtmlParams {
   columnas: string[];
   filas: string[][];
   conMonto: boolean;
-  anchos?: number[];
+  /** Recuento de viajes del intervalo (chip superior, igual que el reporte detallado). */
+  cantidadViajes?: number;
   total?: number;
   color?: string;
   logoUri?: string;
@@ -54,16 +56,17 @@ export function htmlReporte(params: ReporteHtmlParams): string {
     columnas,
     filas,
     conMonto,
-    anchos,
+    cantidadViajes = filas.length,
     total = 0,
     color,
     logoUri,
   } = params;
 
+  // Sin ancho fijo por columna: cada th toma el ancho de su texto (table-layout auto).
   const ths = columnas
     .map(
       (c, i) =>
-        `<th style="width: ${anchos ? anchos[i] : 100 / columnas.length}%;" class="${
+        `<th class="${
           i === columnas.length - 1 && conMonto ? 'num' : ''
         }">${c}</th>`,
     )
@@ -147,8 +150,29 @@ export function htmlReporte(params: ReporteHtmlParams): string {
             margin: 0;
           }
 
+          /* Recuento de viajes del intervalo (mismo chip que el reporte detallado) */
+          .resumen {
+            margin: 8px 0 0;
+            text-align: center;
+          }
+          .dato {
+            display: inline-block;
+            border: 1px solid #2f6fed;
+            background: #eef3fb;
+            color: #26324a;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 3px 8px;
+            margin: 0 3px;
+          }
+          .dato .k {
+            color: #2f6fed;
+            font-size: 7.5px;
+            margin-right: 5px;
+          }
+
           table {
-            width: 100%;
+            width: auto;
             border-collapse: collapse;
             margin-top: 6px;
             table-layout: auto;
@@ -158,7 +182,6 @@ export function htmlReporte(params: ReporteHtmlParams): string {
             padding: 5px 6px;
             font-size: 10pt;
             overflow-wrap: break-word;
-            word-break: break-word;
           }
           th {
             background-color: #26324a;
@@ -200,6 +223,10 @@ export function htmlReporte(params: ReporteHtmlParams): string {
           <div class="direccion-empresa">${escapar(direccionEmpresa)}</div>
         </div>
 
+        <div class="resumen">
+          <span class="dato"><span class="k">VIAJES</span>${cantidadViajes}</span>
+        </div>
+
         <table>
           <thead>
             <tr>${ths}</tr>
@@ -223,7 +250,7 @@ export class ReporteEmpresaService {
   ) {}
 
   async generarPdf(params: ParametrosReporte): Promise<Buffer> {
-    const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, color } = params;
+    const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color } = params;
 
     // 1. Obtener la información de la empresa
     const empresa = Number.isFinite(empresaId) && empresaId > 0
@@ -259,11 +286,17 @@ export class ReporteEmpresaService {
     });
 
     const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
-    const columnas = conMonto
+    let columnas = conMonto
       ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
       : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
-    // Anchos en % del ancho de pagina: suman 100.
-    const anchos = conMonto ? [10, 17, 15, 17, 11, 11, 12, 7] : [11, 18, 16, 18, 12, 12, 13];
+
+    // "Sin chofer": quita la columna CHOFER (indice 2) del encabezado y de cada fila.
+    if (sinChofer) {
+      columnas = columnas.filter((_, i) => i !== 2);
+      filas.forEach((celdas, i) => {
+        filas[i] = celdas.filter((_, j) => j !== 2);
+      });
+    }
 
     const html = htmlReporte({
       nombreEmpresa,
@@ -272,7 +305,7 @@ export class ReporteEmpresaService {
       columnas,
       filas,
       conMonto,
-      anchos,
+      cantidadViajes: viajes.length,
       total,
       color,
       logoUri,

@@ -196,12 +196,12 @@ let ViajeController = class ViajeController {
         }
         const tasa = viaje.tasa ?? 0;
         const montoBs = tasa === 0 ? 0 : Math.round((viaje.montoViaje ?? 0) * tasa);
-        const totalBs = montoBs +
-            (viaje.combustible ?? 0) +
+        const gastos = (viaje.combustible ?? 0) +
             (viaje.viaticos ?? 0) +
             (viaje.peajes ?? 0) +
             (viaje.pagoChofer ?? 0) +
             gastosVarios;
+        const totalBs = montoBs - gastos;
         viaje.totalBs = totalBs;
         viaje.totalUsd = totalBs === 0 || tasa === 0 ? 0 : (0, dates_1.round2)(totalBs / tasa);
         const guardado = await this.repo.save(viaje);

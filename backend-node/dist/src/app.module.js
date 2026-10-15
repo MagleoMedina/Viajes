@@ -34,6 +34,7 @@ const tasa_service_1 = require("./service/tasa.service");
 const export_service_1 = require("./service/export.service");
 const reporte_empresa_service_1 = require("./service/reporte-empresa.service");
 const turso_sync_service_1 = require("./service/turso-sync.service");
+const total_reparacion_service_1 = require("./service/total-reparacion.service");
 const choferes_controller_1 = require("./web/choferes.controller");
 const empresas_controller_1 = require("./web/empresas.controller");
 const puntos_controller_1 = require("./web/puntos.controller");
@@ -43,6 +44,7 @@ const viajes_controller_1 = require("./web/viajes.controller");
 const tasa_controller_1 = require("./web/tasa.controller");
 const export_controller_1 = require("./web/export.controller");
 const sync_controller_1 = require("./web/sync.controller");
+const sistema_controller_1 = require("./web/sistema.controller");
 const api_exception_filter_1 = require("./web/api-exception.filter");
 const json_nonnull_interceptor_1 = require("./common/json-nonnull.interceptor");
 const db_saver_service_1 = require("./common/db-saver.service");
@@ -91,6 +93,7 @@ exports.AppModule = AppModule = __decorate([
             tasa_controller_1.TasaController,
             export_controller_1.ExportController,
             sync_controller_1.SyncController,
+            sistema_controller_1.SistemaController,
         ],
         providers: [
             chofer_repository_1.ChoferRepository,
@@ -104,6 +107,7 @@ exports.AppModule = AppModule = __decorate([
             export_service_1.ExportService,
             reporte_empresa_service_1.ReporteEmpresaService,
             turso_sync_service_1.TursoSyncService,
+            total_reparacion_service_1.TotalReparacionService,
             db_saver_service_1.DbSaverService,
             {
                 provide: core_1.APP_PIPE,

@@ -1,21 +1,8 @@
 import 'reflect-metadata';
 import { mkdirSync } from 'fs';
-import { networkInterfaces } from 'os';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-
-/** IPv4 de red local (192.168.x.x, 10.x.x.x...): sin loopback ni link-local. */
-function ipsLocales(): string[] {
-  const ips: string[] = [];
-  for (const interfaces of Object.values(networkInterfaces())) {
-    for (const dir of interfaces ?? []) {
-      if (dir.family !== 'IPv4' || dir.internal) continue;
-      if (dir.address.startsWith('169.254.')) continue;
-      ips.push(dir.address);
-    }
-  }
-  return ips;
-}
+import { ipsLocales } from './common/sistema';
 
 async function bootstrap() {
   // SQLite no crea directorios: el archivo data/viajes.db necesita que exista data/.

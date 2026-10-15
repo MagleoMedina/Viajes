@@ -78,13 +78,15 @@ describe('Layout PDF: listado visible con referencia del reporte con montos', ()
                 const th = document.querySelector('th');
                 const tds = Array.from(document.querySelectorAll('tbody td'));
                 const tabla = document.querySelector('table');
+                const primeraFila = document.querySelector('tbody tr');
+                const celdas = primeraFila ? primeraFila.querySelectorAll('td').length : 0;
                 const desbordan = tds.filter((td) => td.scrollWidth > td.clientWidth + 1).length;
                 return {
                     fuenteTh: th ? parseFloat(getComputedStyle(th).fontSize) : 0,
                     fuenteTd: tds[0] ? parseFloat(getComputedStyle(tds[0]).fontSize) : 0,
                     anchoTabla: tabla ? tabla.getBoundingClientRect().width : 0,
                     anchoPagina: document.documentElement.clientWidth,
-                    celdas: tds.length,
+                    celdas,
                     desbordan,
                 };
             });
