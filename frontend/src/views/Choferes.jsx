@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FiPlus, FiSave, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import { api } from '../api/client.js'
+import Confirmar from '../components/Confirmar.jsx'
 
 const VACIO = { nombre: '', apellido: '', cedula: '' }
 
@@ -10,6 +11,8 @@ export default function Choferes() {
   const [editandoId, setEditandoId] = useState(null)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [confirmarGuardado, setConfirmarGuardado] = useState(false)
+  const [porEliminar, setPorEliminar] = useState(null)
 
   function cargar() {
     return api.get('/choferes').then(setLista)
@@ -36,8 +39,13 @@ export default function Choferes() {
     setError('')
   }
 
-  async function guardar(e) {
+  function enviar(e) {
     e.preventDefault()
+    setConfirmarGuardado(true)
+  }
+
+  async function guardar() {
+    setConfirmarGuardado(false)
     setError('')
     setAviso('')
     try {
@@ -55,8 +63,10 @@ export default function Choferes() {
     }
   }
 
-  async function eliminar(chofer) {
-    if (!window.confirm(`¿Eliminar al chofer ${chofer.nombre} ${chofer.apellido}?`)) return
+  async function eliminar() {
+    const chofer = porEliminar
+    setPorEliminar(null)
+    if (!chofer) return
     setError('')
     setAviso('')
     try {
@@ -82,7 +92,7 @@ export default function Choferes() {
       <div className="rejilla">
         <section className="tarjeta">
           <h2>{editandoId == null ? 'Nuevo chofer' : 'Editar chofer'}</h2>
-          <form onSubmit={guardar} className="form">
+          <form onSubmit={enviar} className="form">
             <label>
               Nombre
               <input
@@ -160,7 +170,7 @@ export default function Choferes() {
                         <button
                           type="button"
                           className="btn pequeno peligro"
-                          onClick={() => eliminar(chofer)}
+                          onClick={() => setPorEliminar(chofer)}
                         >
                           <FiTrash2 aria-hidden="true" /> Eliminar
                         </button>
@@ -173,6 +183,33 @@ export default function Choferes() {
           )}
         </section>
       </div>
+
+      {confirmarGuardado && (
+        <Confirmar
+          titulo={editandoId == null ? 'Confirmar registro' : 'Confirmar cambios'}
+          mensaje={
+            editandoId == null
+              ? '¿Registrar este chofer?'
+              : '¿Guardar los cambios de este chofer?'
+          }
+          detalle={`${form.nombre} ${form.apellido} · ${form.cedula}`}
+          etiqueta={editandoId == null ? 'Registrar' : 'Guardar'}
+          onConfirmar={guardar}
+          onCancelar={() => setConfirmarGuardado(false)}
+        />
+      )}
+
+      {porEliminar && (
+        <Confirmar
+          titulo="Confirmar eliminación"
+          mensaje={`¿Eliminar al chofer ${porEliminar.nombre} ${porEliminar.apellido}?`}
+          detalle={porEliminar.cedula}
+          etiqueta="Eliminar"
+          peligro
+          onConfirmar={eliminar}
+          onCancelar={() => setPorEliminar(null)}
+        />
+      )}
     </div>
   )
 }

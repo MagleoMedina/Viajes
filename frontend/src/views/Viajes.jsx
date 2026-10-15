@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FiEdit2, FiTrash2, FiX, FiCheck } from 'react-icons/fi'
 import { api, money, fecha } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
+import Confirmar from '../components/Confirmar.jsx'
 
 /** Filas por bloque de la tabla: más de esto y la interfaz deja de responder. */
 const POR_PAGINA = 200
@@ -16,6 +17,7 @@ export default function Viajes({ onEditar }) {
   const [aviso, setAviso] = useState('')
   const [desglose, setDesglose] = useState(null)
   const [sinViajes, setSinViajes] = useState(false)
+  const [porEliminar, setPorEliminar] = useState(null)
   // Con miles de viajes la tabla entera deja la interfaz sin respuesta: se
   // pintan bloques de POR_PAGINA filas y se pagina.
   const [pagina, setPagina] = useState(0)
@@ -50,9 +52,10 @@ export default function Viajes({ onEditar }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [empresaId, desde, hasta])
 
-  async function eliminar(viaje) {
-    if (!window.confirm(`¿Eliminar el viaje del ${fecha(viaje.fechaInicio)} al chofer ${viaje.chofer.nombre}?`))
-      return
+  async function eliminar() {
+    const viaje = porEliminar
+    setPorEliminar(null)
+    if (!viaje) return
     setError('')
     setAviso('')
     try {
@@ -214,7 +217,7 @@ export default function Viajes({ onEditar }) {
                       <button
                         type="button"
                         className="btn pequeno peligro"
-                        onClick={() => eliminar(viaje)}
+                        onClick={() => setPorEliminar(viaje)}
                       >
                         <FiTrash2 aria-hidden="true" /> Eliminar
                       </button>
@@ -295,6 +298,18 @@ export default function Viajes({ onEditar }) {
             </button>
           </div>
         </Modal>
+      )}
+
+      {porEliminar && (
+        <Confirmar
+          titulo="Confirmar eliminación"
+          mensaje={`¿Eliminar el viaje del ${fecha(porEliminar.fechaInicio)} al chofer ${porEliminar.chofer.nombre}?`}
+          detalle={`Total Bs ${money(porEliminar.totalBs)} · $ ${money(porEliminar.totalUsd)}`}
+          etiqueta="Eliminar"
+          peligro
+          onConfirmar={eliminar}
+          onCancelar={() => setPorEliminar(null)}
+        />
       )}
     </div>
   )

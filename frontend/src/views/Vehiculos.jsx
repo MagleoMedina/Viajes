@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FiPlus, FiSave, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import { api } from '../api/client.js'
+import Confirmar from '../components/Confirmar.jsx'
 
 const VACIO = { marca: '', modelo: '', tipo: '', placa: '' }
 
@@ -10,6 +11,8 @@ export default function Vehiculos() {
   const [editandoId, setEditandoId] = useState(null)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [confirmarGuardado, setConfirmarGuardado] = useState(false)
+  const [porEliminar, setPorEliminar] = useState(null)
 
   function cargar() {
     return api.get('/vehiculos').then(setLista)
@@ -41,8 +44,13 @@ export default function Vehiculos() {
     setError('')
   }
 
-  async function guardar(e) {
+  function enviar(e) {
     e.preventDefault()
+    setConfirmarGuardado(true)
+  }
+
+  async function guardar() {
+    setConfirmarGuardado(false)
     setError('')
     setAviso('')
     try {
@@ -60,9 +68,10 @@ export default function Vehiculos() {
     }
   }
 
-  async function eliminar(vehiculo) {
-    if (!window.confirm(`¿Eliminar el vehículo ${vehiculo.marca} ${vehiculo.modelo} (${vehiculo.placa})?`))
-      return
+  async function eliminar() {
+    const vehiculo = porEliminar
+    setPorEliminar(null)
+    if (!vehiculo) return
     setError('')
     setAviso('')
     try {
@@ -88,7 +97,7 @@ export default function Vehiculos() {
       <div className="rejilla">
         <section className="tarjeta">
           <h2>{editandoId == null ? 'Nuevo vehículo' : 'Editar vehículo'}</h2>
-          <form onSubmit={guardar} className="form">
+          <form onSubmit={enviar} className="form">
             <label>
               Marca
               <input type="text" value={form.marca} onChange={(e) => set('marca', e.target.value)} required />
@@ -168,7 +177,7 @@ export default function Vehiculos() {
                         <button
                           type="button"
                           className="btn pequeno peligro"
-                          onClick={() => eliminar(vehiculo)}
+                          onClick={() => setPorEliminar(vehiculo)}
                         >
                           <FiTrash2 aria-hidden="true" /> Eliminar
                         </button>
@@ -181,6 +190,32 @@ export default function Vehiculos() {
           )}
         </section>
       </div>
+
+      {confirmarGuardado && (
+        <Confirmar
+          titulo={editandoId == null ? 'Confirmar registro' : 'Confirmar cambios'}
+          mensaje={
+            editandoId == null
+              ? '¿Registrar este vehículo?'
+              : '¿Guardar los cambios de este vehículo?'
+          }
+          detalle={`${form.marca} ${form.modelo} · ${form.placa}`}
+          etiqueta={editandoId == null ? 'Registrar' : 'Guardar'}
+          onConfirmar={guardar}
+          onCancelar={() => setConfirmarGuardado(false)}
+        />
+      )}
+
+      {porEliminar && (
+        <Confirmar
+          titulo="Confirmar eliminación"
+          mensaje={`¿Eliminar el vehículo ${porEliminar.marca} ${porEliminar.modelo} (${porEliminar.placa})?`}
+          etiqueta="Eliminar"
+          peligro
+          onConfirmar={eliminar}
+          onCancelar={() => setPorEliminar(null)}
+        />
+      )}
     </div>
   )
 }

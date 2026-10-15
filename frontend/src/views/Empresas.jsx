@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FiPlus, FiSave, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import { api } from '../api/client.js'
+import Confirmar from '../components/Confirmar.jsx'
 
 const VACIO = { nombre: '', direccion: '' }
 
@@ -10,6 +11,8 @@ export default function Empresas() {
   const [editandoId, setEditandoId] = useState(null)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [confirmarGuardado, setConfirmarGuardado] = useState(false)
+  const [porEliminar, setPorEliminar] = useState(null)
 
   function cargar() {
     return api.get('/empresas').then(setLista)
@@ -32,8 +35,13 @@ export default function Empresas() {
     setError('')
   }
 
-  async function guardar(e) {
+  function enviar(e) {
     e.preventDefault()
+    setConfirmarGuardado(true)
+  }
+
+  async function guardar() {
+    setConfirmarGuardado(false)
     setError('')
     setAviso('')
     try {
@@ -51,8 +59,10 @@ export default function Empresas() {
     }
   }
 
-  async function eliminar(empresa) {
-    if (!window.confirm(`¿Eliminar la empresa ${empresa.nombre}?`)) return
+  async function eliminar() {
+    const empresa = porEliminar
+    setPorEliminar(null)
+    if (!empresa) return
     setError('')
     setAviso('')
     try {
@@ -78,7 +88,7 @@ export default function Empresas() {
       <div className="rejilla">
         <section className="tarjeta">
           <h2>{editandoId == null ? 'Nueva empresa' : 'Editar empresa'}</h2>
-          <form onSubmit={guardar} className="form">
+          <form onSubmit={enviar} className="form">
             <label>
               Nombre
               <input
@@ -144,7 +154,7 @@ export default function Empresas() {
                         <button
                           type="button"
                           className="btn pequeno peligro"
-                          onClick={() => eliminar(empresa)}
+                          onClick={() => setPorEliminar(empresa)}
                         >
                           <FiTrash2 aria-hidden="true" /> Eliminar
                         </button>
@@ -157,6 +167,32 @@ export default function Empresas() {
           )}
         </section>
       </div>
+
+      {confirmarGuardado && (
+        <Confirmar
+          titulo={editandoId == null ? 'Confirmar registro' : 'Confirmar cambios'}
+          mensaje={
+            editandoId == null
+              ? '¿Registrar esta empresa?'
+              : '¿Guardar los cambios de esta empresa?'
+          }
+          detalle={form.nombre}
+          etiqueta={editandoId == null ? 'Registrar' : 'Guardar'}
+          onConfirmar={guardar}
+          onCancelar={() => setConfirmarGuardado(false)}
+        />
+      )}
+
+      {porEliminar && (
+        <Confirmar
+          titulo="Confirmar eliminación"
+          mensaje={`¿Eliminar la empresa ${porEliminar.nombre}?`}
+          etiqueta="Eliminar"
+          peligro
+          onConfirmar={eliminar}
+          onCancelar={() => setPorEliminar(null)}
+        />
+      )}
     </div>
   )
 }

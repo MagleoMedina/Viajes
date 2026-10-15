@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FiPlus, FiSave, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import { api } from '../api/client.js'
+import Confirmar from '../components/Confirmar.jsx'
 
 const VACIO = { nombre: '' }
 
@@ -10,6 +11,8 @@ export default function Puntos() {
   const [editandoId, setEditandoId] = useState(null)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [confirmarGuardado, setConfirmarGuardado] = useState(false)
+  const [porEliminar, setPorEliminar] = useState(null)
 
   function cargar() {
     return api.get('/puntos').then(setLista)
@@ -32,8 +35,13 @@ export default function Puntos() {
     setError('')
   }
 
-  async function guardar(e) {
+  function enviar(e) {
     e.preventDefault()
+    setConfirmarGuardado(true)
+  }
+
+  async function guardar() {
+    setConfirmarGuardado(false)
     setError('')
     setAviso('')
     try {
@@ -51,8 +59,10 @@ export default function Puntos() {
     }
   }
 
-  async function eliminar(punto) {
-    if (!window.confirm(`¿Eliminar el punto "${punto.nombre}"?`)) return
+  async function eliminar() {
+    const punto = porEliminar
+    setPorEliminar(null)
+    if (!punto) return
     setError('')
     setAviso('')
     try {
@@ -78,7 +88,7 @@ export default function Puntos() {
       <div className="rejilla">
         <section className="tarjeta">
           <h2>{editandoId == null ? 'Nuevo punto' : 'Editar punto'}</h2>
-          <form onSubmit={guardar} className="form">
+          <form onSubmit={enviar} className="form">
             <label>
               Nombre
               <input
@@ -134,7 +144,7 @@ export default function Puntos() {
                         <button
                           type="button"
                           className="btn pequeno peligro"
-                          onClick={() => eliminar(punto)}
+                          onClick={() => setPorEliminar(punto)}
                         >
                           <FiTrash2 aria-hidden="true" /> Eliminar
                         </button>
@@ -147,6 +157,30 @@ export default function Puntos() {
           )}
         </section>
       </div>
+
+      {confirmarGuardado && (
+        <Confirmar
+          titulo={editandoId == null ? 'Confirmar registro' : 'Confirmar cambios'}
+          mensaje={
+            editandoId == null ? '¿Registrar este punto?' : '¿Guardar los cambios de este punto?'
+          }
+          detalle={form.nombre}
+          etiqueta={editandoId == null ? 'Registrar' : 'Guardar'}
+          onConfirmar={guardar}
+          onCancelar={() => setConfirmarGuardado(false)}
+        />
+      )}
+
+      {porEliminar && (
+        <Confirmar
+          titulo="Confirmar eliminación"
+          mensaje={`¿Eliminar el punto "${porEliminar.nombre}"?`}
+          etiqueta="Eliminar"
+          peligro
+          onConfirmar={eliminar}
+          onCancelar={() => setPorEliminar(null)}
+        />
+      )}
     </div>
   )
 }

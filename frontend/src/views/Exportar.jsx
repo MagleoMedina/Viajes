@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiGrid, FiFileText, FiFile, FiCheck } from 'react-icons/fi'
+import { FiFileText, FiFile, FiCheck } from 'react-icons/fi'
 import { api, urlDescarga } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
 
@@ -31,7 +31,7 @@ export default function Exportar() {
         setSinViajes(true)
         return
       }
-      // El color solo aplica a los PDF (Excel no usa titulo coloreado).
+      // El color solo aplica a los PDF.
       const params2 = new URLSearchParams(params)
       if (extras.conMonto !== undefined) {
         params2.set('conMonto', extras.conMonto ? 'true' : 'false')
@@ -51,7 +51,7 @@ export default function Exportar() {
       <header className="vista-cab">
         <div>
           <h1>Exportar</h1>
-          <p className="sub">Descargue los viajes en Excel o en PDF.</p>
+          <p className="sub">Descargue los viajes en PDF.</p>
         </div>
       </header>
 
@@ -96,10 +96,7 @@ export default function Exportar() {
         </label>
 
         <div className="acciones">
-          <button type="button" className="btn primario" onClick={() => descargar('xlsx')}>
-            <FiGrid aria-hidden="true" /> Exportar a Excel
-          </button>
-          <button type="button" className="btn" onClick={() => descargar('pdf')}>
+          <button type="button" className="btn primario" onClick={() => descargar('pdf')}>
             <FiFileText aria-hidden="true" /> Exportar a PDF
           </button>
         </div>

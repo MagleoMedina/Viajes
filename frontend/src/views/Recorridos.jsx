@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { FiPlus, FiTrash2 } from 'react-icons/fi'
 import { api } from '../api/client.js'
+import Confirmar from '../components/Confirmar.jsx'
 
 export default function Recorridos() {
   const [lista, setLista] = useState([])
   const [nombre, setNombre] = useState('')
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [porEliminar, setPorEliminar] = useState(null)
 
   function cargar() {
     return api.get('/recorridos').then(setLista)
@@ -30,8 +32,10 @@ export default function Recorridos() {
     }
   }
 
-  async function eliminar(r) {
-    if (!window.confirm(`¿Eliminar el recorrido "${r.nombre}"?`)) return
+  async function eliminar() {
+    const r = porEliminar
+    setPorEliminar(null)
+    if (!r) return
     setError('')
     setAviso('')
     try {
@@ -96,7 +100,7 @@ export default function Recorridos() {
                         <button
                           type="button"
                           className="btn pequeno peligro"
-                          onClick={() => eliminar(r)}
+                          onClick={() => setPorEliminar(r)}
                         >
                           <FiTrash2 aria-hidden="true" /> Eliminar
                         </button>
@@ -109,6 +113,17 @@ export default function Recorridos() {
           )}
         </section>
       </div>
+
+      {porEliminar && (
+        <Confirmar
+          titulo="Confirmar eliminación"
+          mensaje={`¿Eliminar el recorrido "${porEliminar.nombre}"?`}
+          etiqueta="Eliminar"
+          peligro
+          onConfirmar={eliminar}
+          onCancelar={() => setPorEliminar(null)}
+        />
+      )}
     </div>
   )
 }

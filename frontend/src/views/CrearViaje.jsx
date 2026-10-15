@@ -162,11 +162,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
 
   function enviar(e) {
     e.preventDefault()
-    if (!viaje) {
-      setConfirmar(true)
-      return
-    }
-    guardar()
+    setConfirmar(true)
   }
 
   /**
@@ -603,8 +599,11 @@ export default function CrearViaje({ viaje, onGuardado }) {
       </form>
 
       {confirmar && (
-        <Modal titulo="Confirmar registro" onClose={() => setConfirmar(false)}>
-          <p>¿Registrar este viaje?</p>
+        <Modal
+          titulo={viaje ? 'Confirmar cambios' : 'Confirmar registro'}
+          onClose={() => setConfirmar(false)}
+        >
+          <p>{viaje ? '¿Guardar los cambios de este viaje?' : '¿Registrar este viaje?'}</p>
           <p className="ayuda">
             {fecha(form.fechaInicio)} al {fecha(form.fechaFin)}
             {empresaElegida ? ` · ${empresaElegida.nombre}` : ''}

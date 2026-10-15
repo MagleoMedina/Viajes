@@ -208,6 +208,8 @@ function htmlViajes(viajes, opts = {}) {
         <style>
           ${fontStyles}
           @page { size: letter landscape; margin: 8mm; }
+          /* Tabla con sus tamaños originales; el bloque de filtros
+             (chips .dato) crece 4pt en cada página del documento. */
           body { font-family: 'DejaVu Sans', sans-serif; font-size: 7px; color: #1f2937; margin: 0; padding: 0; }
           .cab { margin-bottom: 6px; }
           .logo { height: 32px; vertical-align: middle; }
@@ -215,9 +217,11 @@ function htmlViajes(viajes, opts = {}) {
           h1 { font-size: 15px; margin: 0 0 2px; color: ${color}; font-family: 'DejaVu Sans', sans-serif; }
           .rango { color: #6b7280; font-size: 8.5px; }
           .resumen { margin: 0 0 8px; }
+          /* Fila de filtros dentro del thead: sin bordes, solo espaciado. */
+          thead tr:first-child td { border: none; background: transparent; padding: 0; font-size: 7px; }
           .dato { display: inline-block; border: 1px solid #2f6fed; background: #eef3fb;
-                  color: #26324a; font-size: 9px; font-weight: bold; padding: 3px 8px; margin-right: 6px; }
-          .dato .k { color: #2f6fed; font-size: 7.5px; margin-right: 5px; }
+                  color: #26324a; font-size: 14.33px; font-weight: bold; padding: 4px 10px; margin-right: 6px; }
+          .dato .k { color: #2f6fed; font-size: 12.83px; margin-right: 5px; }
           table { width: auto; border-collapse: collapse; table-layout: auto; }
           th, td { border: 1px solid #c9d2e0; padding: 2px 3px; overflow-wrap: break-word; }
           th { background: #26324a; color: #ffffff; font-size: 6.5px; text-align: left; }
@@ -240,13 +244,16 @@ function htmlViajes(viajes, opts = {}) {
             <div class="rango">Histórico de viajes</div>
           </div>
         </div>
-        <div class="resumen">
-          <span class="dato"><span class="k">PERIODO</span>${periodo}</span>
-          <span class="dato"><span class="k">VIAJES</span>${cantidad}</span>
-          ${empresaBox}
-        </div>
         <table>
-          <thead><tr>${thsHtml}</tr></thead>
+          <thead>
+            <!-- Filtros arriba de la tabla: se repite en cada página. -->
+            <tr><td colspan="${COLUMNAS.length}"><div class="resumen">
+              <span class="dato"><span class="k">PERIODO</span>${periodo}</span>
+              <span class="dato"><span class="k">VIAJES</span>${cantidad}</span>
+              ${empresaBox}
+            </div></td></tr>
+            <tr>${thsHtml}</tr>
+          </thead>
           <tbody>${cuerpoHtml}</tbody>
         </table>
         <div class="pie">${pieTexto}</div>
