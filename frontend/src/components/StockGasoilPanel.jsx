@@ -3,12 +3,12 @@ import { api } from '../api/client.js'
 import { red2 } from '../api/gastos.js'
 
 /**
- * Ventanita de stock de gasoil por vehículo: litros comprados menos litros
- * usados en viajes. Se recalcula al montar, al cambiar `tick` (tras un
- * alta/edición/borrado) y al recuperar el foco de la ventana.
+ * Ventanita de gasoil: stock GLOBAL (todos los vehículos), litros comprados
+ * menos litros usados en viajes. Se recalcula al montar, al cambiar `tick`
+ * (tras un alta/edición/borrado) y al recuperar el foco de la ventana.
  */
 export default function StockGasoilPanel({ tick = 0 }) {
-  const [lista, setLista] = useState(null)
+  const [stock, setStock] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
 
@@ -17,7 +17,7 @@ export default function StockGasoilPanel({ tick = 0 }) {
     return api
       .get('/gastos-gasoil/stock')
       .then((s) => {
-        setLista(Array.isArray(s) ? s : [])
+        setStock(s)
         setError('')
       })
       .catch((e) => setError(e.message))
@@ -40,10 +40,10 @@ export default function StockGasoilPanel({ tick = 0 }) {
 
   return (
     <section className="tarjeta ancho-completo stock-gasoil-panel">
-      <h2>Gasoil disponible</h2>
+      <h2>Gasoil disponible (total)</h2>
       <p className="ayuda">
-        Litros comprados menos litros usados en viajes, por vehículo. Se actualiza al registrar
-        gasoil o viajes.
+        Litros comprados menos litros usados en viajes, sumando todos los vehículos. Se actualiza
+        al registrar gasoil o viajes.
       </p>
       {error && (
         <p className="error">
@@ -53,35 +53,25 @@ export default function StockGasoilPanel({ tick = 0 }) {
           </button>
         </p>
       )}
-      {cargando && !lista ? (
+      {cargando && !stock ? (
         <p className="vacio">Cargando stock…</p>
-      ) : !lista || lista.length === 0 ? (
-        <p className="vacio">
-          {error ? 'Sin datos de stock.' : 'Registre vehículos para ver su stock de gasoil.'}
-        </p>
-      ) : (
-        <div className="tabla-envoltura">
-          <table className="tabla">
-            <thead>
-              <tr>
-                <th>Vehículo</th>
-                <th className="derecha">Comprado</th>
-                <th className="derecha">Usado en viajes</th>
-                <th className="derecha">Disponible</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lista.map((s) => (
-                <tr key={s.vehiculoId}>
-                  <td>{s.placa}</td>
-                  <td className="derecha">{red2(s.comprado)} L</td>
-                  <td className="derecha">{red2(s.usado)} L</td>
-                  <td className="derecha stock-disponible">{red2(Math.max(0, s.disponible))} L</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      ) : stock ? (
+        <div className="stock-gasoil-cifras">
+          <div className="stock-cifra principal">
+            <span className="etiqueta">Disponible</span>
+            <strong>{red2(Math.max(0, stock.disponible))} L</strong>
+          </div>
+          <div className="stock-cifra">
+            <span className="etiqueta">Comprado</span>
+            <strong>{red2(stock.comprado)} L</strong>
+          </div>
+          <div className="stock-cifra">
+            <span className="etiqueta">Usado en viajes</span>
+            <strong>{red2(stock.usado)} L</strong>
+          </div>
         </div>
+      ) : (
+        <p className="vacio">Sin datos de stock.</p>
       )}
     </section>
   )

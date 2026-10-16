@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi'
 import { api, fecha, money, urlDescarga } from '../api/client.js'
-import { agruparGastos, gasoilPayload, gasoilVacio, red2, vehiculoExistente } from '../api/gastos.js'
+import { agruparGastos, gasoilPayload, gasoilVacio, vehiculoExistente } from '../api/gastos.js'
 import GastoGasoilForm from '../components/GastoGasoilForm.jsx'
 import StockGasoilPanel from '../components/StockGasoilPanel.jsx'
 import Modal from '../components/Modal.jsx'
@@ -375,31 +375,10 @@ function GasConsultar() {
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', vehiculoId: '' })
   const [vistaPrevia, setVistaPrevia] = useState(null)
   const [error, setError] = useState('')
-  const [stock, setStock] = useState(null)
 
   useEffect(() => {
     api.get('/vehiculos').then(setVehiculos).catch((e) => setError(e.message))
   }, [])
-
-  // Stock de gasoil del vehículo filtrado: lo comprado menos lo usado en viajes.
-  useEffect(() => {
-    if (!filtros.vehiculoId) {
-      setStock(null)
-      return undefined
-    }
-    let vivo = true
-    api
-      .get(`/gastos-gasoil/stock?vehiculoId=${filtros.vehiculoId}`)
-      .then((s) => {
-        if (vivo) setStock(s)
-      })
-      .catch(() => {
-        if (vivo) setStock(null)
-      })
-    return () => {
-      vivo = false
-    }
-  }, [filtros.vehiculoId])
 
   function cambiar(campo, valor) {
     setFiltros((f) => ({ ...f, [campo]: valor }))
@@ -482,12 +461,6 @@ function GasConsultar() {
               </button>
             </div>
           </form>
-          {stock && (
-            <p className="ayuda stock-gasoil">
-              Gasoil disponible: <strong>{red2(Math.max(0, stock.disponible))} L</strong>
-              {` · Comprado ${red2(stock.comprado)} L · Usado ${red2(stock.usado)} L`}
-            </p>
-          )}
           {error && <p className="error">{error}</p>}
         </section>
       </div>

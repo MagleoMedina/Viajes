@@ -18,6 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const gasto_gasoil_entity_1 = require("../domain/gasto-gasoil.entity");
 const viaje_entity_1 = require("../domain/viaje.entity");
+const vehiculo_entity_1 = require("../domain/vehiculo.entity");
 const dates_1 = require("../common/dates");
 let StockGasoilService = class StockGasoilService {
     gastos;
@@ -26,21 +27,88 @@ let StockGasoilService = class StockGasoilService {
         this.gastos = gastos;
         this.viajes = viajes;
     }
-    async disponible(vehiculoId, excluirViajeId) {
-        const comprado = await this.suma(this.gastos
-            .createQueryBuilder('g')
-            .select('COALESCE(SUM(g.litros), 0)', 'suma')
-            .where('g.vehiculo_id = :id', { id: vehiculoId }));
+    async global(excluirViajeId) {
+        const comprado = await this.suma(this.gastos.createQueryBuilder('g').select('COALESCE(SUM(g.litros), 0)', 'suma'));
         let qb = this.viajes
             .createQueryBuilder('v')
-            .select('COALESCE(SUM(v.litros), 0)', 'suma')
-            .where('v.vehiculo_id = :id', { id: vehiculoId });
+            .select('COALESCE(SUM(v.litros), 0)', 'suma');
         if (excluirViajeId != null) {
             qb = qb.andWhere('v.id != :excluido', { excluido: excluirViajeId });
         }
         const usado = await this.suma(qb);
+        return this.armar(comprado, usado);
+    }
+    async resumen() {
+        const vehiculos = await this.gastos.manager.find(vehiculo_entity_1.Vehiculo);
+        const placaDe = new Map(vehiculos.map((v) => [v.id, v.placa]));
+        const comprados = await this.gastos
+            .createQueryBuilder('g')
+            .select('g.vehiculo_id', 'vehiculoId')
+            .addSelect('COALESCE(SUM(g.litros), 0)', 'litros')
+            .addSelect('COALESCE(SUM(g.monto_usd), 0)', 'montoUsd')
+            .addSelect('COALESCE(SUM(g.monto_bs), 0)', 'montoBs')
+            .groupBy('g.vehiculo_id')
+            .getRawMany();
+        const usados = await this.viajes
+            .createQueryBuilder('v')
+            .select('v.vehiculo_id', 'vehiculoId')
+            .addSelect('COALESCE(SUM(v.litros), 0)', 'litros')
+            .addSelect('COALESCE(SUM(v.combustible), 0)', 'combustible')
+            .groupBy('v.vehiculo_id')
+            .getRawMany();
+        const claves = new Set();
+        for (const f of comprados)
+            claves.add(f.vehiculoId == null ? null : Number(f.vehiculoId));
+        for (const f of usados)
+            claves.add(f.vehiculoId == null ? null : Number(f.vehiculoId));
+        const compradoPorId = new Map();
+        for (const f of comprados) {
+            compradoPorId.set(f.vehiculoId == null ? null : Number(f.vehiculoId), f);
+        }
+        const usadoPorId = new Map();
+        for (const f of usados) {
+            usadoPorId.set(f.vehiculoId == null ? null : Number(f.vehiculoId), f);
+        }
+        const filas = [];
+        const total = {
+            comprado: 0,
+            usado: 0,
+            disponible: 0,
+            compradoUsd: 0,
+            compradoBs: 0,
+            usadoBs: 0,
+        };
+        for (const id of [...claves].sort((a, b) => (a ?? -1) - (b ?? -1))) {
+            const c = compradoPorId.get(id);
+            const u = usadoPorId.get(id);
+            const fila = {
+                vehiculoId: id,
+                placa: id == null ? 'Sin vehículo' : (placaDe.get(id) ?? `Vehículo #${id}`),
+                comprado: (0, dates_1.round2)(Number(c?.litros ?? 0)),
+                compradoUsd: (0, dates_1.round2)(Number(c?.montoUsd ?? 0)),
+                compradoBs: (0, dates_1.round2)(Number(c?.montoBs ?? 0)),
+                usado: (0, dates_1.round2)(Number(u?.litros ?? 0)),
+                usadoBs: (0, dates_1.round2)(Number(u?.combustible ?? 0)),
+                disponible: 0,
+            };
+            fila.disponible = (0, dates_1.round2)(fila.comprado - fila.usado);
+            filas.push(fila);
+            total.comprado += fila.comprado;
+            total.compradoUsd += fila.compradoUsd;
+            total.compradoBs += fila.compradoBs;
+            total.usado += fila.usado;
+            total.usadoBs += fila.usadoBs;
+        }
+        total.comprado = (0, dates_1.round2)(total.comprado);
+        total.compradoUsd = (0, dates_1.round2)(total.compradoUsd);
+        total.compradoBs = (0, dates_1.round2)(total.compradoBs);
+        total.usado = (0, dates_1.round2)(total.usado);
+        total.usadoBs = (0, dates_1.round2)(total.usadoBs);
+        total.disponible = (0, dates_1.round2)(total.comprado - total.usado);
+        return { filas, total };
+    }
+    armar(comprado, usado) {
         return {
-            vehiculoId,
             comprado: (0, dates_1.round2)(comprado),
             usado: (0, dates_1.round2)(usado),
             disponible: (0, dates_1.round2)(comprado - usado),

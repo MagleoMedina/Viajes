@@ -6,6 +6,7 @@ import { join } from 'path';
 import { Viaje } from '../domain/viaje.entity';
 import { ViajeRepository } from '../repo/viaje.repository';
 import { EmpresaRepository } from '../repo/empresa.repository';
+import { ResumenGasoil, StockGasoilService } from './stock-gasoil.service';
 import { money, round2 } from '../common/dates';
 
 const COLUMNAS = [
@@ -118,6 +119,51 @@ export interface OpcionesViajes {
   desde?: string;
   hasta?: string;
   color?: string;
+  /** Resumen de gasoil (comprado vs usado) por vehículo y total. */
+  resumen?: ResumenGasoil;
+}
+
+/** Bloque «Resumen de gasoil» del PDF: por vehículo + fila TOTAL. */
+function htmlResumenGasoil(resumen: ResumenGasoil): string {
+  const filas = resumen.filas
+    .map(
+      (f, i) => `
+        <tr${i % 2 === 0 ? '' : ' class="par"'}>
+          <td>${esc(f.placa)}</td>
+          <td class="num">${money(f.comprado)}</td>
+          <td class="num">${dolar(f.compradoUsd)}</td>
+          <td class="num">${dolar(f.compradoBs)}</td>
+          <td class="num">${money(f.usado)}</td>
+          <td class="num">${dolar(f.usadoBs)}</td>
+        </tr>`,
+    )
+    .join('');
+  const t = resumen.total;
+  return `
+      <div class="gas-titulo">Resumen de gasoil — todos los vehículos</div>
+      <table class="tabla-gasoil">
+        <thead>
+          <tr>
+            <th>VEHÍCULO</th>
+            <th>GASOIL COMPRADO (L)</th>
+            <th>COMPRADO $</th>
+            <th>COMPRADO Bs</th>
+            <th>GASOIL USADO (L)</th>
+            <th>USADO Bs (combustible)</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+        <tfoot>
+          <tr class="totales">
+            <td>TOTAL</td>
+            <td class="num">${money(t.comprado)}</td>
+            <td class="num">${dolar(t.compradoUsd)}</td>
+            <td class="num">${dolar(t.compradoBs)}</td>
+            <td class="num">${money(t.usado)}</td>
+            <td class="num">${dolar(t.usadoBs)}</td>
+          </tr>
+        </tfoot>
+      </table>`;
 }
 
 /** Construye el HTML del listado de viajes (función pura, testeable). */
@@ -237,6 +283,8 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
           tr.totales td { background: #dde6f5; font-weight: bold; border-top: 2px solid #26324a; }
           tr.suma td { background: #2f6fed; color: #ffffff; font-weight: bold; }
           tr.suma td.etiqueta { text-align: right; }
+          .gas-titulo { margin: 10px 0 3px; font-weight: bold; color: ${color}; }
+          .tabla-gasoil { margin-bottom: 6px; }
           .pie { margin-top: 8px; color: #6b7280; font-size: 7.5px; }
         </style>
       </head>
@@ -260,6 +308,7 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
           </thead>
           <tbody>${cuerpoHtml}</tbody>
         </table>
+        ${opts.resumen ? htmlResumenGasoil(opts.resumen) : ''}
         <div class="pie">${pieTexto}</div>
       </body>
       </html>
@@ -271,6 +320,7 @@ export class ExportService {
   constructor(
     private readonly repo: ViajeRepository,
     private readonly empresas: EmpresaRepository,
+    private readonly stockGasoil: StockGasoilService,
   ) {}
 
   /* ----------------------------- EXCEL ----------------------------- */
@@ -358,12 +408,14 @@ export class ExportService {
     const viajes = await this.buscar(empresaId, desde, hasta);
     const empresaNombre =
       empresaId != null ? (await this.empresas.findById(empresaId))?.nombre ?? '¿?' : null;
+    const resumen = await this.stockGasoil.resumen();
     const htmlContent = htmlViajes(viajes, {
       empresaId,
       empresaNombre,
       desde,
       hasta,
       color: colorTitulo,
+      resumen,
     });
 
     const browser = await lanzarChrome();

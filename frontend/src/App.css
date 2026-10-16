@@ -510,15 +510,48 @@
   color: var(--accent);
 }
 
-/* ---------- Stock de gasoil ---------- */
+/* ---------- Stock de gasoil (global) ---------- */
 
 .stock-gasoil-panel {
   background: #fbfcfe;
 }
 
-.stock-gasoil-panel .stock-disponible {
-  font-weight: 700;
+.stock-gasoil-cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.stock-cifra {
+  flex: 1;
+  min-width: 140px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #fff;
+  text-align: center;
+}
+
+.stock-cifra .etiqueta {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.stock-cifra strong {
+  font-size: 20px;
+  color: var(--text);
+}
+
+.stock-cifra.principal {
+  border-color: var(--accent);
+}
+
+.stock-cifra.principal strong {
   color: var(--accent);
+  font-size: 26px;
 }
 
 /* ---------- Chips de carga ---------- */

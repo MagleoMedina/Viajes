@@ -119,20 +119,15 @@ export default function CrearViaje({ viaje, onGuardado }) {
     cargar().catch((e) => setError(e.message))
   }, [])
 
-  // Stock de gasoil del vehículo elegido. Al editar, el viaje actual excluye
-  // sus propios litros para mostrar lo realmente disponible. Se refresca al
-  // montar, al cambiar de vehículo, tras guardar y al recuperar el foco.
+  // Stock de gasoil GLOBAL (todos los vehículos). Al editar, el viaje actual
+  // excluye sus propios litros. Se refresca al montar, tras guardar y al
+  // recuperar el foco.
   useEffect(() => {
-    if (!form.vehiculoId) {
-      setStock(null)
-      return undefined
-    }
     let vivo = true
     function traer() {
-      const q = new URLSearchParams({ vehiculoId: String(form.vehiculoId) })
-      if (viaje?.id) q.set('excluirViajeId', String(viaje.id))
+      const q = viaje?.id ? `?excluirViajeId=${viaje.id}` : ''
       api
-        .get(`/gastos-gasoil/stock?${q}`)
+        .get(`/gastos-gasoil/stock${q}`)
         .then((s) => {
           if (vivo) setStock(s)
         })
@@ -151,7 +146,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
       window.removeEventListener('focus', alFocar)
       document.removeEventListener('visibilitychange', alFocar)
     }
-  }, [form.vehiculoId, viaje?.id, stockTick])
+  }, [viaje?.id, stockTick])
 
   function set(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }))
@@ -199,7 +194,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
 
   function enviar(e) {
     e.preventDefault()
-    if (form.vehiculoId && stock && numero(form.litros) > stock.disponible) {
+    if (stock && numero(form.litros) > stock.disponible) {
       setError(
         `Litros exceden el gasoil disponible (${red2(Math.max(0, stock.disponible))} L). ` +
           'Registre la compra en el módulo de gasoil o reduzca los litros.',
@@ -442,7 +437,8 @@ export default function CrearViaje({ viaje, onGuardado }) {
             <h2>Montos</h2>
             {stock && (
               <p className="ayuda stock-gasoil">
-                Gasoil disponible: <strong>{red2(Math.max(0, stock.disponible))} L</strong>
+                Gasoil disponible (total):{' '}
+                <strong>{red2(Math.max(0, stock.disponible))} L</strong>
                 {` · Comprado ${red2(stock.comprado)} L · Usado ${red2(stock.usado)} L`}
               </p>
             )}

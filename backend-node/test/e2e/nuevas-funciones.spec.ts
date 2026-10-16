@@ -122,6 +122,28 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
 
   // ---------------------------------------------------------------- T3
   describe('T3: campo litros (input, columna y sumatoria)', () => {
+    // Los viajes con litros descuentan del stock global: se carga gasoil
+    // suficiente antes de validar el campo.
+    beforeAll(async () => {
+      const veh = (
+        await request(server())
+          .post('/api/vehiculos')
+          .send({ marca: 'Toyota', modelo: 'Hilux', tipo: 'Camioneta', placa: 'LITROS1' })
+          .expect(200)
+      ).body;
+      await request(server())
+        .post('/api/gastos-gasoil')
+        .send({
+          vehiculoId: veh.id,
+          fecha: '2026-01-01',
+          estacion: 'PDV',
+          litros: 9000,
+          precioLitro: 2,
+          tasa: 10,
+        })
+        .expect(200);
+    });
+
     it('POST /api/viajes guarda y devuelve litros', async () => {
       const res = await request(server())
         .post('/api/viajes')

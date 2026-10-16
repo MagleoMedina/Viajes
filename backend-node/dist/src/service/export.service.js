@@ -51,6 +51,7 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const viaje_repository_1 = require("../repo/viaje.repository");
 const empresa_repository_1 = require("../repo/empresa.repository");
+const stock_gasoil_service_1 = require("./stock-gasoil.service");
 const dates_1 = require("../common/dates");
 const COLUMNAS = [
     'FECHA INICIO',
@@ -128,6 +129,45 @@ const periodoViajes = (viajes, desde, hasta) => {
     }
     return 'sin viajes';
 };
+function htmlResumenGasoil(resumen) {
+    const filas = resumen.filas
+        .map((f, i) => `
+        <tr${i % 2 === 0 ? '' : ' class="par"'}>
+          <td>${esc(f.placa)}</td>
+          <td class="num">${(0, dates_1.money)(f.comprado)}</td>
+          <td class="num">${dolar(f.compradoUsd)}</td>
+          <td class="num">${dolar(f.compradoBs)}</td>
+          <td class="num">${(0, dates_1.money)(f.usado)}</td>
+          <td class="num">${dolar(f.usadoBs)}</td>
+        </tr>`)
+        .join('');
+    const t = resumen.total;
+    return `
+      <div class="gas-titulo">Resumen de gasoil — todos los vehículos</div>
+      <table class="tabla-gasoil">
+        <thead>
+          <tr>
+            <th>VEHÍCULO</th>
+            <th>GASOIL COMPRADO (L)</th>
+            <th>COMPRADO $</th>
+            <th>COMPRADO Bs</th>
+            <th>GASOIL USADO (L)</th>
+            <th>USADO Bs (combustible)</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+        <tfoot>
+          <tr class="totales">
+            <td>TOTAL</td>
+            <td class="num">${(0, dates_1.money)(t.comprado)}</td>
+            <td class="num">${dolar(t.compradoUsd)}</td>
+            <td class="num">${dolar(t.compradoBs)}</td>
+            <td class="num">${(0, dates_1.money)(t.usado)}</td>
+            <td class="num">${dolar(t.usadoBs)}</td>
+          </tr>
+        </tfoot>
+      </table>`;
+}
 function htmlViajes(viajes, opts = {}) {
     const { empresaNombre = null, desde, hasta, color = '#26324a' } = opts;
     const sumas = sumarViajes(viajes);
@@ -233,6 +273,8 @@ function htmlViajes(viajes, opts = {}) {
           tr.totales td { background: #dde6f5; font-weight: bold; border-top: 2px solid #26324a; }
           tr.suma td { background: #2f6fed; color: #ffffff; font-weight: bold; }
           tr.suma td.etiqueta { text-align: right; }
+          .gas-titulo { margin: 10px 0 3px; font-weight: bold; color: ${color}; }
+          .tabla-gasoil { margin-bottom: 6px; }
           .pie { margin-top: 8px; color: #6b7280; font-size: 7.5px; }
         </style>
       </head>
@@ -256,6 +298,7 @@ function htmlViajes(viajes, opts = {}) {
           </thead>
           <tbody>${cuerpoHtml}</tbody>
         </table>
+        ${opts.resumen ? htmlResumenGasoil(opts.resumen) : ''}
         <div class="pie">${pieTexto}</div>
       </body>
       </html>
@@ -264,9 +307,11 @@ function htmlViajes(viajes, opts = {}) {
 let ExportService = class ExportService {
     repo;
     empresas;
-    constructor(repo, empresas) {
+    stockGasoil;
+    constructor(repo, empresas, stockGasoil) {
         this.repo = repo;
         this.empresas = empresas;
+        this.stockGasoil = stockGasoil;
     }
     crearXlsx(empresaId, desde, hasta) {
         return this.buscar(empresaId, desde, hasta).then((viajes) => {
@@ -337,12 +382,14 @@ let ExportService = class ExportService {
     async crearPdf(empresaId, desde, hasta, colorTitulo = '#26324a') {
         const viajes = await this.buscar(empresaId, desde, hasta);
         const empresaNombre = empresaId != null ? (await this.empresas.findById(empresaId))?.nombre ?? '¿?' : null;
+        const resumen = await this.stockGasoil.resumen();
         const htmlContent = htmlViajes(viajes, {
             empresaId,
             empresaNombre,
             desde,
             hasta,
             color: colorTitulo,
+            resumen,
         });
         const browser = await (0, chromium_1.lanzarChrome)();
         try {
@@ -400,7 +447,8 @@ exports.ExportService = ExportService;
 exports.ExportService = ExportService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [viaje_repository_1.ViajeRepository,
-        empresa_repository_1.EmpresaRepository])
+        empresa_repository_1.EmpresaRepository,
+        stock_gasoil_service_1.StockGasoilService])
 ], ExportService);
 class Sumas {
     monto = 0;

@@ -188,10 +188,10 @@ export class ViajeController {
     viaje.refPagoChofer = referencia(req.refPagoChofer);
     viaje.tasa = cero(req.tasa);
 
-    // El viaje descuenta gasoil del stock del vehículo. Al editar se excluyen
-    // los litros actuales del viaje para validar contra el stock real.
-    if (viaje.vehiculo && (viaje.litros ?? 0) > 0) {
-      const stock = await this.stockGasoil.disponible(viaje.vehiculo.id, viaje.id ?? null);
+    // El viaje descuenta gasoil del stock GLOBAL (todos los vehículos).
+    // Al editar se excluyen los litros actuales del viaje.
+    if ((viaje.litros ?? 0) > 0) {
+      const stock = await this.stockGasoil.global(viaje.id ?? null);
       if ((viaje.litros ?? 0) > stock.disponible) {
         throw new ApiException(
           400,

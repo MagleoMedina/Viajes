@@ -184,8 +184,8 @@ let ViajeController = class ViajeController {
         viaje.refPeajes = referencia(req.refPeajes);
         viaje.refPagoChofer = referencia(req.refPagoChofer);
         viaje.tasa = cero(req.tasa);
-        if (viaje.vehiculo && (viaje.litros ?? 0) > 0) {
-            const stock = await this.stockGasoil.disponible(viaje.vehiculo.id, viaje.id ?? null);
+        if ((viaje.litros ?? 0) > 0) {
+            const stock = await this.stockGasoil.global(viaje.id ?? null);
             if ((viaje.litros ?? 0) > stock.disponible) {
                 throw new api_exception_1.ApiException(400, `Litros exceden el gasoil disponible (disponible: ${Math.max(0, stock.disponible)} L)`);
             }
