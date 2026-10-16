@@ -7,6 +7,11 @@ exports.recorridoJson = recorridoJson;
 exports.vehiculoJson = vehiculoJson;
 exports.tasaJson = tasaJson;
 exports.gastoJson = gastoJson;
+exports.tituloGastoJson = tituloGastoJson;
+exports.gastoVarioJson = gastoVarioJson;
+exports.tituloImpuestoJson = tituloImpuestoJson;
+exports.gastoImpuestoJson = gastoImpuestoJson;
+exports.gastoGasoilJson = gastoGasoilJson;
 exports.viajeJson = viajeJson;
 const dates_1 = require("./dates");
 const num = (value) => value == null ? undefined : Number(value);
@@ -50,6 +55,54 @@ function gastoJson(g) {
         id: g.id,
         monto: num(g.monto),
         descripcion: text(g.descripcion),
+    };
+}
+function tituloGastoJson(t) {
+    return { id: t.id, nombre: text(t.nombre) };
+}
+function gastoVarioJson(g) {
+    return {
+        id: g.id,
+        tituloGasto: g.tituloGasto ? tituloGastoJson(g.tituloGasto) : undefined,
+        fecha: g.fecha == null ? undefined : (0, dates_1.toIsoDate)(g.fecha),
+        numero: text(g.numero),
+        motivo: text(g.motivo),
+        montoUsd: num(g.montoUsd),
+        montoBs: num(g.montoBs),
+        tasa: num(g.tasa),
+        porcentajeDb: num(g.porcentajeDb),
+        referencia: text(g.referencia),
+    };
+}
+function tituloImpuestoJson(t) {
+    return { id: t.id, nombre: text(t.nombre) };
+}
+function gastoImpuestoJson(g) {
+    return {
+        id: g.id,
+        tituloImpuesto: g.tituloImpuesto ? tituloImpuestoJson(g.tituloImpuesto) : undefined,
+        fecha: g.fecha == null ? undefined : (0, dates_1.toIsoDate)(g.fecha),
+        numero: text(g.numero),
+        motivo: text(g.motivo),
+        montoUsd: num(g.montoUsd),
+        montoBs: num(g.montoBs),
+        tasa: num(g.tasa),
+        porcentajeDb: num(g.porcentajeDb),
+        referencia: text(g.referencia),
+    };
+}
+function gastoGasoilJson(g) {
+    return {
+        id: g.id,
+        vehiculo: g.vehiculo ? vehiculoJson(g.vehiculo) : undefined,
+        fecha: g.fecha == null ? undefined : (0, dates_1.toIsoDate)(g.fecha),
+        estacion: text(g.estacion),
+        litros: num(g.litros),
+        precioLitro: num(g.precioLitro),
+        montoUsd: num(g.montoUsd),
+        montoBs: num(g.montoBs),
+        tasa: num(g.tasa),
+        referencia: text(g.referencia),
     };
 }
 function viajeJson(v) {

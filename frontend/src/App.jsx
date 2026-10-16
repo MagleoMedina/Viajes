@@ -9,6 +9,9 @@ import Viajes from './views/Viajes.jsx'
 import Exportar from './views/Exportar.jsx'
 import Tasa from './views/Tasa.jsx'
 import Recorridos from './views/Recorridos.jsx'
+import GastosVarios from './views/GastosVarios.jsx'
+import GastosImpuestos from './views/GastosImpuestos.jsx'
+import GastosGasoil from './views/GastosGasoil.jsx'
 import './App.css'
 
 function App() {
@@ -58,6 +61,9 @@ function App() {
           {vista === 'viajes' && <Viajes onEditar={editarViaje} />}
           {vista === 'exportar' && <Exportar />}
           {vista === 'recorridos' && <Recorridos />}
+          {vista === 'gastos-varios' && <GastosVarios />}
+          {vista === 'gastos-impuestos' && <GastosImpuestos />}
+          {vista === 'gastos-gasoil' && <GastosGasoil />}
         </Fragment>
       </main>
 

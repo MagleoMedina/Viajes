@@ -1,9 +1,14 @@
 import { Chofer } from '../domain/chofer.entity';
 import { Empresa } from '../domain/empresa.entity';
 import { Gasto } from '../domain/gasto.entity';
+import { GastoGasoil } from '../domain/gasto-gasoil.entity';
+import { GastoImpuesto } from '../domain/gasto-impuesto.entity';
+import { GastoVario } from '../domain/gasto-vario.entity';
 import { Punto } from '../domain/punto.entity';
 import { Recorrido } from '../domain/recorrido.entity';
 import { Tasa } from '../domain/tasa.entity';
+import { TituloGasto } from '../domain/titulo-gasto.entity';
+import { TituloImpuesto } from '../domain/titulo-impuesto.entity';
 import { Vehiculo } from '../domain/vehiculo.entity';
 import { Viaje } from '../domain/viaje.entity';
 import { toIsoDate, toIsoDateTime } from './dates';
@@ -58,6 +63,59 @@ export function gastoJson(g: Gasto) {
     id: g.id,
     monto: num(g.monto),
     descripcion: text(g.descripcion),
+  };
+}
+
+export function tituloGastoJson(t: TituloGasto) {
+  return { id: t.id, nombre: text(t.nombre) };
+}
+
+export function gastoVarioJson(g: GastoVario) {
+  return {
+    id: g.id,
+    tituloGasto: g.tituloGasto ? tituloGastoJson(g.tituloGasto) : undefined,
+    fecha: g.fecha == null ? undefined : toIsoDate(g.fecha),
+    numero: text(g.numero),
+    motivo: text(g.motivo),
+    montoUsd: num(g.montoUsd),
+    montoBs: num(g.montoBs),
+    tasa: num(g.tasa),
+    porcentajeDb: num(g.porcentajeDb),
+    referencia: text(g.referencia),
+  };
+}
+
+export function tituloImpuestoJson(t: TituloImpuesto) {
+  return { id: t.id, nombre: text(t.nombre) };
+}
+
+export function gastoImpuestoJson(g: GastoImpuesto) {
+  return {
+    id: g.id,
+    tituloImpuesto: g.tituloImpuesto ? tituloImpuestoJson(g.tituloImpuesto) : undefined,
+    fecha: g.fecha == null ? undefined : toIsoDate(g.fecha),
+    numero: text(g.numero),
+    motivo: text(g.motivo),
+    montoUsd: num(g.montoUsd),
+    montoBs: num(g.montoBs),
+    tasa: num(g.tasa),
+    porcentajeDb: num(g.porcentajeDb),
+    referencia: text(g.referencia),
+  };
+}
+
+export function gastoGasoilJson(g: GastoGasoil) {
+  return {
+    id: g.id,
+    vehiculo: g.vehiculo ? vehiculoJson(g.vehiculo) : undefined,
+    fecha: g.fecha == null ? undefined : toIsoDate(g.fecha),
+    estacion: text(g.estacion),
+    litros: num(g.litros),
+    precioLitro: num(g.precioLitro),
+    montoUsd: num(g.montoUsd),
+    montoBs: num(g.montoBs),
+    tasa: num(g.tasa),
+    referencia: text(g.referencia),
   };
 }
 

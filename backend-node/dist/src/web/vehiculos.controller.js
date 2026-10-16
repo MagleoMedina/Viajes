@@ -18,6 +18,7 @@ const class_validator_1 = require("class-validator");
 const vehiculo_entity_1 = require("../domain/vehiculo.entity");
 const vehiculo_repository_1 = require("../repo/vehiculo.repository");
 const viaje_repository_1 = require("../repo/viaje.repository");
+const gasto_gasoil_repository_1 = require("../repo/gasto-gasoil.repository");
 const serialize_1 = require("../common/serialize");
 const api_exception_1 = require("./api-exception");
 class VehiculoRequest {
@@ -46,9 +47,11 @@ __decorate([
 let VehiculoController = class VehiculoController {
     repo;
     viajes;
-    constructor(repo, viajes) {
+    gasoil;
+    constructor(repo, viajes, gasoil) {
         this.repo = repo;
         this.viajes = viajes;
+        this.gasoil = gasoil;
     }
     listar() {
         return this.repo.findAll().then((lista) => lista.map(serialize_1.vehiculoJson));
@@ -76,7 +79,8 @@ let VehiculoController = class VehiculoController {
         if (!(await this.repo.existsById(id))) {
             throw new api_exception_1.ApiException(404, 'Vehiculo no encontrado');
         }
-        if (await this.viajes.existsByVehiculoId(id)) {
+        const enUso = (await this.viajes.existsByVehiculoId(id)) || (await this.gasoil.existsByVehiculoId(id));
+        if (enUso) {
             await this.repo.ocultar(id);
             return;
         }
@@ -129,6 +133,7 @@ __decorate([
 exports.VehiculoController = VehiculoController = __decorate([
     (0, common_1.Controller)('api/vehiculos'),
     __metadata("design:paramtypes", [vehiculo_repository_1.VehiculoRepository,
-        viaje_repository_1.ViajeRepository])
+        viaje_repository_1.ViajeRepository,
+        gasto_gasoil_repository_1.GastoGasoilRepository])
 ], VehiculoController);
 //# sourceMappingURL=vehiculos.controller.js.map

@@ -128,9 +128,10 @@ describe('Layout PDF: listado visible con referencia del reporte con montos', ()
     expect(listado.fuenteTh).toBeLessThanOrEqual(referencia.fuenteTh + 0.01);
     expect(listado.fuenteTd).toBeLessThanOrEqual(referencia.fuenteTd + 0.01);
 
-    // Responsivo: la tabla ocupa el ancho disponible, sin exceder la pagina.
+    // Con celdas a medida del contenido la tabla se ajusta a lo que pide
+    // su contenido (sin ancho fijo por columna), sin exceder la hoja.
     expect(listado.anchoTabla).toBeLessThanOrEqual(listado.anchoPagina + 1);
-    expect(listado.anchoTabla).toBeGreaterThan(listado.anchoPagina * 0.9);
+    expect(listado.anchoTabla).toBeGreaterThan(listado.anchoPagina * 0.6);
 
     // Visible: ninguna celda recorta su contenido.
     expect(listado.desbordan).toBe(0);

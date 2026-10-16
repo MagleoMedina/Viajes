@@ -13,6 +13,10 @@ import {
   FiChevronRight,
   FiRefreshCw,
   FiMenu,
+  FiCreditCard,
+  FiFileText,
+  FiClipboard,
+  FiDroplet,
 } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Modal from './Modal.jsx'
@@ -28,6 +32,12 @@ const SUBMENU = [
   { id: 'recorridos', label: 'Recorridos', Icono: FiNavigation },
 ]
 
+const SUBMENU_GASTOS = [
+  { id: 'gastos-varios', label: 'Gastos varios', Icono: FiFileText },
+  { id: 'gastos-impuestos', label: 'Impuestos', Icono: FiClipboard },
+  { id: 'gastos-gasoil', label: 'Gasoil', Icono: FiDroplet },
+]
+
 /** "2026-10-13T15:04:00.000Z" -> "13/10/2026 11:04" (hora local). */
 function fechaLocal(iso) {
   const d = new Date(iso)
@@ -37,6 +47,7 @@ function fechaLocal(iso) {
 
 export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado }) {
   const [abierto, setAbierto] = useState(true)
+  const [abiertoGastos, setAbiertoGastos] = useState(true)
   const [colapsado, setColapsado] = useState(() => {
     try {
       return localStorage.getItem('sidebar-colapsado') === '1'
@@ -180,6 +191,42 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
         {abierto && (
           <ul className="submenu">
             {SUBMENU.map(({ id, label, Icono }) => (
+              <li key={id}>
+                <button
+                  type="button"
+                  className={`nav-hijo${vista === id ? ' activo' : ''}`}
+                  onClick={() => onNavigate(id)}
+                  title={label}
+                >
+                  <Icono aria-hidden="true" />
+                  <span className="txt">{label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <button
+          type="button"
+          className="nav-padre"
+          onClick={() => setAbiertoGastos((a) => !a)}
+          aria-expanded={abiertoGastos}
+          title="Gastos"
+        >
+          <span className="nav-padre-eti">
+            <FiCreditCard aria-hidden="true" />
+            <span className="txt">Gastos</span>
+          </span>
+          {abiertoGastos ? (
+            <FiChevronDown className="flecha" aria-hidden="true" />
+          ) : (
+            <FiChevronRight className="flecha" aria-hidden="true" />
+          )}
+        </button>
+
+        {abiertoGastos && (
+          <ul className="submenu">
+            {SUBMENU_GASTOS.map(({ id, label, Icono }) => (
               <li key={id}>
                 <button
                   type="button"

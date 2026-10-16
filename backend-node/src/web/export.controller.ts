@@ -2,6 +2,9 @@ import { Controller, Get, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ExportService } from '../service/export.service';
 import { ReporteEmpresaService } from '../service/reporte-empresa.service';
+import { GastosVariosService } from '../service/gastos-varios.service';
+import { GastosImpuestosService } from '../service/gastos-impuestos.service';
+import { GastosGasoilService } from '../service/gastos-gasoil.service';
 import { EmpresaRepository } from '../repo/empresa.repository';
 
 /** "#8c3b87" -> si, cualquier otra cosa -> color por defecto (evita inyectar CSS). */
@@ -31,6 +34,9 @@ export class ExportController {
     private readonly servicio: ExportService,
     private readonly reporteServicio: ReporteEmpresaService,
     private readonly empresaRepo: EmpresaRepository,
+    private readonly gastosServicio: GastosVariosService,
+    private readonly impuestosServicio: GastosImpuestosService,
+    private readonly gasoilServicio: GastosGasoilService,
   ) {}
 
   /** Nombre base "<prefijo>_<empresa>_<desde>_<hasta>" para adjuntar. */
@@ -97,6 +103,63 @@ export class ExportController {
       color: colorDe(color, '#8c3b87'),
     });
     const nombre = await this.nombre(idEmpresa > 0 ? idEmpresa : null, 'reporte', desde, hasta);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+    res.setHeader('Content-Length', String(buffer.length));
+    res.end(buffer);
+  }
+
+  /** PDF de gastos varios: un bloque por título con subtotales y total general. */
+  @Get('gastos-varios')
+  async gastosVarios(
+    @Res() res: Response,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('tituloId') tituloId?: string,
+  ) {
+    const idTitulo = tituloId ? Number(tituloId) : null;
+    const buffer = await this.gastosServicio.crearPdf(desde, hasta, idTitulo);
+    const d = fechaArchivo(desde, 'inicio');
+    const h = fechaArchivo(hasta, 'hoy');
+    const nombre = `gastos_varios_${d}_${h}`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+    res.setHeader('Content-Length', String(buffer.length));
+    res.end(buffer);
+  }
+
+  /** PDF de gastos de impuestos: un bloque por tipo con subtotales y total general. */
+  @Get('gastos-impuestos')
+  async gastosImpuestos(
+    @Res() res: Response,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('tituloId') tituloId?: string,
+  ) {
+    const idTitulo = tituloId ? Number(tituloId) : null;
+    const buffer = await this.impuestosServicio.crearPdf(desde, hasta, idTitulo);
+    const d = fechaArchivo(desde, 'inicio');
+    const h = fechaArchivo(hasta, 'hoy');
+    const nombre = `gastos_impuestos_${d}_${h}`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+    res.setHeader('Content-Length', String(buffer.length));
+    res.end(buffer);
+  }
+
+  /** PDF de gastos de gasoil: un bloque por vehículo con subtotales y total general. */
+  @Get('gastos-gasoil')
+  async gastosGasoil(
+    @Res() res: Response,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('vehiculoId') vehiculoId?: string,
+  ) {
+    const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
+    const buffer = await this.gasoilServicio.crearPdf(desde, hasta, idVehiculo);
+    const d = fechaArchivo(desde, 'inicio');
+    const h = fechaArchivo(hasta, 'hoy');
+    const nombre = `gastos_gasoil_${d}_${h}`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
     res.setHeader('Content-Length', String(buffer.length));

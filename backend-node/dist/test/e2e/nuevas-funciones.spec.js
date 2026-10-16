@@ -173,13 +173,13 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
             expect(textos.join(' ').toUpperCase()).not.toMatch(/REF\./);
         });
     });
-    describe('T5: tabla responsiva, celdas sin desbordar el margen', () => {
-        it('ancho 100%, layout fijo y anchos por columna', () => {
+    describe('T5: tabla por contenido, celdas sin desbordar el margen', () => {
+        it('ancho auto, layout por contenido y sin anchos fijos por columna', () => {
             const { htmlViajes } = require('../../src/service/export.service');
             const html = htmlViajes([], { empresaNombre: null, color: '#26324a' });
-            expect(html).toMatch(/table\s*\{[^}]*width:\s*100%/);
-            expect(html).toMatch(/table-layout:\s*fixed/);
-            expect(html).toMatch(/<th style="width: \d+%;">/);
+            expect(html).toMatch(/table\s*\{[^}]*width:\s*auto/);
+            expect(html).toMatch(/table-layout:\s*auto/);
+            expect(html).not.toMatch(/<th style="width: \d+%;">/);
         });
         it('el PDF no excede el ancho de carta apaisada', async () => {
             const r = await descargar(app, '/api/export/pdf');

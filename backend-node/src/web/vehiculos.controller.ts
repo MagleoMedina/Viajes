@@ -14,6 +14,7 @@ import { IsNotEmpty } from 'class-validator';
 import { Vehiculo } from '../domain/vehiculo.entity';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
+import { GastoGasoilRepository } from '../repo/gasto-gasoil.repository';
 import { vehiculoJson } from '../common/serialize';
 import { ApiException } from './api-exception';
 
@@ -36,6 +37,7 @@ export class VehiculoController {
   constructor(
     private readonly repo: VehiculoRepository,
     private readonly viajes: ViajeRepository,
+    private readonly gasoil: GastoGasoilRepository,
   ) {}
 
   @Get()
@@ -71,8 +73,10 @@ export class VehiculoController {
     if (!(await this.repo.existsById(id))) {
       throw new ApiException(404, 'Vehiculo no encontrado');
     }
-    if (await this.viajes.existsByVehiculoId(id)) {
-      // Esta en uso: se oculta del frontend y se conserva para los viajes historicos.
+    const enUso =
+      (await this.viajes.existsByVehiculoId(id)) || (await this.gasoil.existsByVehiculoId(id));
+    if (enUso) {
+      // Esta en uso: se oculta del frontend y se conserva para los registros historicos.
       await this.repo.ocultar(id);
       return;
     }

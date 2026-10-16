@@ -9,27 +9,45 @@ import { join } from 'path';
 import { Chofer } from './domain/chofer.entity';
 import { Empresa } from './domain/empresa.entity';
 import { Gasto } from './domain/gasto.entity';
+import { GastoGasoil } from './domain/gasto-gasoil.entity';
+import { GastoImpuesto } from './domain/gasto-impuesto.entity';
+import { GastoVario } from './domain/gasto-vario.entity';
 import { Punto } from './domain/punto.entity';
 import { Recorrido } from './domain/recorrido.entity';
 import { Tasa } from './domain/tasa.entity';
+import { TituloGasto } from './domain/titulo-gasto.entity';
+import { TituloImpuesto } from './domain/titulo-impuesto.entity';
 import { Vehiculo } from './domain/vehiculo.entity';
 import { Viaje } from './domain/viaje.entity';
 import { ChoferRepository } from './repo/chofer.repository';
 import { EmpresaRepository } from './repo/empresa.repository';
+import { GastoGasoilRepository } from './repo/gasto-gasoil.repository';
+import { GastoImpuestoRepository } from './repo/gasto-impuesto.repository';
+import { GastoVarioRepository } from './repo/gasto-vario.repository';
 import { PuntoRepository } from './repo/punto.repository';
 import { RecorridoRepository } from './repo/recorrido.repository';
 import { TasaRepository } from './repo/tasa.repository';
+import { TituloGastoRepository } from './repo/titulo-gasto.repository';
+import { TituloImpuestoRepository } from './repo/titulo-impuesto.repository';
 import { VehiculoRepository } from './repo/vehiculo.repository';
 import { ViajeRepository } from './repo/viaje.repository';
 import { TasaService } from './service/tasa.service';
 import { ExportService } from './service/export.service';
+import { GastosGasoilService } from './service/gastos-gasoil.service';
+import { GastosImpuestosService } from './service/gastos-impuestos.service';
+import { GastosVariosService } from './service/gastos-varios.service';
 import { ReporteEmpresaService } from './service/reporte-empresa.service';
 import { TursoSyncService } from './service/turso-sync.service';
 import { TotalReparacionService } from './service/total-reparacion.service';
 import { ChoferController } from './web/choferes.controller';
 import { EmpresaController } from './web/empresas.controller';
+import { GastoGasoilController } from './web/gastos-gasoil.controller';
+import { GastoImpuestoController } from './web/gastos-impuestos.controller';
+import { GastoVarioController } from './web/gastos-varios.controller';
 import { PuntoController } from './web/puntos.controller';
 import { RecorridoController } from './web/recorridos.controller';
+import { TituloGastoController } from './web/titulos-gasto.controller';
+import { TituloImpuestoController } from './web/titulos-impuesto.controller';
 import { VehiculoController } from './web/vehiculos.controller';
 import { ViajeController } from './web/viajes.controller';
 import { TasaController } from './web/tasa.controller';
@@ -45,9 +63,14 @@ const ENTIDADES = [
   Chofer,
   Empresa,
   Gasto,
+  GastoGasoil,
+  GastoImpuesto,
+  GastoVario,
   Punto,
   Recorrido,
   Tasa,
+  TituloGasto,
+  TituloImpuesto,
   Vehiculo,
   Viaje,
 ];
@@ -78,8 +101,13 @@ const ENTIDADES = [
   controllers: [
     ChoferController,
     EmpresaController,
+    GastoGasoilController,
+    GastoImpuestoController,
+    GastoVarioController,
     PuntoController,
     RecorridoController,
+    TituloGastoController,
+    TituloImpuestoController,
     VehiculoController,
     ViajeController,
     TasaController,
@@ -90,13 +118,21 @@ const ENTIDADES = [
   providers: [
     ChoferRepository,
     EmpresaRepository,
+    GastoGasoilRepository,
+    GastoImpuestoRepository,
+    GastoVarioRepository,
     PuntoRepository,
     RecorridoRepository,
     TasaRepository,
+    TituloGastoRepository,
+    TituloImpuestoRepository,
     VehiculoRepository,
     ViajeRepository,
     TasaService,
     ExportService,
+    GastosGasoilService,
+    GastosImpuestosService,
+    GastosVariosService,
     ReporteEmpresaService,
     TursoSyncService,
     TotalReparacionService,

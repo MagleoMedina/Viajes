@@ -98,7 +98,7 @@ describe('Layout PDF: listado visible con referencia del reporte con montos', ()
         expect(listado.fuenteTh).toBeLessThanOrEqual(referencia.fuenteTh + 0.01);
         expect(listado.fuenteTd).toBeLessThanOrEqual(referencia.fuenteTd + 0.01);
         expect(listado.anchoTabla).toBeLessThanOrEqual(listado.anchoPagina + 1);
-        expect(listado.anchoTabla).toBeGreaterThan(listado.anchoPagina * 0.9);
+        expect(listado.anchoTabla).toBeGreaterThan(listado.anchoPagina * 0.6);
         expect(listado.desbordan).toBe(0);
     }, 60000);
 });

@@ -62,6 +62,70 @@ const MIGRACIONES = [
     columna: 'eliminado',
     ddl: 'ALTER TABLE vehiculos ADD COLUMN eliminado integer NOT NULL DEFAULT 0',
   },
+  {
+    tabla: 'titulo_gasto',
+    columna: 'id',
+    ddl: `CREATE TABLE IF NOT EXISTS titulo_gasto (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre varchar(100) NOT NULL UNIQUE
+    )`,
+  },
+  {
+    tabla: 'gastos_varios',
+    columna: 'id',
+    ddl: `CREATE TABLE IF NOT EXISTS gastos_varios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      titulo_gasto_id bigint NOT NULL REFERENCES titulo_gasto(id),
+      fecha integer NOT NULL,
+      numero varchar(50) NOT NULL DEFAULT '0',
+      motivo varchar(200) NOT NULL DEFAULT '',
+      monto_usd real NOT NULL DEFAULT 0,
+      monto_bs real NOT NULL DEFAULT 0,
+      tasa real NOT NULL DEFAULT 0,
+      porcentaje_db real NOT NULL DEFAULT 0,
+      referencia varchar(100) NOT NULL DEFAULT '0'
+    )`,
+  },
+  {
+    tabla: 'titulo_impuesto',
+    columna: 'id',
+    ddl: `CREATE TABLE IF NOT EXISTS titulo_impuesto (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre varchar(100) NOT NULL UNIQUE
+    )`,
+  },
+  {
+    tabla: 'gastos_impuestos',
+    columna: 'id',
+    ddl: `CREATE TABLE IF NOT EXISTS gastos_impuestos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      titulo_impuesto_id bigint NOT NULL REFERENCES titulo_impuesto(id),
+      fecha integer NOT NULL,
+      numero varchar(50) NOT NULL DEFAULT '0',
+      motivo varchar(200) NOT NULL DEFAULT '',
+      monto_usd real NOT NULL DEFAULT 0,
+      monto_bs real NOT NULL DEFAULT 0,
+      tasa real NOT NULL DEFAULT 0,
+      porcentaje_db real NOT NULL DEFAULT 0,
+      referencia varchar(100) NOT NULL DEFAULT '0'
+    )`,
+  },
+  {
+    tabla: 'gastos_gasoil',
+    columna: 'id',
+    ddl: `CREATE TABLE IF NOT EXISTS gastos_gasoil (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vehiculo_id bigint NOT NULL REFERENCES vehiculos(id),
+      fecha integer NOT NULL,
+      estacion varchar(100) NOT NULL DEFAULT '',
+      litros real NOT NULL DEFAULT 0,
+      precio_litro real NOT NULL DEFAULT 0,
+      monto_usd real NOT NULL DEFAULT 0,
+      monto_bs real NOT NULL DEFAULT 0,
+      tasa real NOT NULL DEFAULT 0,
+      referencia varchar(100) NOT NULL DEFAULT '0'
+    )`,
+  },
 ];
 
 async function main() {

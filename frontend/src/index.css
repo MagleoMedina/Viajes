@@ -188,6 +188,64 @@ label {
   text-align: right;
 }
 
+/* Fila de subtotal por título en la vista previa de gastos varios. */
+.tabla tr.suma td {
+  background: #2f6fed;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Título de cada bloque (gasto agrupado por título). */
+.bloque-titulo {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #26324a;
+}
+
+/* Totales generales al pie de la vista previa. */
+.resumen-total {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin: 14px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* Pestañas Registrar / Modificar / Consultar de cada sección de gastos. */
+.pestanas {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 16px;
+  border-bottom: 1px solid #c9d2e0;
+}
+
+.pestanas button {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  color: #4b5563;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.pestanas button:hover {
+  color: #26324a;
+}
+
+.pestanas button.activa {
+  color: #2f6fed;
+  border-bottom-color: #2f6fed;
+}
+
 .error,
 .ok {
   margin-top: 10px;
