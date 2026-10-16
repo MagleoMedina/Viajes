@@ -48,6 +48,7 @@ const gastos_varios_service_1 = require("./service/gastos-varios.service");
 const reporte_empresa_service_1 = require("./service/reporte-empresa.service");
 const turso_sync_service_1 = require("./service/turso-sync.service");
 const total_reparacion_service_1 = require("./service/total-reparacion.service");
+const stock_gasoil_service_1 = require("./service/stock-gasoil.service");
 const choferes_controller_1 = require("./web/choferes.controller");
 const empresas_controller_1 = require("./web/empresas.controller");
 const gastos_gasoil_controller_1 = require("./web/gastos-gasoil.controller");
@@ -144,6 +145,7 @@ exports.AppModule = AppModule = __decorate([
             reporte_empresa_service_1.ReporteEmpresaService,
             turso_sync_service_1.TursoSyncService,
             total_reparacion_service_1.TotalReparacionService,
+            stock_gasoil_service_1.StockGasoilService,
             db_saver_service_1.DbSaverService,
             {
                 provide: core_1.APP_PIPE,

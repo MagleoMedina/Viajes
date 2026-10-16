@@ -27,6 +27,7 @@ const recorrido_repository_1 = require("../repo/recorrido.repository");
 const tasa_repository_1 = require("../repo/tasa.repository");
 const vehiculo_repository_1 = require("../repo/vehiculo.repository");
 const viaje_repository_1 = require("../repo/viaje.repository");
+const stock_gasoil_service_1 = require("../service/stock-gasoil.service");
 const serialize_1 = require("../common/serialize");
 const dates_1 = require("../common/dates");
 const api_exception_1 = require("./api-exception");
@@ -88,8 +89,9 @@ let ViajeController = class ViajeController {
     tasaRepo;
     recorridoRepo;
     vehiculoRepo;
+    stockGasoil;
     gastoRepo;
-    constructor(repo, choferRepo, empresaRepo, puntoRepo, tasaRepo, recorridoRepo, vehiculoRepo, gastoRepo) {
+    constructor(repo, choferRepo, empresaRepo, puntoRepo, tasaRepo, recorridoRepo, vehiculoRepo, stockGasoil, gastoRepo) {
         this.repo = repo;
         this.choferRepo = choferRepo;
         this.empresaRepo = empresaRepo;
@@ -97,6 +99,7 @@ let ViajeController = class ViajeController {
         this.tasaRepo = tasaRepo;
         this.recorridoRepo = recorridoRepo;
         this.vehiculoRepo = vehiculoRepo;
+        this.stockGasoil = stockGasoil;
         this.gastoRepo = gastoRepo;
     }
     listar(empresaId, desde, hasta) {
@@ -181,6 +184,12 @@ let ViajeController = class ViajeController {
         viaje.refPeajes = referencia(req.refPeajes);
         viaje.refPagoChofer = referencia(req.refPagoChofer);
         viaje.tasa = cero(req.tasa);
+        if (viaje.vehiculo && (viaje.litros ?? 0) > 0) {
+            const stock = await this.stockGasoil.disponible(viaje.vehiculo.id, viaje.id ?? null);
+            if ((viaje.litros ?? 0) > stock.disponible) {
+                throw new api_exception_1.ApiException(400, `Litros exceden el gasoil disponible (disponible: ${Math.max(0, stock.disponible)} L)`);
+            }
+        }
         const plan = [];
         let gastosVarios = 0;
         if (req.gastos) {
@@ -281,7 +290,7 @@ __decorate([
 ], ViajeController.prototype, "eliminar", null);
 exports.ViajeController = ViajeController = __decorate([
     (0, common_1.Controller)('api/viajes'),
-    __param(7, (0, typeorm_1.InjectRepository)(gasto_entity_1.Gasto)),
+    __param(8, (0, typeorm_1.InjectRepository)(gasto_entity_1.Gasto)),
     __metadata("design:paramtypes", [viaje_repository_1.ViajeRepository,
         chofer_repository_1.ChoferRepository,
         empresa_repository_1.EmpresaRepository,
@@ -289,6 +298,7 @@ exports.ViajeController = ViajeController = __decorate([
         tasa_repository_1.TasaRepository,
         recorrido_repository_1.RecorridoRepository,
         vehiculo_repository_1.VehiculoRepository,
+        stock_gasoil_service_1.StockGasoilService,
         typeorm_2.Repository])
 ], ViajeController);
 const cero = (valor) => (valor == null ? 0 : valor);

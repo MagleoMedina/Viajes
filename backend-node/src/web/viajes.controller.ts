@@ -24,6 +24,7 @@ import { RecorridoRepository } from '../repo/recorrido.repository';
 import { TasaRepository } from '../repo/tasa.repository';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
+import { StockGasoilService } from '../service/stock-gasoil.service';
 import { viajeJson } from '../common/serialize';
 import { dateOnlyToMillis, round2 } from '../common/dates';
 import { ApiException } from './api-exception';
@@ -79,6 +80,7 @@ export class ViajeController {
     private readonly tasaRepo: TasaRepository,
     private readonly recorridoRepo: RecorridoRepository,
     private readonly vehiculoRepo: VehiculoRepository,
+    private readonly stockGasoil: StockGasoilService,
     @InjectRepository(Gasto) private readonly gastoRepo: Repository<Gasto>,
   ) {}
 
@@ -185,6 +187,18 @@ export class ViajeController {
     viaje.refPeajes = referencia(req.refPeajes);
     viaje.refPagoChofer = referencia(req.refPagoChofer);
     viaje.tasa = cero(req.tasa);
+
+    // El viaje descuenta gasoil del stock del vehículo. Al editar se excluyen
+    // los litros actuales del viaje para validar contra el stock real.
+    if (viaje.vehiculo && (viaje.litros ?? 0) > 0) {
+      const stock = await this.stockGasoil.disponible(viaje.vehiculo.id, viaje.id ?? null);
+      if ((viaje.litros ?? 0) > stock.disponible) {
+        throw new ApiException(
+          400,
+          `Litros exceden el gasoil disponible (disponible: ${Math.max(0, stock.disponible)} L)`,
+        );
+      }
+    }
 
     // Se validan los gastos antes de tocar la base; el monto va en $.
     const plan: Array<{ monto: number; descripcion: string }> = [];

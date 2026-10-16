@@ -39,6 +39,7 @@ import { GastosVariosService } from './service/gastos-varios.service';
 import { ReporteEmpresaService } from './service/reporte-empresa.service';
 import { TursoSyncService } from './service/turso-sync.service';
 import { TotalReparacionService } from './service/total-reparacion.service';
+import { StockGasoilService } from './service/stock-gasoil.service';
 import { ChoferController } from './web/choferes.controller';
 import { EmpresaController } from './web/empresas.controller';
 import { GastoGasoilController } from './web/gastos-gasoil.controller';
@@ -136,6 +137,7 @@ const ENTIDADES = [
     ReporteEmpresaService,
     TursoSyncService,
     TotalReparacionService,
+    StockGasoilService,
     DbSaverService,
     {
       provide: APP_PIPE,

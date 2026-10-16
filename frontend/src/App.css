@@ -510,6 +510,17 @@
   color: var(--accent);
 }
 
+/* ---------- Stock de gasoil ---------- */
+
+.stock-gasoil-panel {
+  background: #fbfcfe;
+}
+
+.stock-gasoil-panel .stock-disponible {
+  font-weight: 700;
+  color: var(--accent);
+}
+
 /* ---------- Chips de carga ---------- */
 
 .chips {

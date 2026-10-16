@@ -18,6 +18,7 @@ const class_validator_1 = require("class-validator");
 const gasto_gasoil_entity_1 = require("../domain/gasto-gasoil.entity");
 const gasto_gasoil_repository_1 = require("../repo/gasto-gasoil.repository");
 const vehiculo_repository_1 = require("../repo/vehiculo.repository");
+const stock_gasoil_service_1 = require("../service/stock-gasoil.service");
 const serialize_1 = require("../common/serialize");
 const dates_1 = require("../common/dates");
 const api_exception_1 = require("./api-exception");
@@ -83,13 +84,30 @@ __decorate([
 let GastoGasoilController = class GastoGasoilController {
     repo;
     vehiculos;
-    constructor(repo, vehiculos) {
+    stockGasoil;
+    constructor(repo, vehiculos, stockGasoil) {
         this.repo = repo;
         this.vehiculos = vehiculos;
+        this.stockGasoil = stockGasoil;
     }
     buscar(desde, hasta, vehiculoId) {
         const id = vehiculoId ? Number(vehiculoId) : null;
         return this.repo.buscar(id, desde, hasta).then((lista) => lista.map(serialize_1.gastoGasoilJson));
+    }
+    async stock(vehiculoId, excluirViajeId) {
+        if (!vehiculoId) {
+            const vehiculos = await this.vehiculos.findAll();
+            return Promise.all(vehiculos.map(async (v) => ({
+                placa: v.placa,
+                ...(await this.stockGasoil.disponible(v.id, null)),
+            })));
+        }
+        const id = Number(vehiculoId);
+        if (!Number.isFinite(id) || id <= 0) {
+            throw new api_exception_1.ApiValidationException({ vehiculoId: 'El vehículo es obligatorio' });
+        }
+        const excluido = excluirViajeId ? Number(excluirViajeId) : null;
+        return this.stockGasoil.disponible(id, excluido);
     }
     async crear(req) {
         if (req.vehiculoId == null) {
@@ -110,6 +128,8 @@ let GastoGasoilController = class GastoGasoilController {
         if (!gasto)
             throw new api_exception_1.ApiException(404, 'Gasto de gasoil no encontrado');
         this.validarFecha(req.fecha);
+        const vehiculoAntes = gasto.vehiculo?.id ?? null;
+        const litrosAntes = gasto.litros ?? 0;
         if (req.vehiculoId != null) {
             const vehiculo = await this.vehiculos.findById(req.vehiculoId);
             if (!vehiculo)
@@ -118,6 +138,7 @@ let GastoGasoilController = class GastoGasoilController {
         }
         gasto.fecha = new Date((0, dates_1.dateOnlyToMillis)(req.fecha));
         this.aplicar(gasto, req, false);
+        await this.validarStockEdicion(gasto, vehiculoAntes, litrosAntes);
         return this.repo.save(gasto).then(serialize_1.gastoGasoilJson);
     }
     async eliminar(id) {
@@ -157,6 +178,19 @@ let GastoGasoilController = class GastoGasoilController {
             throw new api_exception_1.ApiValidationException({ fecha: 'Formato de fecha inválido (AAAA-MM-DD)' });
         }
     }
+    async validarStockEdicion(gasto, vehiculoAntes, litrosAntes) {
+        const vehiculoId = gasto.vehiculo?.id;
+        if (vehiculoId == null)
+            return;
+        const stock = await this.stockGasoil.disponible(vehiculoId, null);
+        const mismoVehiculo = vehiculoAntes === vehiculoId;
+        const stockTras = (0, dates_1.round2)(stock.disponible - (mismoVehiculo ? litrosAntes : 0) + (gasto.litros ?? 0));
+        if (stockTras < 0) {
+            throw new api_exception_1.ApiValidationException({
+                litros: 'La edición dejaría el stock de gasoil en negativo',
+            });
+        }
+    }
 };
 exports.GastoGasoilController = GastoGasoilController;
 __decorate([
@@ -168,6 +202,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], GastoGasoilController.prototype, "buscar", null);
+__decorate([
+    (0, common_1.Get)('stock'),
+    __param(0, (0, common_1.Query)('vehiculoId')),
+    __param(1, (0, common_1.Query)('excluirViajeId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], GastoGasoilController.prototype, "stock", null);
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
@@ -194,6 +236,7 @@ __decorate([
 exports.GastoGasoilController = GastoGasoilController = __decorate([
     (0, common_1.Controller)('api/gastos-gasoil'),
     __metadata("design:paramtypes", [gasto_gasoil_repository_1.GastoGasoilRepository,
-        vehiculo_repository_1.VehiculoRepository])
+        vehiculo_repository_1.VehiculoRepository,
+        stock_gasoil_service_1.StockGasoilService])
 ], GastoGasoilController);
 //# sourceMappingURL=gastos-gasoil.controller.js.map

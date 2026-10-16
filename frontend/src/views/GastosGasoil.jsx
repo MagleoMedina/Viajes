@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi'
 import { api, fecha, money, urlDescarga } from '../api/client.js'
-import { agruparGastos, gasoilPayload, gasoilVacio, vehiculoExistente } from '../api/gastos.js'
+import { agruparGastos, gasoilPayload, gasoilVacio, red2, vehiculoExistente } from '../api/gastos.js'
 import GastoGasoilForm from '../components/GastoGasoilForm.jsx'
+import StockGasoilPanel from '../components/StockGasoilPanel.jsx'
 import Modal from '../components/Modal.jsx'
 import Confirmar from '../components/Confirmar.jsx'
 
@@ -14,7 +15,7 @@ const PESTANAS = [
 
 /* ------------------------------------------------------------------ Registrar */
 
-function GasRegistrar() {
+function GasRegistrar({ onStockCambio }) {
   const [vehiculos, setVehiculos] = useState([])
   const [form, setForm] = useState(() => gasoilVacio())
   const [tasaActual, setTasaActual] = useState('')
@@ -62,6 +63,7 @@ function GasRegistrar() {
       setAviso('Gasto de gasoil registrado.')
       setForm(gasoilVacio(tasaActual))
       await cargarRegistros()
+      onStockCambio?.()
     } catch (err) {
       setError(err.message)
     }
@@ -126,7 +128,7 @@ function GasRegistrar() {
 
 /* ------------------------------------------------------------------ Modificar */
 
-function GasModificar() {
+function GasModificar({ onStockCambio }) {
   const [vehiculos, setVehiculos] = useState([])
   const [registros, setRegistros] = useState([])
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', vehiculoId: '' })
@@ -209,6 +211,7 @@ function GasModificar() {
       setAviso('Gasto actualizado.')
       cerrarEdicion()
       await cargarRegistros()
+      onStockCambio?.()
     } catch (err) {
       setError(err.message)
     }
@@ -224,6 +227,7 @@ function GasModificar() {
       await api.del(`/gastos-gasoil/${g.id}`)
       setAviso('Gasto eliminado.')
       await cargarRegistros()
+      onStockCambio?.()
     } catch (err) {
       setError(err.message)
     }
@@ -371,10 +375,31 @@ function GasConsultar() {
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', vehiculoId: '' })
   const [vistaPrevia, setVistaPrevia] = useState(null)
   const [error, setError] = useState('')
+  const [stock, setStock] = useState(null)
 
   useEffect(() => {
     api.get('/vehiculos').then(setVehiculos).catch((e) => setError(e.message))
   }, [])
+
+  // Stock de gasoil del vehículo filtrado: lo comprado menos lo usado en viajes.
+  useEffect(() => {
+    if (!filtros.vehiculoId) {
+      setStock(null)
+      return undefined
+    }
+    let vivo = true
+    api
+      .get(`/gastos-gasoil/stock?vehiculoId=${filtros.vehiculoId}`)
+      .then((s) => {
+        if (vivo) setStock(s)
+      })
+      .catch(() => {
+        if (vivo) setStock(null)
+      })
+    return () => {
+      vivo = false
+    }
+  }, [filtros.vehiculoId])
 
   function cambiar(campo, valor) {
     setFiltros((f) => ({ ...f, [campo]: valor }))
@@ -457,6 +482,12 @@ function GasConsultar() {
               </button>
             </div>
           </form>
+          {stock && (
+            <p className="ayuda stock-gasoil">
+              Gasoil disponible: <strong>{red2(Math.max(0, stock.disponible))} L</strong>
+              {` · Comprado ${red2(stock.comprado)} L · Usado ${red2(stock.usado)} L`}
+            </p>
+          )}
           {error && <p className="error">{error}</p>}
         </section>
       </div>
@@ -547,6 +578,12 @@ function GasConsultar() {
 /** Sección «Gasoil» con pestañas Registrar / Modificar / Consultar. */
 export default function GastosGasoil() {
   const [pestana, setPestana] = useState('registrar')
+  // Cambia tras cada alta/edición/borrado para refrescar la ventanita de stock.
+  const [stockTick, setStockTick] = useState(0)
+
+  function refrescarStock() {
+    setStockTick((t) => t + 1)
+  }
 
   return (
     <div className="vista">
@@ -572,8 +609,10 @@ export default function GastosGasoil() {
         ))}
       </nav>
 
-      {pestana === 'registrar' && <GasRegistrar />}
-      {pestana === 'modificar' && <GasModificar />}
+      <StockGasoilPanel tick={stockTick} />
+
+      {pestana === 'registrar' && <GasRegistrar onStockCambio={refrescarStock} />}
+      {pestana === 'modificar' && <GasModificar onStockCambio={refrescarStock} />}
       {pestana === 'consultar' && <GasConsultar />}
     </div>
   )

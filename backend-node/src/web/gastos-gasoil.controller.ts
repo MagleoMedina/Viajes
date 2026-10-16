@@ -15,6 +15,7 @@ import { IsInt, IsNumber, IsOptional, IsString, MaxLength } from 'class-validato
 import { GastoGasoil } from '../domain/gasto-gasoil.entity';
 import { GastoGasoilRepository } from '../repo/gasto-gasoil.repository';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
+import { StockGasoilService } from '../service/stock-gasoil.service';
 import { gastoGasoilJson } from '../common/serialize';
 import { dateOnlyToMillis, round2 } from '../common/dates';
 import { ApiException, ApiValidationException } from './api-exception';
@@ -66,6 +67,7 @@ export class GastoGasoilController {
   constructor(
     private readonly repo: GastoGasoilRepository,
     private readonly vehiculos: VehiculoRepository,
+    private readonly stockGasoil: StockGasoilService,
   ) {}
 
   @Get()
@@ -76,6 +78,32 @@ export class GastoGasoilController {
   ) {
     const id = vehiculoId ? Number(vehiculoId) : null;
     return this.repo.buscar(id, desde, hasta).then((lista) => lista.map(gastoGasoilJson));
+  }
+
+  /**
+   * Stock por vehículo: comprado (gastos) menos usado (viajes).
+   * Sin vehiculoId responde la lista de todos los vehículos (con placa).
+   */
+  @Get('stock')
+  async stock(
+    @Query('vehiculoId') vehiculoId?: string,
+    @Query('excluirViajeId') excluirViajeId?: string,
+  ) {
+    if (!vehiculoId) {
+      const vehiculos = await this.vehiculos.findAll();
+      return Promise.all(
+        vehiculos.map(async (v) => ({
+          placa: v.placa,
+          ...(await this.stockGasoil.disponible(v.id, null)),
+        })),
+      );
+    }
+    const id = Number(vehiculoId);
+    if (!Number.isFinite(id) || id <= 0) {
+      throw new ApiValidationException({ vehiculoId: 'El vehículo es obligatorio' });
+    }
+    const excluido = excluirViajeId ? Number(excluirViajeId) : null;
+    return this.stockGasoil.disponible(id, excluido);
   }
 
   @Post()
@@ -101,6 +129,8 @@ export class GastoGasoilController {
     if (!gasto) throw new ApiException(404, 'Gasto de gasoil no encontrado');
     this.validarFecha(req.fecha);
 
+    const vehiculoAntes = gasto.vehiculo?.id ?? null;
+    const litrosAntes = gasto.litros ?? 0;
     if (req.vehiculoId != null) {
       const vehiculo = await this.vehiculos.findById(req.vehiculoId);
       if (!vehiculo) throw new ApiException(404, 'Vehículo no encontrado');
@@ -108,6 +138,7 @@ export class GastoGasoilController {
     }
     gasto.fecha = new Date(dateOnlyToMillis(req.fecha));
     this.aplicar(gasto, req, false);
+    await this.validarStockEdicion(gasto, vehiculoAntes, litrosAntes);
     return this.repo.save(gasto).then(gastoGasoilJson);
   }
 
@@ -151,6 +182,29 @@ export class GastoGasoilController {
   private validarFecha(fecha: string) {
     if (!fecha || !FECHA_ISO.test(fecha)) {
       throw new ApiValidationException({ fecha: 'Formato de fecha inválido (AAAA-MM-DD)' });
+    }
+  }
+
+  /**
+   * La edición no puede dejar el stock del vehículo en negativo: el nuevo
+   * stock = disponible actual − litros previos + litros nuevos.
+   */
+  private async validarStockEdicion(
+    gasto: GastoGasoil,
+    vehiculoAntes: number | null,
+    litrosAntes: number,
+  ) {
+    const vehiculoId = gasto.vehiculo?.id;
+    if (vehiculoId == null) return;
+    const stock = await this.stockGasoil.disponible(vehiculoId, null);
+    const mismoVehiculo = vehiculoAntes === vehiculoId;
+    const stockTras = round2(
+      stock.disponible - (mismoVehiculo ? litrosAntes : 0) + (gasto.litros ?? 0),
+    );
+    if (stockTras < 0) {
+      throw new ApiValidationException({
+        litros: 'La edición dejaría el stock de gasoil en negativo',
+      });
     }
   }
 }

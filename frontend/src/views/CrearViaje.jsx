@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FiPlus, FiX, FiSave, FiCheck } from 'react-icons/fi'
 import { api, hoy, money, fecha } from '../api/client.js'
+import { red2 } from '../api/gastos.js'
 import ChipsInput from '../components/ChipsInput.jsx'
 import Modal from '../components/Modal.jsx'
 
@@ -89,6 +90,8 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const [aviso, setAviso] = useState('')
   const [guardado, setGuardado] = useState('')
   const [confirmar, setConfirmar] = useState(false)
+  const [stock, setStock] = useState(null)
+  const [stockTick, setStockTick] = useState(0)
 
   function cargar() {
     return Promise.all([
@@ -115,6 +118,40 @@ export default function CrearViaje({ viaje, onGuardado }) {
   useEffect(() => {
     cargar().catch((e) => setError(e.message))
   }, [])
+
+  // Stock de gasoil del vehículo elegido. Al editar, el viaje actual excluye
+  // sus propios litros para mostrar lo realmente disponible. Se refresca al
+  // montar, al cambiar de vehículo, tras guardar y al recuperar el foco.
+  useEffect(() => {
+    if (!form.vehiculoId) {
+      setStock(null)
+      return undefined
+    }
+    let vivo = true
+    function traer() {
+      const q = new URLSearchParams({ vehiculoId: String(form.vehiculoId) })
+      if (viaje?.id) q.set('excluirViajeId', String(viaje.id))
+      api
+        .get(`/gastos-gasoil/stock?${q}`)
+        .then((s) => {
+          if (vivo) setStock(s)
+        })
+        .catch(() => {
+          if (vivo) setStock(null)
+        })
+    }
+    const alFocar = () => {
+      if (document.visibilityState === 'visible') traer()
+    }
+    traer()
+    window.addEventListener('focus', alFocar)
+    document.addEventListener('visibilitychange', alFocar)
+    return () => {
+      vivo = false
+      window.removeEventListener('focus', alFocar)
+      document.removeEventListener('visibilitychange', alFocar)
+    }
+  }, [form.vehiculoId, viaje?.id, stockTick])
 
   function set(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }))
@@ -162,6 +199,13 @@ export default function CrearViaje({ viaje, onGuardado }) {
 
   function enviar(e) {
     e.preventDefault()
+    if (form.vehiculoId && stock && numero(form.litros) > stock.disponible) {
+      setError(
+        `Litros exceden el gasoil disponible (${red2(Math.max(0, stock.disponible))} L). ` +
+          'Registre la compra en el módulo de gasoil o reduzca los litros.',
+      )
+      return
+    }
     setConfirmar(true)
   }
 
@@ -227,6 +271,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
         limpiarFormulario()
         setGuardado('Viaje guardado')
       }
+      setStockTick((t) => t + 1)
     } catch (err) {
       setError(err.message)
     }
@@ -395,6 +440,12 @@ export default function CrearViaje({ viaje, onGuardado }) {
         <div className="viaje-rejilla">
           <section className="tarjeta">
             <h2>Montos</h2>
+            {stock && (
+              <p className="ayuda stock-gasoil">
+                Gasoil disponible: <strong>{red2(Math.max(0, stock.disponible))} L</strong>
+                {` · Comprado ${red2(stock.comprado)} L · Usado ${red2(stock.usado)} L`}
+              </p>
+            )}
             <div className="campos-3">
               <label>
                 Monto del viaje ($)
