@@ -126,6 +126,18 @@ const MIGRACIONES = [
       referencia varchar(100) NOT NULL DEFAULT '0'
     )`,
   },
+  {
+    tabla: 'gasoil_estacionario',
+    columna: 'id',
+    ddl: `CREATE TABLE IF NOT EXISTS gasoil_estacionario (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vehiculo_id bigint NOT NULL REFERENCES vehiculos(id),
+      fecha integer NOT NULL,
+      litros real NOT NULL DEFAULT 0,
+      referencia varchar(100) NOT NULL DEFAULT '0',
+      motivo varchar(200) NOT NULL DEFAULT ''
+    )`,
+  },
 ];
 
 /**

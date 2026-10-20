@@ -2,6 +2,7 @@ import { Chofer } from '../domain/chofer.entity';
 import { Empresa } from '../domain/empresa.entity';
 import { Gasto } from '../domain/gasto.entity';
 import { GastoGasoil } from '../domain/gasto-gasoil.entity';
+import { GasoilEstacionario } from '../domain/gasoil-estacionario.entity';
 import { GastoImpuesto } from '../domain/gasto-impuesto.entity';
 import { GastoVario } from '../domain/gasto-vario.entity';
 import { Punto } from '../domain/punto.entity';
@@ -116,6 +117,17 @@ export function gastoGasoilJson(g: GastoGasoil) {
     montoBs: num(g.montoBs),
     tasa: num(g.tasa),
     referencia: text(g.referencia),
+  };
+}
+
+export function gasoilEstacionarioJson(g: GasoilEstacionario) {
+  return {
+    id: g.id,
+    vehiculo: g.vehiculo ? vehiculoJson(g.vehiculo) : undefined,
+    fecha: g.fecha == null ? undefined : toIsoDate(g.fecha),
+    litros: num(g.litros),
+    referencia: text(g.referencia),
+    motivo: text(g.motivo),
   };
 }
 

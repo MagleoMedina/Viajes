@@ -4,8 +4,8 @@ import { red2 } from '../api/gastos.js'
 
 /**
  * Ventanita de gasoil: stock GLOBAL (todos los vehículos), litros comprados
- * menos litros usados en viajes. Se recalcula al montar, al cambiar `tick`
- * (tras un alta/edición/borrado) y al recuperar el foco de la ventana.
+ * menos litros usados en viajes y estacionarios. Se recalcula al montar, al
+ * cambiar `tick` (tras un alta/edición/borrado) y al recuperar el foco.
  */
 export default function StockGasoilPanel({ tick = 0 }) {
   const [stock, setStock] = useState(null)
@@ -42,8 +42,8 @@ export default function StockGasoilPanel({ tick = 0 }) {
     <section className="tarjeta ancho-completo stock-gasoil-panel">
       <h2>Gasoil disponible (total)</h2>
       <p className="ayuda">
-        Litros comprados menos litros usados en viajes, sumando todos los vehículos. Se actualiza
-        al registrar gasoil o viajes.
+        Litros comprados menos litros usados en viajes y por vehículos estacionarios, sumando
+        todos los vehículos. Se actualiza al registrar gasoil, viajes o consumos estacionarios.
       </p>
       {error && (
         <p className="error">
@@ -68,6 +68,10 @@ export default function StockGasoilPanel({ tick = 0 }) {
           <div className="stock-cifra">
             <span className="etiqueta">Usado en viajes</span>
             <strong>{red2(stock.usado)} L</strong>
+          </div>
+          <div className="stock-cifra">
+            <span className="etiqueta">Estacionario</span>
+            <strong>{red2(stock.estacionario)} L</strong>
           </div>
         </div>
       ) : (

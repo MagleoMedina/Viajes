@@ -3,6 +3,7 @@ import { FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi'
 import { api, fecha, money, urlDescarga } from '../api/client.js'
 import { agruparGastos, gasoilPayload, gasoilVacio, vehiculoExistente } from '../api/gastos.js'
 import GastoGasoilForm from '../components/GastoGasoilForm.jsx'
+import GasoilEstacionario from '../components/GasoilEstacionario.jsx'
 import StockGasoilPanel from '../components/StockGasoilPanel.jsx'
 import Modal from '../components/Modal.jsx'
 import Confirmar from '../components/Confirmar.jsx'
@@ -122,6 +123,8 @@ function GasRegistrar({ onStockCambio }) {
           </div>
         )}
       </section>
+
+      <GasoilEstacionario onStockCambio={onStockCambio} />
     </div>
   )
 }

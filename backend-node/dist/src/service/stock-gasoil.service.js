@@ -17,15 +17,18 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const gasto_gasoil_entity_1 = require("../domain/gasto-gasoil.entity");
+const gasoil_estacionario_entity_1 = require("../domain/gasoil-estacionario.entity");
 const viaje_entity_1 = require("../domain/viaje.entity");
 const vehiculo_entity_1 = require("../domain/vehiculo.entity");
 const dates_1 = require("../common/dates");
 let StockGasoilService = class StockGasoilService {
     gastos;
     viajes;
-    constructor(gastos, viajes) {
+    estacionarios;
+    constructor(gastos, viajes, estacionarios) {
         this.gastos = gastos;
         this.viajes = viajes;
+        this.estacionarios = estacionarios;
     }
     async global(excluirViajeId) {
         const comprado = await this.suma(this.gastos.createQueryBuilder('g').select('COALESCE(SUM(g.litros), 0)', 'suma'));
@@ -36,7 +39,10 @@ let StockGasoilService = class StockGasoilService {
             qb = qb.andWhere('v.id != :excluido', { excluido: excluirViajeId });
         }
         const usado = await this.suma(qb);
-        return this.armar(comprado, usado);
+        const estacionario = await this.suma(this.estacionarios
+            .createQueryBuilder('e')
+            .select('COALESCE(SUM(e.litros), 0)', 'suma'));
+        return this.armar(comprado, usado, estacionario);
     }
     async resumen() {
         const vehiculos = await this.gastos.manager.find(vehiculo_entity_1.Vehiculo);
@@ -73,6 +79,7 @@ let StockGasoilService = class StockGasoilService {
         const total = {
             comprado: 0,
             usado: 0,
+            estacionario: 0,
             disponible: 0,
             compradoUsd: 0,
             compradoBs: 0,
@@ -89,6 +96,7 @@ let StockGasoilService = class StockGasoilService {
                 compradoBs: (0, dates_1.round2)(Number(c?.montoBs ?? 0)),
                 usado: (0, dates_1.round2)(Number(u?.litros ?? 0)),
                 usadoBs: (0, dates_1.round2)(Number(u?.combustible ?? 0)),
+                estacionario: 0,
                 disponible: 0,
             };
             fila.disponible = (0, dates_1.round2)(fila.comprado - fila.usado);
@@ -107,11 +115,12 @@ let StockGasoilService = class StockGasoilService {
         total.disponible = (0, dates_1.round2)(total.comprado - total.usado);
         return { filas, total };
     }
-    armar(comprado, usado) {
+    armar(comprado, usado, estacionario) {
         return {
             comprado: (0, dates_1.round2)(comprado),
             usado: (0, dates_1.round2)(usado),
-            disponible: (0, dates_1.round2)(comprado - usado),
+            estacionario: (0, dates_1.round2)(estacionario),
+            disponible: (0, dates_1.round2)(comprado - usado - estacionario),
         };
     }
     async suma(qb) {
@@ -125,7 +134,9 @@ exports.StockGasoilService = StockGasoilService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(gasto_gasoil_entity_1.GastoGasoil)),
     __param(1, (0, typeorm_1.InjectRepository)(viaje_entity_1.Viaje)),
+    __param(2, (0, typeorm_1.InjectRepository)(gasoil_estacionario_entity_1.GasoilEstacionario)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], StockGasoilService);
 //# sourceMappingURL=stock-gasoil.service.js.map

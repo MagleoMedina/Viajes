@@ -19,6 +19,7 @@ const reporte_empresa_service_1 = require("../service/reporte-empresa.service");
 const gastos_varios_service_1 = require("../service/gastos-varios.service");
 const gastos_impuestos_service_1 = require("../service/gastos-impuestos.service");
 const gastos_gasoil_service_1 = require("../service/gastos-gasoil.service");
+const gasoil_estacionario_service_1 = require("../service/gasoil-estacionario.service");
 const relacion_reportes_service_1 = require("../service/relacion-reportes.service");
 const empresa_repository_1 = require("../repo/empresa.repository");
 const api_exception_1 = require("./api-exception");
@@ -44,14 +45,16 @@ let ExportController = class ExportController {
     gastosServicio;
     impuestosServicio;
     gasoilServicio;
+    estacionarioServicio;
     relacionServicio;
-    constructor(servicio, reporteServicio, empresaRepo, gastosServicio, impuestosServicio, gasoilServicio, relacionServicio) {
+    constructor(servicio, reporteServicio, empresaRepo, gastosServicio, impuestosServicio, gasoilServicio, estacionarioServicio, relacionServicio) {
         this.servicio = servicio;
         this.reporteServicio = reporteServicio;
         this.empresaRepo = empresaRepo;
         this.gastosServicio = gastosServicio;
         this.impuestosServicio = impuestosServicio;
         this.gasoilServicio = gasoilServicio;
+        this.estacionarioServicio = estacionarioServicio;
         this.relacionServicio = relacionServicio;
     }
     async nombre(empresaId, prefijo, desde, hasta) {
@@ -124,6 +127,17 @@ let ExportController = class ExportController {
         const d = fechaArchivo(desde, 'inicio');
         const h = fechaArchivo(hasta, 'hoy');
         const nombre = `gastos_gasoil_${d}_${h}`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+        res.setHeader('Content-Length', String(buffer.length));
+        res.end(buffer);
+    }
+    async gasoilEstacionario(res, desde, hasta, vehiculoId) {
+        const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
+        const buffer = await this.estacionarioServicio.crearPdf(desde, hasta, idVehiculo);
+        const d = fechaArchivo(desde, 'inicio');
+        const h = fechaArchivo(hasta, 'hoy');
+        const nombre = `gasoil_estacionario_${d}_${h}`;
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
         res.setHeader('Content-Length', String(buffer.length));
@@ -213,6 +227,16 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ExportController.prototype, "gastosGasoil", null);
 __decorate([
+    (0, common_1.Get)('gasoil-estacionario'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('desde')),
+    __param(2, (0, common_1.Query)('hasta')),
+    __param(3, (0, common_1.Query)('vehiculoId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ExportController.prototype, "gasoilEstacionario", null);
+__decorate([
     (0, common_1.Get)('relacion/:tipo'),
     __param(0, (0, common_1.Res)()),
     __param(1, (0, common_1.Param)('tipo')),
@@ -230,6 +254,7 @@ exports.ExportController = ExportController = __decorate([
         gastos_varios_service_1.GastosVariosService,
         gastos_impuestos_service_1.GastosImpuestosService,
         gastos_gasoil_service_1.GastosGasoilService,
+        gasoil_estacionario_service_1.GasoilEstacionarioService,
         relacion_reportes_service_1.RelacionReportesService])
 ], ExportController);
 //# sourceMappingURL=export.controller.js.map

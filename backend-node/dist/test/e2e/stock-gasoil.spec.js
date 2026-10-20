@@ -53,6 +53,7 @@ describe('Stock de gasoil global', () => {
             expect(s.vehiculoId).toBeUndefined();
             expect(s.comprado).toBe(0);
             expect(s.usado).toBe(0);
+            expect(s.estacionario).toBe(0);
             expect(s.disponible).toBe(0);
         });
     });

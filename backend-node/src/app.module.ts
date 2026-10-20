@@ -10,6 +10,7 @@ import { Chofer } from './domain/chofer.entity';
 import { Empresa } from './domain/empresa.entity';
 import { Gasto } from './domain/gasto.entity';
 import { GastoGasoil } from './domain/gasto-gasoil.entity';
+import { GasoilEstacionario } from './domain/gasoil-estacionario.entity';
 import { GastoImpuesto } from './domain/gasto-impuesto.entity';
 import { GastoVario } from './domain/gasto-vario.entity';
 import { Punto } from './domain/punto.entity';
@@ -22,6 +23,7 @@ import { Viaje } from './domain/viaje.entity';
 import { ChoferRepository } from './repo/chofer.repository';
 import { EmpresaRepository } from './repo/empresa.repository';
 import { GastoGasoilRepository } from './repo/gasto-gasoil.repository';
+import { GasoilEstacionarioRepository } from './repo/gasoil-estacionario.repository';
 import { GastoImpuestoRepository } from './repo/gasto-impuesto.repository';
 import { GastoVarioRepository } from './repo/gasto-vario.repository';
 import { PuntoRepository } from './repo/punto.repository';
@@ -34,6 +36,7 @@ import { ViajeRepository } from './repo/viaje.repository';
 import { TasaService } from './service/tasa.service';
 import { ExportService } from './service/export.service';
 import { GastosGasoilService } from './service/gastos-gasoil.service';
+import { GasoilEstacionarioService } from './service/gasoil-estacionario.service';
 import { GastosImpuestosService } from './service/gastos-impuestos.service';
 import { GastosVariosService } from './service/gastos-varios.service';
 import { ReporteEmpresaService } from './service/reporte-empresa.service';
@@ -44,6 +47,7 @@ import { StockGasoilService } from './service/stock-gasoil.service';
 import { ChoferController } from './web/choferes.controller';
 import { EmpresaController } from './web/empresas.controller';
 import { GastoGasoilController } from './web/gastos-gasoil.controller';
+import { GasoilEstacionarioController } from './web/gasoil-estacionario.controller';
 import { GastoImpuestoController } from './web/gastos-impuestos.controller';
 import { GastoVarioController } from './web/gastos-varios.controller';
 import { PuntoController } from './web/puntos.controller';
@@ -67,6 +71,7 @@ const ENTIDADES = [
   Empresa,
   Gasto,
   GastoGasoil,
+  GasoilEstacionario,
   GastoImpuesto,
   GastoVario,
   Punto,
@@ -105,6 +110,7 @@ const ENTIDADES = [
     ChoferController,
     EmpresaController,
     GastoGasoilController,
+    GasoilEstacionarioController,
     GastoImpuestoController,
     GastoVarioController,
     PuntoController,
@@ -123,6 +129,7 @@ const ENTIDADES = [
     ChoferRepository,
     EmpresaRepository,
     GastoGasoilRepository,
+    GasoilEstacionarioRepository,
     GastoImpuestoRepository,
     GastoVarioRepository,
     PuntoRepository,
@@ -135,6 +142,7 @@ const ENTIDADES = [
     TasaService,
     ExportService,
     GastosGasoilService,
+    GasoilEstacionarioService,
     GastosImpuestosService,
     GastosVariosService,
     ReporteEmpresaService,

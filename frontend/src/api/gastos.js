@@ -92,6 +92,28 @@ export function gasoilPayload(form, vehiculoId) {
   }
 }
 
+/** Estado vacío del formulario de gasoil estacionario (fecha de hoy). */
+export function estacionarioVacio() {
+  return {
+    vehiculoId: '',
+    fecha: hoyISO(),
+    litros: '',
+    referencia: '',
+    motivo: '',
+  }
+}
+
+/** Payload numérico para POST/PUT de consumos estacionarios. */
+export function estacionarioPayload(form) {
+  return {
+    vehiculoId: Number(form.vehiculoId),
+    fecha: form.fecha,
+    litros: num(form.litros),
+    referencia: form.referencia.trim() || '0',
+    motivo: form.motivo.trim(),
+  }
+}
+
 /** Placa escrita que ya existe en la BD (ignore-case: placa se guarda en mayúsculas). */
 export function vehiculoExistente(placa, vehiculos) {
   const objetivo = placa.trim().toLocaleLowerCase('es')

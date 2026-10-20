@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
 import { GastoGasoil } from '../domain/gasto-gasoil.entity';
+import { GasoilEstacionario } from '../domain/gasoil-estacionario.entity';
 import { Viaje } from '../domain/viaje.entity';
 import { Vehiculo } from '../domain/vehiculo.entity';
 import { round2 } from '../common/dates';
@@ -11,7 +12,10 @@ export interface StockGasoil {
   comprado: number;
   /** Litros totales consumidos en viajes, todos los vehículos. */
   usado: number;
-  /** comprado - usado (puede ser negativo si los viajes históricos exceden las compras). */
+  /** Litros consumidos por vehículos estacionarios (gasoil_estacionario). */
+  estacionario: number;
+  /** comprado - usado - estacionario (puede ser negativo si los viajes
+   * históricos exceden las compras). */
   disponible: number;
 }
 
@@ -33,14 +37,16 @@ export interface ResumenGasoil {
 /**
  * Stock de gasoil GLOBAL (una sola bolsa para todos los vehículos),
  * calculado al vuelo: lo comprado (gastos_gasoil) menos lo consumido en
- * viajes. No hay estado guardado: editar o borrar registros lo mantiene
- * consistente sin triggers ni migraciones.
+ * viajes y por vehículos estacionarios. No hay estado guardado: editar o
+ * borrar registros lo mantiene consistente sin triggers ni migraciones.
  */
 @Injectable()
 export class StockGasoilService {
   constructor(
     @InjectRepository(GastoGasoil) private readonly gastos: Repository<GastoGasoil>,
     @InjectRepository(Viaje) private readonly viajes: Repository<Viaje>,
+    @InjectRepository(GasoilEstacionario)
+    private readonly estacionarios: Repository<GasoilEstacionario>,
   ) {}
 
   /**
@@ -58,7 +64,12 @@ export class StockGasoilService {
       qb = qb.andWhere('v.id != :excluido', { excluido: excluirViajeId });
     }
     const usado = await this.suma(qb);
-    return this.armar(comprado, usado);
+    const estacionario = await this.suma(
+      this.estacionarios
+        .createQueryBuilder('e')
+        .select('COALESCE(SUM(e.litros), 0)', 'suma'),
+    );
+    return this.armar(comprado, usado, estacionario);
   }
 
   /** Desglose por vehículo (comprado y usado) más los totales globales. */
@@ -100,6 +111,7 @@ export class StockGasoilService {
     const total = {
       comprado: 0,
       usado: 0,
+      estacionario: 0,
       disponible: 0,
       compradoUsd: 0,
       compradoBs: 0,
@@ -116,6 +128,7 @@ export class StockGasoilService {
         compradoBs: round2(Number(c?.montoBs ?? 0)),
         usado: round2(Number(u?.litros ?? 0)),
         usadoBs: round2(Number(u?.combustible ?? 0)),
+        estacionario: 0,
         disponible: 0,
       };
       fila.disponible = round2(fila.comprado - fila.usado);
@@ -135,11 +148,12 @@ export class StockGasoilService {
     return { filas, total };
   }
 
-  private armar(comprado: number, usado: number): StockGasoil {
+  private armar(comprado: number, usado: number, estacionario: number): StockGasoil {
     return {
       comprado: round2(comprado),
       usado: round2(usado),
-      disponible: round2(comprado - usado),
+      estacionario: round2(estacionario),
+      disponible: round2(comprado - usado - estacionario),
     };
   }
 

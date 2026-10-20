@@ -19,6 +19,7 @@ const chofer_entity_1 = require("./domain/chofer.entity");
 const empresa_entity_1 = require("./domain/empresa.entity");
 const gasto_entity_1 = require("./domain/gasto.entity");
 const gasto_gasoil_entity_1 = require("./domain/gasto-gasoil.entity");
+const gasoil_estacionario_entity_1 = require("./domain/gasoil-estacionario.entity");
 const gasto_impuesto_entity_1 = require("./domain/gasto-impuesto.entity");
 const gasto_vario_entity_1 = require("./domain/gasto-vario.entity");
 const punto_entity_1 = require("./domain/punto.entity");
@@ -31,6 +32,7 @@ const viaje_entity_1 = require("./domain/viaje.entity");
 const chofer_repository_1 = require("./repo/chofer.repository");
 const empresa_repository_1 = require("./repo/empresa.repository");
 const gasto_gasoil_repository_1 = require("./repo/gasto-gasoil.repository");
+const gasoil_estacionario_repository_1 = require("./repo/gasoil-estacionario.repository");
 const gasto_impuesto_repository_1 = require("./repo/gasto-impuesto.repository");
 const gasto_vario_repository_1 = require("./repo/gasto-vario.repository");
 const punto_repository_1 = require("./repo/punto.repository");
@@ -43,6 +45,7 @@ const viaje_repository_1 = require("./repo/viaje.repository");
 const tasa_service_1 = require("./service/tasa.service");
 const export_service_1 = require("./service/export.service");
 const gastos_gasoil_service_1 = require("./service/gastos-gasoil.service");
+const gasoil_estacionario_service_1 = require("./service/gasoil-estacionario.service");
 const gastos_impuestos_service_1 = require("./service/gastos-impuestos.service");
 const gastos_varios_service_1 = require("./service/gastos-varios.service");
 const reporte_empresa_service_1 = require("./service/reporte-empresa.service");
@@ -53,6 +56,7 @@ const stock_gasoil_service_1 = require("./service/stock-gasoil.service");
 const choferes_controller_1 = require("./web/choferes.controller");
 const empresas_controller_1 = require("./web/empresas.controller");
 const gastos_gasoil_controller_1 = require("./web/gastos-gasoil.controller");
+const gasoil_estacionario_controller_1 = require("./web/gasoil-estacionario.controller");
 const gastos_impuestos_controller_1 = require("./web/gastos-impuestos.controller");
 const gastos_varios_controller_1 = require("./web/gastos-varios.controller");
 const puntos_controller_1 = require("./web/puntos.controller");
@@ -75,6 +79,7 @@ const ENTIDADES = [
     empresa_entity_1.Empresa,
     gasto_entity_1.Gasto,
     gasto_gasoil_entity_1.GastoGasoil,
+    gasoil_estacionario_entity_1.GasoilEstacionario,
     gasto_impuesto_entity_1.GastoImpuesto,
     gasto_vario_entity_1.GastoVario,
     punto_entity_1.Punto,
@@ -113,6 +118,7 @@ exports.AppModule = AppModule = __decorate([
             choferes_controller_1.ChoferController,
             empresas_controller_1.EmpresaController,
             gastos_gasoil_controller_1.GastoGasoilController,
+            gasoil_estacionario_controller_1.GasoilEstacionarioController,
             gastos_impuestos_controller_1.GastoImpuestoController,
             gastos_varios_controller_1.GastoVarioController,
             puntos_controller_1.PuntoController,
@@ -131,6 +137,7 @@ exports.AppModule = AppModule = __decorate([
             chofer_repository_1.ChoferRepository,
             empresa_repository_1.EmpresaRepository,
             gasto_gasoil_repository_1.GastoGasoilRepository,
+            gasoil_estacionario_repository_1.GasoilEstacionarioRepository,
             gasto_impuesto_repository_1.GastoImpuestoRepository,
             gasto_vario_repository_1.GastoVarioRepository,
             punto_repository_1.PuntoRepository,
@@ -143,6 +150,7 @@ exports.AppModule = AppModule = __decorate([
             tasa_service_1.TasaService,
             export_service_1.ExportService,
             gastos_gasoil_service_1.GastosGasoilService,
+            gasoil_estacionario_service_1.GasoilEstacionarioService,
             gastos_impuestos_service_1.GastosImpuestosService,
             gastos_varios_service_1.GastosVariosService,
             reporte_empresa_service_1.ReporteEmpresaService,
