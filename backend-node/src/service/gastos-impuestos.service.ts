@@ -7,13 +7,9 @@ import { gastoImpuestoJson } from '../common/serialize';
 import { GastoImpuestoRepository } from '../repo/gasto-impuesto.repository';
 import {
   BloqueGasto,
-  ColumnaGasto,
   FilaGasto,
   agruparPor,
-  escapar,
-  fechaCorta,
-  formatearDinero,
-  htmlGastosSeccion,
+  htmlResumenTitulos,
   rangoFechas,
 } from './gastos-seccion.builder';
 
@@ -30,42 +26,6 @@ export function resumirPorTipo(gastos: GastoImpuestoFila[]): BloqueGasto[] {
   return agruparPor(gastos, (g) => g.tituloImpuesto?.nombre ?? '');
 }
 
-const COLUMNAS: ColumnaGasto[] = [
-  { clave: 'fecha', encabezado: 'Fecha', celda: (f) => fechaCorta(f.fecha) },
-  {
-    clave: 'tipo',
-    encabezado: 'Tipo',
-    celda: (f) => escapar(f.tituloImpuesto?.nombre ?? ''),
-  },
-  { clave: 'numero', encabezado: 'N°', celda: (f) => escapar(f.numero ?? '') },
-  { clave: 'motivo', encabezado: 'Motivo', celda: (f) => escapar(f.motivo ?? '') },
-  {
-    clave: 'usd',
-    encabezado: 'Monto $',
-    num: true,
-    celda: (f) => `$ ${formatearDinero(f.montoUsd)}`,
-  },
-  {
-    clave: 'bs',
-    encabezado: 'Monto Bs',
-    num: true,
-    celda: (f) => `Bs ${formatearDinero(f.montoBs)}`,
-  },
-  {
-    clave: 'tasa',
-    encabezado: 'Tasa',
-    num: true,
-    celda: (f) => formatearDinero(f.tasa),
-  },
-  {
-    clave: 'pdb',
-    encabezado: '%DB',
-    num: true,
-    celda: (f) => formatearDinero(f.porcentajeDb),
-  },
-  { clave: 'ref', encabezado: 'N° REF', celda: (f) => escapar(f.referencia ?? '') },
-];
-
 @Injectable()
 export class GastosImpuestosService {
   constructor(private readonly repo: GastoImpuestoRepository) {}
@@ -76,11 +36,15 @@ export class GastosImpuestosService {
     const totalUsd = round2(bloques.reduce((s, b) => s + b.sumaUsd, 0));
     const totalBs = round2(bloques.reduce((s, b) => s + b.sumaBs, 0));
 
-    const html = htmlGastosSeccion({
+    const html = htmlResumenTitulos({
       titulo: 'Gastos de impuestos',
+      encabezado: 'TÍTULO',
       rango: rangoFechas(desde, hasta),
-      columnas: COLUMNAS,
-      bloques,
+      filas: bloques.map((b) => ({
+        etiqueta: b.clave,
+        montoUsd: b.sumaUsd,
+        montoBs: b.sumaBs,
+      })),
       totalUsd,
       totalBs,
       cantidad: gastos.length,

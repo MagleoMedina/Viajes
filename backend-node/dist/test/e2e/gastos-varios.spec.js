@@ -170,7 +170,7 @@ describe('Gastos varios (titulo_gasto + gastos_varios)', () => {
             expect(alcaldia.sumaUsd).toBe(30);
             expect(alcaldia.sumaBs).toBe(300);
         });
-        it('el PDF del intervalo muestra el subtotal del título', async () => {
+        it('el PDF del intervalo muestra una fila por título con la suma', async () => {
             const r = await descargar(app, '/api/export/gastos-varios?desde=2026-03-01&hasta=2026-03-31');
             expect(r.status).toBe(200);
             const { text } = await pdfParse(r.buffer);
@@ -178,6 +178,9 @@ describe('Gastos varios (titulo_gasto + gastos_varios)', () => {
             expect(plano.toUpperCase()).toContain('ALCALDÍA');
             expect(plano).toContain('473,00');
             expect(plano).toContain('573,00');
+            expect(plano.toUpperCase().split('ALCALDÍA').length - 1).toBe(1);
+            expect(plano).not.toContain('MOTIVO-TEST');
+            expect(plano.toUpperCase()).not.toContain('%DB');
         });
     });
     describe('T4: PDF de gastos varios', () => {
@@ -190,7 +193,7 @@ describe('Gastos varios (titulo_gasto + gastos_varios)', () => {
             const { text } = await pdfParse(r.buffer);
             const plano = text.replace(/\s+/g, '').toUpperCase();
             expect(plano).toContain('GASTOSVARIOS');
-            expect(plano).toContain('SUBTOTAL');
+            expect(plano).not.toContain('SUBTOTAL');
             expect(plano).toContain('TOTALGENERAL');
             expect(plano).toContain('ALCALDÍA');
         });

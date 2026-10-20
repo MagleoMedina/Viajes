@@ -37,6 +37,7 @@ import { GastosGasoilService } from './service/gastos-gasoil.service';
 import { GastosImpuestosService } from './service/gastos-impuestos.service';
 import { GastosVariosService } from './service/gastos-varios.service';
 import { ReporteEmpresaService } from './service/reporte-empresa.service';
+import { RelacionReportesService } from './service/relacion-reportes.service';
 import { TursoSyncService } from './service/turso-sync.service';
 import { TotalReparacionService } from './service/total-reparacion.service';
 import { StockGasoilService } from './service/stock-gasoil.service';
@@ -53,6 +54,7 @@ import { VehiculoController } from './web/vehiculos.controller';
 import { ViajeController } from './web/viajes.controller';
 import { TasaController } from './web/tasa.controller';
 import { ExportController } from './web/export.controller';
+import { RelacionController } from './web/relacion.controller';
 import { SyncController } from './web/sync.controller';
 import { SistemaController } from './web/sistema.controller';
 import { ApiExceptionFilter } from './web/api-exception.filter';
@@ -113,6 +115,7 @@ const ENTIDADES = [
     ViajeController,
     TasaController,
     ExportController,
+    RelacionController,
     SyncController,
     SistemaController,
   ],
@@ -135,6 +138,7 @@ const ENTIDADES = [
     GastosImpuestosService,
     GastosVariosService,
     ReporteEmpresaService,
+    RelacionReportesService,
     TursoSyncService,
     TotalReparacionService,
     StockGasoilService,

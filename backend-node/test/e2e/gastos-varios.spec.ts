@@ -202,7 +202,7 @@ describe('Gastos varios (titulo_gasto + gastos_varios)', () => {
       expect(alcaldia.sumaBs).toBe(300);
     });
 
-    it('el PDF del intervalo muestra el subtotal del título', async () => {
+    it('el PDF del intervalo muestra una fila por título con la suma', async () => {
       // Alcaldía en marzo: $15 + $15 + $20 = $50 y Bs 150 + 123 + 200 = 473.
       const r = await descargar(
         app,
@@ -212,8 +212,13 @@ describe('Gastos varios (titulo_gasto + gastos_varios)', () => {
       const { text } = await pdfParse(r.buffer);
       const plano = text.replace(/\s+/g, '');
       expect(plano.toUpperCase()).toContain('ALCALDÍA');
-      expect(plano).toContain('473,00'); // subtotal Bs de Alcaldía
+      expect(plano).toContain('473,00'); // suma Bs del título
       expect(plano).toContain('573,00'); // total general Bs (473 + 100)
+      // El título aparece una sola vez: no se repite por cada registro.
+      expect(plano.toUpperCase().split('ALCALDÍA').length - 1).toBe(1);
+      // Sin detalle de cada gasto.
+      expect(plano).not.toContain('MOTIVO-TEST');
+      expect(plano.toUpperCase()).not.toContain('%DB');
     });
   });
 
@@ -229,7 +234,7 @@ describe('Gastos varios (titulo_gasto + gastos_varios)', () => {
       const { text } = await pdfParse(r.buffer);
       const plano = text.replace(/\s+/g, '').toUpperCase();
       expect(plano).toContain('GASTOSVARIOS');
-      expect(plano).toContain('SUBTOTAL');
+      expect(plano).not.toContain('SUBTOTAL');
       expect(plano).toContain('TOTALGENERAL');
       expect(plano).toContain('ALCALDÍA');
     });

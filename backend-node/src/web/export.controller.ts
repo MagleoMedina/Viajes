@@ -1,11 +1,17 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Controller, Get, Param, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ExportService } from '../service/export.service';
 import { ReporteEmpresaService } from '../service/reporte-empresa.service';
 import { GastosVariosService } from '../service/gastos-varios.service';
 import { GastosImpuestosService } from '../service/gastos-impuestos.service';
 import { GastosGasoilService } from '../service/gastos-gasoil.service';
+import {
+  RelacionReportesService,
+  TIPOS_RELACION,
+  TipoRelacion,
+} from '../service/relacion-reportes.service';
 import { EmpresaRepository } from '../repo/empresa.repository';
+import { ApiException } from './api-exception';
 
 /** "#8c3b87" -> si, cualquier otra cosa -> color por defecto (evita inyectar CSS). */
 const COLOR_SEGURO = /^#[0-9a-fA-F]{6}$/;
@@ -37,6 +43,7 @@ export class ExportController {
     private readonly gastosServicio: GastosVariosService,
     private readonly impuestosServicio: GastosImpuestosService,
     private readonly gasoilServicio: GastosGasoilService,
+    private readonly relacionServicio: RelacionReportesService,
   ) {}
 
   /** Nombre base "<prefijo>_<empresa>_<desde>_<hasta>" para adjuntar. */
@@ -160,6 +167,30 @@ export class ExportController {
     const d = fechaArchivo(desde, 'inicio');
     const h = fechaArchivo(hasta, 'hoy');
     const nombre = `gastos_gasoil_${d}_${h}`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+    res.setHeader('Content-Length', String(buffer.length));
+    res.end(buffer);
+  }
+
+  /** PDF de relación: ingresos por empresa, gastos por tipo o relación general. */
+  @Get('relacion/:tipo')
+  async relacion(
+    @Res() res: Response,
+    @Param('tipo') tipo: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+  ) {
+    const valido = TIPOS_RELACION.includes(tipo as TipoRelacion)
+      ? (tipo as TipoRelacion)
+      : null;
+    if (!valido) throw new ApiException(404, `Reporte desconocido: ${tipo}`);
+    this.relacionServicio.validarRango(desde, hasta);
+
+    const buffer = await this.relacionServicio.crearPdf(valido, desde!, hasta!);
+    const d = fechaArchivo(desde, 'inicio');
+    const h = fechaArchivo(hasta, 'hoy');
+    const nombre = `relacion_${valido}_${d}_${h}`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
     res.setHeader('Content-Length', String(buffer.length));

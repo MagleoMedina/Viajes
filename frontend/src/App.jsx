@@ -12,6 +12,7 @@ import Recorridos from './views/Recorridos.jsx'
 import GastosVarios from './views/GastosVarios.jsx'
 import GastosImpuestos from './views/GastosImpuestos.jsx'
 import GastosGasoil from './views/GastosGasoil.jsx'
+import Relacion from './views/Relacion.jsx'
 import './App.css'
 
 function App() {
@@ -64,6 +65,7 @@ function App() {
           {vista === 'gastos-varios' && <GastosVarios />}
           {vista === 'gastos-impuestos' && <GastosImpuestos />}
           {vista === 'gastos-gasoil' && <GastosGasoil />}
+          {vista === 'relacion' && <Relacion />}
         </Fragment>
       </main>
 

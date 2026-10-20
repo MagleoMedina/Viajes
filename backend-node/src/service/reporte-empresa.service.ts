@@ -118,7 +118,7 @@ export function htmlReporte(params: ReporteHtmlParams): string {
             margin-bottom: 16px;
           }
           .logo {
-            max-width: 150px;
+            max-width: 200px;
             height: auto;
             margin-bottom: 6px;
           }
@@ -129,7 +129,7 @@ export function htmlReporte(params: ReporteHtmlParams): string {
             margin-bottom: 7px;
           }
           .titulo-reporte {
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 800;
             color: #111827;
             letter-spacing: 0.5px;
@@ -160,14 +160,14 @@ export function htmlReporte(params: ReporteHtmlParams): string {
             border: 1px solid #2f6fed;
             background: #eef3fb;
             color: #26324a;
-            font-size: 9px;
+            font-size: 18px;
             font-weight: bold;
-            padding: 3px 8px;
+            padding: 8px 18px;
             margin: 0 3px;
           }
           .dato .k {
             color: #2f6fed;
-            font-size: 7.5px;
+            font-size: 11px;
             margin-right: 5px;
           }
 

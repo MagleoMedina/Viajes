@@ -97,6 +97,12 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
+.nav-tasa.activo {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .etiqueta {
   font-size: 10px;
   font-weight: 600;
@@ -437,6 +443,14 @@
   grid-column: 1 / -1;
 }
 
+/* Relación: 3 tarjetas de reportes lado a lado. */
+.relacion-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
 .acciones {
   display: flex;
   gap: 8px;
@@ -697,6 +711,13 @@
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.3);
   padding: 18px;
   animation: modal-in 0.22s ease both;
+}
+
+/* Vista previa de consultas de gastos: la tabla necesita más ancho. */
+.modal.amplio {
+  max-width: 1100px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
 @keyframes overlay-in {

@@ -466,7 +466,11 @@ function GasConsultar() {
       </div>
 
       {vistaPrevia && (
-        <Modal titulo="Vista previa de la consulta" onClose={() => setVistaPrevia(null)}>
+        <Modal
+          titulo="Vista previa de la consulta"
+          onClose={() => setVistaPrevia(null)}
+          ancho="amplio"
+        >
           <p className="ayuda">
             {vistaPrevia.cantidad} registro{vistaPrevia.cantidad === 1 ? '' : 's'} ·{' '}
             {filtros.desde || filtros.hasta

@@ -17,6 +17,7 @@ import {
   FiFileText,
   FiClipboard,
   FiDroplet,
+  FiPieChart,
 } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Modal from './Modal.jsx'
@@ -241,6 +242,19 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
             ))}
           </ul>
         )}
+
+        <button
+          type="button"
+          className={`nav-tasa${vista === 'relacion' ? ' activo' : ''}`}
+          onClick={() => onNavigate('relacion')}
+          title="Relación"
+        >
+          <span className="nav-padre-eti">
+            <FiPieChart aria-hidden="true" />
+            <span className="txt">Relación</span>
+          </span>
+          <span className="etiqueta">reportes</span>
+        </button>
 
         <button type="button" className="nav-tasa" onClick={onTasa} title="Tasa">
           <span className="nav-padre-eti">

@@ -19,7 +19,9 @@ const reporte_empresa_service_1 = require("../service/reporte-empresa.service");
 const gastos_varios_service_1 = require("../service/gastos-varios.service");
 const gastos_impuestos_service_1 = require("../service/gastos-impuestos.service");
 const gastos_gasoil_service_1 = require("../service/gastos-gasoil.service");
+const relacion_reportes_service_1 = require("../service/relacion-reportes.service");
 const empresa_repository_1 = require("../repo/empresa.repository");
+const api_exception_1 = require("./api-exception");
 const COLOR_SEGURO = /^#[0-9a-fA-F]{6}$/;
 function colorDe(color, porDefecto) {
     return color && COLOR_SEGURO.test(color) ? color.toLowerCase() : porDefecto;
@@ -42,13 +44,15 @@ let ExportController = class ExportController {
     gastosServicio;
     impuestosServicio;
     gasoilServicio;
-    constructor(servicio, reporteServicio, empresaRepo, gastosServicio, impuestosServicio, gasoilServicio) {
+    relacionServicio;
+    constructor(servicio, reporteServicio, empresaRepo, gastosServicio, impuestosServicio, gasoilServicio, relacionServicio) {
         this.servicio = servicio;
         this.reporteServicio = reporteServicio;
         this.empresaRepo = empresaRepo;
         this.gastosServicio = gastosServicio;
         this.impuestosServicio = impuestosServicio;
         this.gasoilServicio = gasoilServicio;
+        this.relacionServicio = relacionServicio;
     }
     async nombre(empresaId, prefijo, desde, hasta) {
         const empresa = empresaId != null ? await this.empresaRepo.findById(empresaId) : null;
@@ -125,6 +129,22 @@ let ExportController = class ExportController {
         res.setHeader('Content-Length', String(buffer.length));
         res.end(buffer);
     }
+    async relacion(res, tipo, desde, hasta) {
+        const valido = relacion_reportes_service_1.TIPOS_RELACION.includes(tipo)
+            ? tipo
+            : null;
+        if (!valido)
+            throw new api_exception_1.ApiException(404, `Reporte desconocido: ${tipo}`);
+        this.relacionServicio.validarRango(desde, hasta);
+        const buffer = await this.relacionServicio.crearPdf(valido, desde, hasta);
+        const d = fechaArchivo(desde, 'inicio');
+        const h = fechaArchivo(hasta, 'hoy');
+        const nombre = `relacion_${valido}_${d}_${h}`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+        res.setHeader('Content-Length', String(buffer.length));
+        res.end(buffer);
+    }
 };
 exports.ExportController = ExportController;
 __decorate([
@@ -192,6 +212,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ExportController.prototype, "gastosGasoil", null);
+__decorate([
+    (0, common_1.Get)('relacion/:tipo'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Param)('tipo')),
+    __param(2, (0, common_1.Query)('desde')),
+    __param(3, (0, common_1.Query)('hasta')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ExportController.prototype, "relacion", null);
 exports.ExportController = ExportController = __decorate([
     (0, common_1.Controller)('api/export'),
     __metadata("design:paramtypes", [export_service_1.ExportService,
@@ -199,6 +229,7 @@ exports.ExportController = ExportController = __decorate([
         empresa_repository_1.EmpresaRepository,
         gastos_varios_service_1.GastosVariosService,
         gastos_impuestos_service_1.GastosImpuestosService,
-        gastos_gasoil_service_1.GastosGasoilService])
+        gastos_gasoil_service_1.GastosGasoilService,
+        relacion_reportes_service_1.RelacionReportesService])
 ], ExportController);
 //# sourceMappingURL=export.controller.js.map

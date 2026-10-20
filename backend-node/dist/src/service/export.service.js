@@ -143,6 +143,7 @@ function htmlResumenGasoil(resumen) {
         .join('');
     const t = resumen.total;
     return `
+      <div class="pagina-gasoil">
       <div class="gas-titulo">Resumen de gasoil — todos los vehículos</div>
       <table class="tabla-gasoil">
         <thead>
@@ -166,7 +167,8 @@ function htmlResumenGasoil(resumen) {
             <td class="num">${dolar(t.usadoBs)}</td>
           </tr>
         </tfoot>
-      </table>`;
+      </table>
+      </div>`;
 }
 function htmlViajes(viajes, opts = {}) {
     const { empresaNombre = null, desde, hasta, color = '#26324a' } = opts;
@@ -252,7 +254,7 @@ function htmlViajes(viajes, opts = {}) {
              (chips .dato) crece 4pt en cada página del documento. */
           body { font-family: 'DejaVu Sans', sans-serif; font-size: 7px; color: #1f2937; margin: 0; padding: 0; }
           .cab { margin-bottom: 6px; }
-          .logo { height: 32px; vertical-align: middle; }
+          .logo { height: 48px; vertical-align: middle; }
           .cab-texto { display: inline-block; vertical-align: middle; margin-left: 8px; }
           h1 { font-size: 15px; margin: 0 0 2px; color: ${color}; font-family: 'DejaVu Sans', sans-serif; }
           .rango { color: #6b7280; font-size: 8.5px; }
@@ -260,8 +262,8 @@ function htmlViajes(viajes, opts = {}) {
           /* Fila de filtros dentro del thead: sin bordes, solo espaciado. */
           thead tr:first-child td { border: none; background: transparent; padding: 0; font-size: 7px; }
           .dato { display: inline-block; border: 1px solid #2f6fed; background: #eef3fb;
-                  color: #26324a; font-size: 14.33px; font-weight: bold; padding: 4px 10px; margin-right: 6px; }
-          .dato .k { color: #2f6fed; font-size: 12.83px; margin-right: 5px; }
+                  color: #26324a; font-size: 16.5px; font-weight: bold; padding: 4px 10px; margin-right: 6px; }
+          .dato .k { color: #2f6fed; font-size: 14px; margin-right: 5px; }
           table { width: auto; border-collapse: collapse; table-layout: auto; }
           th, td { border: 1px solid #c9d2e0; padding: 2px 3px; overflow-wrap: break-word; }
           th { background: #26324a; color: #ffffff; font-size: 6.5px; text-align: left; }
@@ -273,8 +275,13 @@ function htmlViajes(viajes, opts = {}) {
           tr.totales td { background: #dde6f5; font-weight: bold; border-top: 2px solid #26324a; }
           tr.suma td { background: #2f6fed; color: #ffffff; font-weight: bold; }
           tr.suma td.etiqueta { text-align: right; }
-          .gas-titulo { margin: 10px 0 3px; font-weight: bold; color: ${color}; }
-          .tabla-gasoil { margin-bottom: 6px; }
+          /* Resumen de gasoil: ocupa una página propia, en grande. */
+          .pagina-gasoil { page-break-before: always; break-before: page; }
+          .gas-titulo { margin: 0 0 8px; font-size: 16px; font-weight: bold; color: ${color}; }
+          .tabla-gasoil { width: 100%; margin-bottom: 6px; }
+          .tabla-gasoil th, .tabla-gasoil td { font-size: 12px; padding: 6px 8px; }
+          .tabla-gasoil th { font-size: 11px; }
+          .tabla-gasoil tr.totales td { font-size: 12px; }
           .pie { margin-top: 8px; color: #6b7280; font-size: 7.5px; }
         </style>
       </head>

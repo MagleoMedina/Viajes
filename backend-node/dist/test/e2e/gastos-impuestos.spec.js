@@ -164,7 +164,7 @@ describe('Gastos de impuestos (titulo_impuesto + gastos_impuestos)', () => {
             expect(alcaldia.sumaUsd).toBe(30);
             expect(alcaldia.sumaBs).toBe(300);
         });
-        it('el PDF del intervalo muestra los subtotales por tipo', async () => {
+        it('el PDF del intervalo muestra una fila por tipo con la suma', async () => {
             const r = await descargar(app, '/api/export/gastos-impuestos?desde=2026-03-01&hasta=2026-03-31');
             expect(r.status).toBe(200);
             const { text } = await pdfParse(r.buffer);
@@ -172,6 +172,9 @@ describe('Gastos de impuestos (titulo_impuesto + gastos_impuestos)', () => {
             expect(plano.toUpperCase()).toContain('IVSS');
             expect(plano).toContain('373,00');
             expect(plano).toContain('573,00');
+            expect(plano.toUpperCase().split('IVSS').length - 1).toBe(1);
+            expect(plano).not.toContain('MOTIVO-TEST');
+            expect(plano.toUpperCase()).not.toContain('%DB');
         });
     });
     describe('T4: PDF de gastos de impuestos', () => {
@@ -184,7 +187,7 @@ describe('Gastos de impuestos (titulo_impuesto + gastos_impuestos)', () => {
             const { text } = await pdfParse(r.buffer);
             const plano = text.replace(/\s+/g, '').toUpperCase();
             expect(plano).toContain('GASTOSDEIMPUESTOS');
-            expect(plano).toContain('SUBTOTAL');
+            expect(plano).not.toContain('SUBTOTAL');
             expect(plano).toContain('TOTALGENERAL');
             expect(plano).toContain('IVSS');
             expect(plano).toContain('ALCALDÍA');

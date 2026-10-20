@@ -46,6 +46,7 @@ const gastos_gasoil_service_1 = require("./service/gastos-gasoil.service");
 const gastos_impuestos_service_1 = require("./service/gastos-impuestos.service");
 const gastos_varios_service_1 = require("./service/gastos-varios.service");
 const reporte_empresa_service_1 = require("./service/reporte-empresa.service");
+const relacion_reportes_service_1 = require("./service/relacion-reportes.service");
 const turso_sync_service_1 = require("./service/turso-sync.service");
 const total_reparacion_service_1 = require("./service/total-reparacion.service");
 const stock_gasoil_service_1 = require("./service/stock-gasoil.service");
@@ -62,6 +63,7 @@ const vehiculos_controller_1 = require("./web/vehiculos.controller");
 const viajes_controller_1 = require("./web/viajes.controller");
 const tasa_controller_1 = require("./web/tasa.controller");
 const export_controller_1 = require("./web/export.controller");
+const relacion_controller_1 = require("./web/relacion.controller");
 const sync_controller_1 = require("./web/sync.controller");
 const sistema_controller_1 = require("./web/sistema.controller");
 const api_exception_filter_1 = require("./web/api-exception.filter");
@@ -121,6 +123,7 @@ exports.AppModule = AppModule = __decorate([
             viajes_controller_1.ViajeController,
             tasa_controller_1.TasaController,
             export_controller_1.ExportController,
+            relacion_controller_1.RelacionController,
             sync_controller_1.SyncController,
             sistema_controller_1.SistemaController,
         ],
@@ -143,6 +146,7 @@ exports.AppModule = AppModule = __decorate([
             gastos_impuestos_service_1.GastosImpuestosService,
             gastos_varios_service_1.GastosVariosService,
             reporte_empresa_service_1.ReporteEmpresaService,
+            relacion_reportes_service_1.RelacionReportesService,
             turso_sync_service_1.TursoSyncService,
             total_reparacion_service_1.TotalReparacionService,
             stock_gasoil_service_1.StockGasoilService,

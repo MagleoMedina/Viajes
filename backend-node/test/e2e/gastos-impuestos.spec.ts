@@ -196,7 +196,7 @@ describe('Gastos de impuestos (titulo_impuesto + gastos_impuestos)', () => {
       expect(alcaldia.sumaBs).toBe(300);
     });
 
-    it('el PDF del intervalo muestra los subtotales por tipo', async () => {
+    it('el PDF del intervalo muestra una fila por tipo con la suma', async () => {
       // Marzo: IVSS = $10 + $15 + $15 (Bs 100 + 150 + 123 = 373);
       // Alcaldía = $20 (Bs 200). Total = $60 / Bs 573.
       const r = await descargar(
@@ -207,8 +207,12 @@ describe('Gastos de impuestos (titulo_impuesto + gastos_impuestos)', () => {
       const { text } = await pdfParse(r.buffer);
       const plano = text.replace(/\s+/g, '');
       expect(plano.toUpperCase()).toContain('IVSS');
-      expect(plano).toContain('373,00'); // subtotal Bs de IVSS
+      expect(plano).toContain('373,00'); // suma Bs de IVSS
       expect(plano).toContain('573,00'); // total general Bs
+      // El tipo aparece una sola vez, no por cada registro.
+      expect(plano.toUpperCase().split('IVSS').length - 1).toBe(1);
+      expect(plano).not.toContain('MOTIVO-TEST');
+      expect(plano.toUpperCase()).not.toContain('%DB');
     });
   });
 
@@ -227,7 +231,7 @@ describe('Gastos de impuestos (titulo_impuesto + gastos_impuestos)', () => {
       const { text } = await pdfParse(r.buffer);
       const plano = text.replace(/\s+/g, '').toUpperCase();
       expect(plano).toContain('GASTOSDEIMPUESTOS');
-      expect(plano).toContain('SUBTOTAL');
+      expect(plano).not.toContain('SUBTOTAL');
       expect(plano).toContain('TOTALGENERAL');
       expect(plano).toContain('IVSS');
       expect(plano).toContain('ALCALDÍA');

@@ -22,41 +22,6 @@ const gastos_seccion_builder_1 = require("./gastos-seccion.builder");
 function resumirPorTipo(gastos) {
     return (0, gastos_seccion_builder_1.agruparPor)(gastos, (g) => g.tituloImpuesto?.nombre ?? '');
 }
-const COLUMNAS = [
-    { clave: 'fecha', encabezado: 'Fecha', celda: (f) => (0, gastos_seccion_builder_1.fechaCorta)(f.fecha) },
-    {
-        clave: 'tipo',
-        encabezado: 'Tipo',
-        celda: (f) => (0, gastos_seccion_builder_1.escapar)(f.tituloImpuesto?.nombre ?? ''),
-    },
-    { clave: 'numero', encabezado: 'N°', celda: (f) => (0, gastos_seccion_builder_1.escapar)(f.numero ?? '') },
-    { clave: 'motivo', encabezado: 'Motivo', celda: (f) => (0, gastos_seccion_builder_1.escapar)(f.motivo ?? '') },
-    {
-        clave: 'usd',
-        encabezado: 'Monto $',
-        num: true,
-        celda: (f) => `$ ${(0, gastos_seccion_builder_1.formatearDinero)(f.montoUsd)}`,
-    },
-    {
-        clave: 'bs',
-        encabezado: 'Monto Bs',
-        num: true,
-        celda: (f) => `Bs ${(0, gastos_seccion_builder_1.formatearDinero)(f.montoBs)}`,
-    },
-    {
-        clave: 'tasa',
-        encabezado: 'Tasa',
-        num: true,
-        celda: (f) => (0, gastos_seccion_builder_1.formatearDinero)(f.tasa),
-    },
-    {
-        clave: 'pdb',
-        encabezado: '%DB',
-        num: true,
-        celda: (f) => (0, gastos_seccion_builder_1.formatearDinero)(f.porcentajeDb),
-    },
-    { clave: 'ref', encabezado: 'N° REF', celda: (f) => (0, gastos_seccion_builder_1.escapar)(f.referencia ?? '') },
-];
 let GastosImpuestosService = class GastosImpuestosService {
     repo;
     constructor(repo) {
@@ -67,11 +32,15 @@ let GastosImpuestosService = class GastosImpuestosService {
         const bloques = resumirPorTipo(gastos.map(serialize_1.gastoImpuestoJson));
         const totalUsd = (0, dates_1.round2)(bloques.reduce((s, b) => s + b.sumaUsd, 0));
         const totalBs = (0, dates_1.round2)(bloques.reduce((s, b) => s + b.sumaBs, 0));
-        const html = (0, gastos_seccion_builder_1.htmlGastosSeccion)({
+        const html = (0, gastos_seccion_builder_1.htmlResumenTitulos)({
             titulo: 'Gastos de impuestos',
+            encabezado: 'TÍTULO',
             rango: (0, gastos_seccion_builder_1.rangoFechas)(desde, hasta),
-            columnas: COLUMNAS,
-            bloques,
+            filas: bloques.map((b) => ({
+                etiqueta: b.clave,
+                montoUsd: b.sumaUsd,
+                montoBs: b.sumaBs,
+            })),
             totalUsd,
             totalBs,
             cantidad: gastos.length,
