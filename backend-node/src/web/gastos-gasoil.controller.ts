@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { IsInt, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 import { GastoGasoil } from '../domain/gasto-gasoil.entity';
+import { Vehiculo } from '../domain/vehiculo.entity';
 import { GastoGasoilRepository } from '../repo/gasto-gasoil.repository';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { StockGasoilService } from '../service/stock-gasoil.service';
@@ -23,10 +24,10 @@ import { ApiException, ApiValidationException } from './api-exception';
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 export class GastoGasoilRequest {
-  /** En POST es obligatorio; en PUT solo cambia si viene. */
+  /** Opcional: sin vehículo el gasto igual se registra. */
   @IsOptional()
-  @IsInt({ message: 'El vehículo es obligatorio' })
-  vehiculoId?: number;
+  @IsInt({ message: 'El vehículo debe ser un id válido' })
+  vehiculoId?: number | null;
 
   @IsString({ message: 'La fecha es obligatoria' })
   fecha: string;
@@ -93,12 +94,8 @@ export class GastoGasoilController {
   @Post()
   @HttpCode(HttpStatus.OK)
   async crear(@Body() req: GastoGasoilRequest) {
-    if (req.vehiculoId == null) {
-      throw new ApiValidationException({ vehiculoId: 'El vehículo es obligatorio' });
-    }
     this.validarFecha(req.fecha);
-    const vehiculo = await this.vehiculos.findById(req.vehiculoId);
-    if (!vehiculo) throw new ApiException(404, 'Vehículo no encontrado');
+    const vehiculo = await this.buscarVehiculo(req.vehiculoId);
 
     const gasto = new GastoGasoil();
     gasto.vehiculo = vehiculo;
@@ -114,10 +111,11 @@ export class GastoGasoilController {
     this.validarFecha(req.fecha);
 
     const litrosAntes = gasto.litros ?? 0;
-    if (req.vehiculoId != null) {
-      const vehiculo = await this.vehiculos.findById(req.vehiculoId);
-      if (!vehiculo) throw new ApiException(404, 'Vehículo no encontrado');
-      gasto.vehiculo = vehiculo;
+    // null explícito quita el vehículo; si no viene, se conserva.
+    if (req.vehiculoId === null) {
+      gasto.vehiculo = null;
+    } else if (req.vehiculoId != null) {
+      gasto.vehiculo = await this.buscarVehiculo(req.vehiculoId);
     }
     gasto.fecha = new Date(dateOnlyToMillis(req.fecha));
     this.aplicar(gasto, req, false);
@@ -166,6 +164,14 @@ export class GastoGasoilController {
     if (!fecha || !FECHA_ISO.test(fecha)) {
       throw new ApiValidationException({ fecha: 'Formato de fecha inválido (AAAA-MM-DD)' });
     }
+  }
+
+  /** Vehículo opcional: sin id devuelve null; con id inexistente, 404. */
+  private async buscarVehiculo(id?: number | null): Promise<Vehiculo | null> {
+    if (id == null) return null;
+    const vehiculo = await this.vehiculos.findById(id);
+    if (!vehiculo) throw new ApiException(404, 'Vehículo no encontrado');
+    return vehiculo;
   }
 
   /**

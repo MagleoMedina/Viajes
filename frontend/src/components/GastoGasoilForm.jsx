@@ -57,14 +57,13 @@ export default function GastoGasoilForm({
     <form onSubmit={onSubmit} className="form">
       <div className="campos-3">
         <label>
-          Vehículo
+          Vehículo (opcional)
           <input
             type="text"
             list={datalistId}
             value={form.vehiculo}
             onChange={(e) => cambiar('vehiculo', e.target.value)}
-            placeholder="Escriba o elija la placa"
-            required
+            placeholder="Opcional: escriba o elija la placa"
           />
           <datalist id={datalistId}>
             {vehiculos.map((v) => (

@@ -11,9 +11,10 @@ export class GastoGasoil {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Vehiculo, { nullable: false })
+  /** Opcional: el gasto puede registrarse sin vehículo. */
+  @ManyToOne(() => Vehiculo, { nullable: true })
   @JoinColumn({ name: 'vehiculo_id' })
-  vehiculo: Vehiculo;
+  vehiculo: Vehiculo | null;
 
   @Column({ type: 'integer', transformer: epochMs })
   fecha: Date;

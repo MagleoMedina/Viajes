@@ -24,9 +24,10 @@ export type GastoGasoilFila = FilaGasto & {
 
 /**
  * Agrupa por placa del vehículo (orden alfabético) y suma montos $ y Bs.
+ * Los gastos sin vehículo caen en el bloque «SIN VEHÍCULO».
  */
 export function resumirPorVehiculo(gastos: GastoGasoilFila[]): BloqueGasto[] {
-  return agruparPor(gastos, (g) => g.vehiculo?.placa ?? '');
+  return agruparPor(gastos, (g) => g.vehiculo?.placa || 'SIN VEHÍCULO');
 }
 
 const litros = (v: number | undefined): string =>

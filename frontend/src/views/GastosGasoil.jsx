@@ -54,12 +54,12 @@ function GasRegistrar({ onStockCambio }) {
     setError('')
     setAviso('')
     const vehiculo = vehiculoExistente(form.vehiculo, vehiculos)
-    if (!vehiculo) {
-      setError('Registre primero el vehículo en la sección Vehículos.')
+    if (form.vehiculo.trim() && !vehiculo) {
+      setError('La placa escrita no existe. Corríjala o deje el vehículo vacío.')
       return
     }
     try {
-      await api.post('/gastos-gasoil', gasoilPayload(form, vehiculo.id))
+      await api.post('/gastos-gasoil', gasoilPayload(form, vehiculo ? vehiculo.id : undefined))
       setAviso('Gasto de gasoil registrado.')
       setForm(gasoilVacio(tasaActual))
       await cargarRegistros()
@@ -76,7 +76,7 @@ function GasRegistrar({ onStockCambio }) {
       <section className="tarjeta">
         <h2>Registrar gasto de gasoil</h2>
         <p className="ayuda">
-          La placa debe existir en la sección Vehículos. Monto $ = Litros × Precio $/L.
+          La placa es opcional; si la escribe debe existir en Vehículos. Monto $ = Litros × Precio $/L.
         </p>
         <GastoGasoilForm
           form={form}
@@ -110,7 +110,7 @@ function GasRegistrar({ onStockCambio }) {
                 {ultimos.map((g) => (
                   <tr key={g.id}>
                     <td>{fecha(g.fecha)}</td>
-                    <td>{g.vehiculo?.placa}</td>
+                    <td>{g.vehiculo?.placa ?? '—'}</td>
                     <td>{g.estacion}</td>
                     <td className="derecha">{money(g.litros)}</td>
                     <td className="derecha">{money(g.montoUsd)}</td>
@@ -193,8 +193,8 @@ function GasModificar({ onStockCambio }) {
   function enviarEdicion(e) {
     e.preventDefault()
     const vehiculo = vehiculoExistente(form.vehiculo, vehiculos)
-    if (!vehiculo) {
-      setError('El vehículo escrito no existe: regístrelo en la sección Vehículos.')
+    if (form.vehiculo.trim() && !vehiculo) {
+      setError('La placa escrita no existe: regístrela en Vehículos o déjela vacía.')
       return
     }
     setConfirmarGuardado(true)
@@ -206,7 +206,7 @@ function GasModificar({ onStockCambio }) {
     try {
       await api.put(
         `/gastos-gasoil/${gastoEditando.id}`,
-        gasoilPayload(form, vehiculoExistente(form.vehiculo, vehiculos).id),
+        gasoilPayload(form, vehiculoExistente(form.vehiculo, vehiculos)?.id ?? null),
       )
       setAviso('Gasto actualizado.')
       cerrarEdicion()
@@ -296,7 +296,7 @@ function GasModificar({ onStockCambio }) {
                   {registros.map((g) => (
                     <tr key={g.id}>
                       <td>{fecha(g.fecha)}</td>
-                      <td>{g.vehiculo?.placa}</td>
+                      <td>{g.vehiculo?.placa ?? '—'}</td>
                       <td>{g.estacion}</td>
                       <td className="derecha">{money(g.litros)}</td>
                       <td className="derecha">{money(g.precioLitro)}</td>
@@ -346,7 +346,7 @@ function GasModificar({ onStockCambio }) {
         <Confirmar
           titulo="Confirmar cambios"
           mensaje="¿Guardar los cambios de este gasto?"
-          detalle={`${form.vehiculo} · ${fecha(form.fecha)} · $ ${money(form.montoUsd)}`}
+          detalle={`${form.vehiculo || 'Sin vehículo'} · ${fecha(form.fecha)} · $ ${money(form.montoUsd)}`}
           etiqueta="Guardar"
           onConfirmar={guardarEdicion}
           onCancelar={() => setConfirmarGuardado(false)}
@@ -357,7 +357,7 @@ function GasModificar({ onStockCambio }) {
         <Confirmar
           titulo="Confirmar eliminación"
           mensaje={`¿Eliminar el gasto de gasoil del ${fecha(porEliminar.fecha)}?`}
-          detalle={`${porEliminar.vehiculo?.placa} · ${porEliminar.estacion || 'sin estación'} · $ ${money(porEliminar.montoUsd)}`}
+          detalle={`${porEliminar.vehiculo?.placa ?? 'Sin vehículo'} · ${porEliminar.estacion || 'sin estación'} · $ ${money(porEliminar.montoUsd)}`}
           etiqueta="Eliminar"
           peligro
           onConfirmar={eliminar}
@@ -401,7 +401,7 @@ function GasConsultar() {
     }
     try {
       const gastos = await api.get(`/gastos-gasoil?${params().toString()}`)
-      const bloques = agruparGastos(gastos, (g) => g.vehiculo?.placa)
+      const bloques = agruparGastos(gastos, (g) => g.vehiculo?.placa || 'SIN VEHÍCULO')
       setVistaPrevia({
         bloques,
         cantidad: gastos.length,

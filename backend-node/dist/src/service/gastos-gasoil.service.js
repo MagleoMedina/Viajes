@@ -20,7 +20,7 @@ const serialize_1 = require("../common/serialize");
 const gasto_gasoil_repository_1 = require("../repo/gasto-gasoil.repository");
 const gastos_seccion_builder_1 = require("./gastos-seccion.builder");
 function resumirPorVehiculo(gastos) {
-    return (0, gastos_seccion_builder_1.agruparPor)(gastos, (g) => g.vehiculo?.placa ?? '');
+    return (0, gastos_seccion_builder_1.agruparPor)(gastos, (g) => g.vehiculo?.placa || 'SIN VEHÍCULO');
 }
 const litros = (v) => Number(v || 0).toLocaleString('es-VE', {
     minimumFractionDigits: 2,

@@ -115,7 +115,7 @@ const MIGRACIONES = [
     columna: 'id',
     ddl: `CREATE TABLE IF NOT EXISTS gastos_gasoil (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      vehiculo_id bigint NOT NULL REFERENCES vehiculos(id),
+      vehiculo_id bigint NULL REFERENCES vehiculos(id),
       fecha integer NOT NULL,
       estacion varchar(100) NOT NULL DEFAULT '',
       litros real NOT NULL DEFAULT 0,
@@ -127,6 +127,40 @@ const MIGRACIONES = [
     )`,
   },
 ];
+
+/**
+ * `gastos_gasoil.vehiculo_id` nacio NOT NULL: ahora el vehiculo es opcional.
+ * SQLite no cambia la restriccion con ALTER, asi que se reconstruye la tabla
+ * conservando los registros (idempotente: solo actua si sigue siendo NOT NULL).
+ */
+function permitirVehiculoNulo(db) {
+  const info = db.exec('PRAGMA table_info(gastos_gasoil)');
+  if (!info.length) return false;
+  const col = info[0].values.find((v) => v[1] === 'vehiculo_id');
+  if (!col || col[3] !== 1) return false; // notnull: 0 -> ya es opcional
+
+  db.run('PRAGMA foreign_keys = OFF');
+  db.run(`CREATE TABLE gastos_gasoil_nueva (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vehiculo_id bigint NULL REFERENCES vehiculos(id),
+    fecha integer NOT NULL,
+    estacion varchar(100) NOT NULL DEFAULT '',
+    litros real NOT NULL DEFAULT 0,
+    precio_litro real NOT NULL DEFAULT 0,
+    monto_usd real NOT NULL DEFAULT 0,
+    monto_bs real NOT NULL DEFAULT 0,
+    tasa real NOT NULL DEFAULT 0,
+    referencia varchar(100) NOT NULL DEFAULT '0'
+  )`);
+  db.run(`INSERT INTO gastos_gasoil_nueva
+      (id, vehiculo_id, fecha, estacion, litros, precio_litro, monto_usd, monto_bs, tasa, referencia)
+    SELECT id, vehiculo_id, fecha, estacion, litros, precio_litro, monto_usd, monto_bs, tasa, referencia
+    FROM gastos_gasoil`);
+  db.run('DROP TABLE gastos_gasoil');
+  db.run('ALTER TABLE gastos_gasoil_nueva RENAME TO gastos_gasoil');
+  db.run('PRAGMA foreign_keys = ON');
+  return true;
+}
 
 async function main() {
   const dbFile = process.argv[2] || process.env.DB_PATH || path.join(__dirname, '..', 'data', 'viajes.db');
@@ -157,6 +191,10 @@ async function main() {
       db.run(m.ddl);
       aplicadas.push(`${m.tabla}.${m.columna}`);
     }
+  }
+
+  if (permitirVehiculoNulo(db)) {
+    aplicadas.push('gastos_gasoil.vehiculo_id (opcional)');
   }
 
   guardar();

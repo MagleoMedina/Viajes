@@ -31,9 +31,9 @@ __decorate([
     __metadata("design:type", Number)
 ], GastoGasoil.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => vehiculo_entity_1.Vehiculo, { nullable: false }),
+    (0, typeorm_1.ManyToOne)(() => vehiculo_entity_1.Vehiculo, { nullable: true }),
     (0, typeorm_1.JoinColumn)({ name: 'vehiculo_id' }),
-    __metadata("design:type", vehiculo_entity_1.Vehiculo)
+    __metadata("design:type", Object)
 ], GastoGasoil.prototype, "vehiculo", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'integer', transformer: epoch_transformer_1.epochMs }),

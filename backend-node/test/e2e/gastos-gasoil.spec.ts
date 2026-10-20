@@ -88,6 +88,22 @@ describe('Gastos de gasoil (gastos_gasoil)', () => {
         .send(gastoBase({ vehiculoId: 99999 }))
         .expect(404);
     });
+
+    it('POST sin vehículo registra el gasto (vehículo opcional)', async () => {
+      const res = await request(server())
+        .post('/api/gastos-gasoil')
+        .send({
+          fecha: '2026-03-06',
+          estacion: 'PDV-SIN',
+          litros: 10,
+          precioLitro: 2,
+          tasa: 10,
+        })
+        .expect(200);
+      expect(res.body.vehiculo).toBeUndefined();
+      expect(res.body.montoUsd).toBe(20);
+      expect(res.body.montoBs).toBe(200);
+    });
   });
 
   // ------------------------------------------------------------------ T2
@@ -147,6 +163,13 @@ describe('Gastos de gasoil (gastos_gasoil)', () => {
       expect(editado.montoUsd).toBe(100); // recalculado con litros × precio
       expect(editado.montoBs).toBe(1000);
 
+      // vehiculoId: null explícito quita el vehículo.
+      const sinVehiculo = await request(server())
+        .put(`/api/gastos-gasoil/${id}`)
+        .send(gastoBase({ vehiculoId: null }))
+        .expect(200);
+      expect(sinVehiculo.body.vehiculo).toBeUndefined();
+
       await request(server()).delete(`/api/gastos-gasoil/${id}`).expect(200);
       await request(server()).delete(`/api/gastos-gasoil/${id}`).expect(404);
       const final = await request(server()).get('/api/gastos-gasoil').expect(200);
@@ -162,16 +185,19 @@ describe('Gastos de gasoil (gastos_gasoil)', () => {
         { vehiculo: { placa: 'AAA' }, montoUsd: 10, montoBs: 100 },
         { vehiculo: { placa: 'AAA' }, montoUsd: 20, montoBs: 200 },
         { vehiculo: { placa: 'BBB' }, montoUsd: 1, montoBs: 10 },
+        { montoUsd: 5, montoBs: 50 },
       ]);
-      expect(bloques).toHaveLength(2);
+      expect(bloques).toHaveLength(3);
       const aaa = bloques.find((b: any) => b.clave === 'AAA');
       expect(aaa.sumaUsd).toBe(30);
       expect(aaa.sumaBs).toBe(300);
+      expect(bloques.find((b: any) => b.clave === 'SIN VEHÍCULO').sumaUsd).toBe(5);
     });
 
     it('el PDF del intervalo muestra los subtotales por vehículo', async () => {
       // Marzo: PLACAGA1 = $100 (Bs 1000) + $50 (Bs 777) = $150 / Bs 1777;
-      // PLACAGA2 = $10 (Bs 100). Total = $160 / Bs 1877.
+      // PLACAGA2 = $10 (Bs 100); sin vehículo = $20 (Bs 200).
+      // Total = $180 / Bs 2077.
       const r = await descargar(
         app,
         '/api/export/gastos-gasoil?desde=2026-03-01&hasta=2026-03-31',
@@ -181,7 +207,8 @@ describe('Gastos de gasoil (gastos_gasoil)', () => {
       const plano = text.replace(/\s+/g, '');
       expect(plano.toUpperCase()).toContain('PLACAGA1');
       expect(plano).toContain('1.777,00'); // subtotal Bs de PLACAGA1
-      expect(plano).toContain('1.877,00'); // total general Bs
+      expect(plano).toContain('2.077,00'); // total general Bs
+      expect(plano.toUpperCase()).toContain('SINVEHÍCULO');
       // El subtotal no repite la placa (solo dice "SUBTOTAL").
       expect(plano.toUpperCase()).not.toContain('SUBTOTALPLACAGA1');
       expect(plano.toUpperCase()).toContain('SUBTOTAL');
@@ -207,6 +234,7 @@ describe('Gastos de gasoil (gastos_gasoil)', () => {
       expect(plano).toContain('TOTALGENERAL');
       expect(plano).toContain('PLACAGA1');
       expect(plano).toContain('PLACAGA2');
+      expect(plano).toContain('SINVEHÍCULO');
     });
 
     it('no borra un vehículo con gastos: se oculta y el gasto conserva la placa', async () => {

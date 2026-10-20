@@ -37,8 +37,8 @@ class GastoGasoilRequest {
 exports.GastoGasoilRequest = GastoGasoilRequest;
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsInt)({ message: 'El vehículo es obligatorio' }),
-    __metadata("design:type", Number)
+    (0, class_validator_1.IsInt)({ message: 'El vehículo debe ser un id válido' }),
+    __metadata("design:type", Object)
 ], GastoGasoilRequest.prototype, "vehiculoId", void 0);
 __decorate([
     (0, class_validator_1.IsString)({ message: 'La fecha es obligatoria' }),
@@ -99,13 +99,8 @@ let GastoGasoilController = class GastoGasoilController {
         return this.stockGasoil.global(excluido);
     }
     async crear(req) {
-        if (req.vehiculoId == null) {
-            throw new api_exception_1.ApiValidationException({ vehiculoId: 'El vehículo es obligatorio' });
-        }
         this.validarFecha(req.fecha);
-        const vehiculo = await this.vehiculos.findById(req.vehiculoId);
-        if (!vehiculo)
-            throw new api_exception_1.ApiException(404, 'Vehículo no encontrado');
+        const vehiculo = await this.buscarVehiculo(req.vehiculoId);
         const gasto = new gasto_gasoil_entity_1.GastoGasoil();
         gasto.vehiculo = vehiculo;
         gasto.fecha = new Date((0, dates_1.dateOnlyToMillis)(req.fecha));
@@ -118,11 +113,11 @@ let GastoGasoilController = class GastoGasoilController {
             throw new api_exception_1.ApiException(404, 'Gasto de gasoil no encontrado');
         this.validarFecha(req.fecha);
         const litrosAntes = gasto.litros ?? 0;
-        if (req.vehiculoId != null) {
-            const vehiculo = await this.vehiculos.findById(req.vehiculoId);
-            if (!vehiculo)
-                throw new api_exception_1.ApiException(404, 'Vehículo no encontrado');
-            gasto.vehiculo = vehiculo;
+        if (req.vehiculoId === null) {
+            gasto.vehiculo = null;
+        }
+        else if (req.vehiculoId != null) {
+            gasto.vehiculo = await this.buscarVehiculo(req.vehiculoId);
         }
         gasto.fecha = new Date((0, dates_1.dateOnlyToMillis)(req.fecha));
         this.aplicar(gasto, req, false);
@@ -165,6 +160,14 @@ let GastoGasoilController = class GastoGasoilController {
         if (!fecha || !FECHA_ISO.test(fecha)) {
             throw new api_exception_1.ApiValidationException({ fecha: 'Formato de fecha inválido (AAAA-MM-DD)' });
         }
+    }
+    async buscarVehiculo(id) {
+        if (id == null)
+            return null;
+        const vehiculo = await this.vehiculos.findById(id);
+        if (!vehiculo)
+            throw new api_exception_1.ApiException(404, 'Vehículo no encontrado');
+        return vehiculo;
     }
     async validarStockEdicion(litrosNuevos, litrosAntes) {
         const stock = await this.stockGasoil.global(null);
