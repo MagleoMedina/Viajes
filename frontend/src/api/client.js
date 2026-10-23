@@ -29,8 +29,42 @@ export const api = {
   del: (path) => pedir(path, { method: 'DELETE' }),
 }
 
-export function urlDescarga(path) {
-  return BASE + path
+/** Nombre de archivo que sugiere el backend en Content-Disposition. */
+function nombreDeCabecera(cabecera) {
+  if (!cabecera) return 'documento.pdf'
+  const utf8 = cabecera.match(/filename\*=UTF-8''([^;]+)/i)
+  if (utf8) {
+    try {
+      return decodeURIComponent(utf8[1])
+    } catch {
+      /* cabecera mal codificada: sigue con filename */
+    }
+  }
+  const simple = cabecera.match(/filename="?([^";]+)"?/i)
+  return simple ? simple[1] : 'documento.pdf'
+}
+
+/**
+ * Genera un PDF sin descargarlo, para previsualizarlo antes.
+ * Devuelve el blob y el nombre sugerido; el botón Descargar reutiliza el blob
+ * para no pedir el documento dos veces.
+ */
+export async function prepararPdf(path) {
+  const res = await fetch(BASE + path)
+  if (!res.ok) {
+    let mensaje = `Error ${res.status}`
+    try {
+      const cuerpo = await res.json()
+      if (cuerpo?.message) mensaje = cuerpo.message
+    } catch {
+      /* respuesta sin cuerpo JSON */
+    }
+    throw new Error(mensaje)
+  }
+  return {
+    blob: await res.blob(),
+    nombre: nombreDeCabecera(res.headers.get('content-disposition')),
+  }
 }
 
 /** 1234.5 -> "1.234,50" */

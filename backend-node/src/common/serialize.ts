@@ -5,6 +5,7 @@ import { GastoGasoil } from '../domain/gasto-gasoil.entity';
 import { GasoilEstacionario } from '../domain/gasoil-estacionario.entity';
 import { GastoImpuesto } from '../domain/gasto-impuesto.entity';
 import { GastoVario } from '../domain/gasto-vario.entity';
+import { Ingreso } from '../domain/ingreso.entity';
 import { Punto } from '../domain/punto.entity';
 import { Recorrido } from '../domain/recorrido.entity';
 import { Tasa } from '../domain/tasa.entity';
@@ -128,6 +129,22 @@ export function gasoilEstacionarioJson(g: GasoilEstacionario) {
     litros: num(g.litros),
     referencia: text(g.referencia),
     motivo: text(g.motivo),
+  };
+}
+
+export function ingresoJson(i: Ingreso) {
+  return {
+    id: i.id,
+    fecha: i.fecha == null ? undefined : toIsoDate(i.fecha),
+    empresa: i.empresa ? empresaJson(i.empresa) : undefined,
+    condicionesPago: text(i.condicionesPago),
+    descripcion: text(i.descripcion),
+    cantidad: num(i.cantidad),
+    tasa: num(i.tasa),
+    facturaNum: i.facturaNum == null ? null : Number(i.facturaNum),
+    iva: num(i.iva),
+    montoDivisa: num(i.montoDivisa),
+    montoBs: num(i.montoBs),
   };
 }
 

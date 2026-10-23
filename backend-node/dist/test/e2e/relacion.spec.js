@@ -67,6 +67,38 @@ describe('Relación: ingresos, gastos y general', () => {
             .post('/api/gastos-gasoil')
             .send({ fecha: '2026-10-08', estacion: 'PDV', litros: 10, precioLitro: 2, tasa: TASA })
             .expect(200);
+        const empresas = (await request(server()).get('/api/empresas').expect(200)).body;
+        const idDe = (nombre) => empresas.find((e) => e.nombre === nombre).id;
+        await request(server())
+            .post('/api/ingresos')
+            .send({
+            empresaId: idDe('CABELUM'),
+            fecha: '2026-10-09',
+            condicionesPago: 'Contado',
+            descripcion: 'Cobro CABELUM',
+            cantidad: 1,
+            tasa: TASA,
+            facturaNum: 501,
+            iva: 0,
+            montoDivisa: 300,
+            montoBs: 262695,
+        })
+            .expect(200);
+        await request(server())
+            .post('/api/ingresos')
+            .send({
+            empresaId: idDe('FERROMINERA'),
+            fecha: '2026-10-20',
+            condicionesPago: 'Crédito 15 días',
+            descripcion: 'Cobro FERROMINERA',
+            cantidad: 1,
+            tasa: TASA,
+            facturaNum: 502,
+            iva: 0,
+            montoDivisa: 100,
+            montoBs: 87565,
+        })
+            .expect(200);
     });
     afterAll(async () => {
         await app?.close();
@@ -75,11 +107,11 @@ describe('Relación: ingresos, gastos y general', () => {
     describe('T1: cálculo puro', () => {
         it('resumirIngresos agrupa por empresa (alfabético) y deja SIN EMPRESA', () => {
             const filas = (0, relacion_reportes_service_1.resumirIngresos)([
-                { empresa: 'B', montoViaje: 100 },
-                { empresa: null, montoViaje: 50 },
-                { empresa: 'A', montoViaje: 10 },
-                { empresa: 'A', montoViaje: 5 },
-            ], 2);
+                { empresa: 'B', montoDivisa: 100, montoBs: 200 },
+                { empresa: null, montoDivisa: 50, montoBs: 100 },
+                { empresa: 'A', montoDivisa: 10, montoBs: 20 },
+                { empresa: 'A', montoDivisa: 5, montoBs: 10 },
+            ]);
             expect(filas.map((f) => f.etiqueta)).toEqual(['A', 'B', 'SIN EMPRESA']);
             expect(filas[0]).toEqual({ etiqueta: 'A', montoUsd: 15, montoBs: 30 });
             expect(filas[2]).toEqual({ etiqueta: 'SIN EMPRESA', montoUsd: 50, montoBs: 100 });
@@ -139,16 +171,16 @@ describe('Relación: ingresos, gastos y general', () => {
         });
     });
     describe('T2: GET /api/relacion/:tipo', () => {
-        it('ingresos suma los viajes por empresa con la tasa vigente', async () => {
+        it('ingresos suma los registros del módulo Ingresos por empresa', async () => {
             const res = await request(server()).get(`/api/relacion/ingresos?${RANGO}`).expect(200);
             expect(res.body.tasa).toBe(TASA);
             expect(res.body.cantidad).toBe(2);
             expect(res.body.filas).toEqual([
-                { etiqueta: 'CABELUM', montoUsd: 280, montoBs: 245182 },
+                { etiqueta: 'CABELUM', montoUsd: 300, montoBs: 262695 },
                 { etiqueta: 'FERROMINERA', montoUsd: 100, montoBs: 87565 },
             ]);
-            expect(res.body.totalUsd).toBe(380);
-            expect(res.body.totalBs).toBe(332747);
+            expect(res.body.totalUsd).toBe(400);
+            expect(res.body.totalBs).toBe(350260);
         });
         it('gastos abre varios e impuestos por título y deja el resto fijo', async () => {
             const res = await request(server()).get(`/api/relacion/gastos?${RANGO}`).expect(200);
@@ -181,9 +213,9 @@ describe('Relación: ingresos, gastos y general', () => {
         it('general muestra ingresos, egresos y la relación', async () => {
             const res = await request(server()).get(`/api/relacion/general?${RANGO}`).expect(200);
             expect(res.body.filas).toEqual([
-                { etiqueta: 'INGRESOS', montoUsd: 380, montoBs: 332747 },
+                { etiqueta: 'INGRESOS', montoUsd: 400, montoBs: 350260 },
                 { etiqueta: 'EGRESOS', montoUsd: 223.97, montoBs: 194740.5 },
-                { etiqueta: 'RELACIÓN', montoUsd: 156.03, montoBs: 138006.5 },
+                { etiqueta: 'RELACIÓN', montoUsd: 176.03, montoBs: 155519.5 },
             ]);
             expect(res.body.cantidad).toBe(7);
         });
@@ -233,7 +265,7 @@ describe('Relación: ingresos, gastos y general', () => {
             const plano = text.replace(/\s+/g, '');
             expect(plano.toUpperCase()).toContain('CABELUM');
             expect(plano.toUpperCase()).toContain('FERROMINERA');
-            expect(plano).toContain('332.747,00');
+            expect(plano).toContain('350.260,00');
         });
         it('el PDF de gastos lista los títulos y el resto de categorías', async () => {
             const r = await descargar(app, `/api/export/relacion/gastos?${RANGO}`);
@@ -259,7 +291,7 @@ describe('Relación: ingresos, gastos y general', () => {
             expect(plano).toContain('INGRESOS');
             expect(plano).toContain('EGRESOS');
             expect(plano).toContain('RELACIÓN');
-            expect(plano).toContain('138.006,50');
+            expect(plano).toContain('155.519,50');
         });
         it('el PDF de relación exige el rango de fechas', async () => {
             await request(server()).get('/api/export/relacion/ingresos').expect(400);

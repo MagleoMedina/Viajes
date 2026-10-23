@@ -6,6 +6,7 @@ import { round2 } from '../common/dates';
 import { GastoGasoilRepository } from '../repo/gasto-gasoil.repository';
 import { GastoImpuestoRepository } from '../repo/gasto-impuesto.repository';
 import { GastoVarioRepository } from '../repo/gasto-vario.repository';
+import { IngresoRepository } from '../repo/ingreso.repository';
 import { TasaRepository } from '../repo/tasa.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
 import { ApiException, ApiValidationException } from '../web/api-exception';
@@ -13,8 +14,8 @@ import { escapar, formatearDinero, rangoFechas } from './gastos-seccion.builder'
 
 /**
  * Reportes de relación (ingresos, gastos y relación general).
- * Sin tablas nuevas: todo se calcula sobre viajes, los 3 módulos de gastos
- * y la última tasa registrada.
+ * Los ingresos salen del módulo Ingresos; los gastos, de viajes y de los
+ * 3 módulos de gastos; el Bs usa la última tasa registrada.
  */
 
 export const TIPOS_RELACION = ['ingresos', 'gastos', 'general'] as const;
@@ -48,13 +49,20 @@ export interface RelacionResumen {
 
 /** Viaje reducido a lo que necesita el cálculo (función pura testeable). */
 export interface ViajeRelacion {
-  empresa?: string | null;
-  montoViaje?: number;
   tasa?: number;
   combustible?: number;
   pagoChofer?: number;
   peajes?: number;
   viaticos?: number;
+}
+
+/** Ingreso reducido a lo que necesita el cálculo (función pura testeable). */
+export interface IngresoRelacion {
+  empresa?: string | null;
+  /** Monto recibido en divisas ($). */
+  montoDivisa?: number;
+  /** Monto final en Bs: valor independiente guardado en el ingreso. */
+  montoBs?: number;
 }
 
 /** Registro de un módulo de gastos (monto $ y Bs ya guardados). */
@@ -80,22 +88,26 @@ const sumar = (filas: GastoModuloRelacion[]): { usd: number; bs: number } => ({
 });
 
 /**
- * Ingresos agrupados por empresa (orden alfabético): suma de `montoViaje` en $.
- * El Bs se calcula con la tasa del día de la consulta.
- * Los viajes sin empresa caen en «SIN EMPRESA».
+ * Ingresos agrupados por empresa (orden alfabético): suma del monto en divisas
+ * ($) y del monto final en Bs ya guardado en cada ingreso. El IVA es
+ * informativo y no entra en estos totales.
+ * Los ingresos sin empresa caen en «SIN EMPRESA».
  */
-export function resumirIngresos(viajes: ViajeRelacion[], tasa: number): FilaRelacion[] {
-  const mapa = new Map<string, number>();
-  for (const v of viajes) {
-    const clave = (v.empresa ?? '').trim() || 'SIN EMPRESA';
-    mapa.set(clave, round2((mapa.get(clave) ?? 0) + num(v.montoViaje)));
+export function resumirIngresos(ingresos: IngresoRelacion[]): FilaRelacion[] {
+  const mapa = new Map<string, { usd: number; bs: number }>();
+  for (const i of ingresos) {
+    const clave = (i.empresa ?? '').trim() || 'SIN EMPRESA';
+    const suma = mapa.get(clave) ?? { usd: 0, bs: 0 };
+    suma.usd += num(i.montoDivisa);
+    suma.bs += num(i.montoBs);
+    mapa.set(clave, suma);
   }
   return [...mapa.entries()]
     .sort((a, b) => a[0].localeCompare(b[0], 'es'))
-    .map(([etiqueta, montoUsd]) => ({
+    .map(([etiqueta, suma]) => ({
       etiqueta,
-      montoUsd,
-      montoBs: round2(montoUsd * num(tasa)),
+      montoUsd: round2(suma.usd),
+      montoBs: round2(suma.bs),
     }));
 }
 
@@ -377,6 +389,7 @@ const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 export class RelacionReportesService {
   constructor(
     private readonly viajeRepo: ViajeRepository,
+    private readonly ingresoRepo: IngresoRepository,
     private readonly variosRepo: GastoVarioRepository,
     private readonly impuestosRepo: GastoImpuestoRepository,
     private readonly gasoilRepo: GastoGasoilRepository,
@@ -398,18 +411,15 @@ export class RelacionReportesService {
 
   async ingresos(desde: string, hasta: string): Promise<RelacionResumen> {
     const tasa = await this.tasaVigente();
-    const viajes = await this.viajeRepo.findByFechaInicioBetweenOrderByFechaInicioDesc(
-      desde,
-      hasta,
-    );
+    const registros = await this.ingresoRepo.buscar(null, desde, hasta);
     const filas = resumirIngresos(
-      viajes.map((v) => ({
-        empresa: v.empresa?.nombre ?? null,
-        montoViaje: v.montoViaje,
+      registros.map((i) => ({
+        empresa: i.empresa?.nombre ?? null,
+        montoDivisa: i.montoDivisa,
+        montoBs: i.montoBs,
       })),
-      tasa,
     );
-    return this.resumen('ingresos', tasa, filas, viajes.length);
+    return this.resumen('ingresos', tasa, filas, registros.length);
   }
 
   async gastos(desde: string, hasta: string): Promise<RelacionResumen> {

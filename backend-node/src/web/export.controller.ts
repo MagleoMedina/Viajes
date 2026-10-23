@@ -6,6 +6,7 @@ import { GastosVariosService } from '../service/gastos-varios.service';
 import { GastosImpuestosService } from '../service/gastos-impuestos.service';
 import { GastosGasoilService } from '../service/gastos-gasoil.service';
 import { GasoilEstacionarioService } from '../service/gasoil-estacionario.service';
+import { IngresosService } from '../service/ingresos.service';
 import {
   RelacionReportesService,
   TIPOS_RELACION,
@@ -45,6 +46,7 @@ export class ExportController {
     private readonly impuestosServicio: GastosImpuestosService,
     private readonly gasoilServicio: GastosGasoilService,
     private readonly estacionarioServicio: GasoilEstacionarioService,
+    private readonly ingresosServicio: IngresosService,
     private readonly relacionServicio: RelacionReportesService,
   ) {}
 
@@ -188,6 +190,25 @@ export class ExportController {
     const d = fechaArchivo(desde, 'inicio');
     const h = fechaArchivo(hasta, 'hoy');
     const nombre = `gasoil_estacionario_${d}_${h}`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+    res.setHeader('Content-Length', String(buffer.length));
+    res.end(buffer);
+  }
+
+  /** PDF de ingresos: un bloque por empresa con subtotales y total general. */
+  @Get('ingresos')
+  async ingresos(
+    @Res() res: Response,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('empresaId') empresaId?: string,
+  ) {
+    const idEmpresa = empresaId ? Number(empresaId) : null;
+    const buffer = await this.ingresosServicio.crearPdf(desde, hasta, idEmpresa);
+    const d = fechaArchivo(desde, 'inicio');
+    const h = fechaArchivo(hasta, 'hoy');
+    const nombre = `ingresos_${d}_${h}`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
     res.setHeader('Content-Length', String(buffer.length));

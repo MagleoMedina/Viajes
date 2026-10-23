@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FiPlus, FiSave, FiEdit2, FiTrash2, FiSearch, FiX } from 'react-icons/fi'
-import { api, fecha, money, urlDescarga } from '../api/client.js'
+import { api, fecha, money } from '../api/client.js'
 import {
   agruparGastos,
   gastoVacio,
@@ -8,8 +8,10 @@ import {
   tipoImpuestoExistente,
 } from '../api/gastos.js'
 import GastoForm from '../components/GastoForm.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 import Modal from '../components/Modal.jsx'
 import Confirmar from '../components/Confirmar.jsx'
+import VistaPreviaPdf from '../components/VistaPreviaPdf.jsx'
 
 const PESTANAS = [
   { id: 'registrar', label: 'Registrar' },
@@ -34,6 +36,8 @@ function ImpRegistrar() {
   const [registros, setRegistros] = useState([])
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [formRef, enfocarFormulario] = useFocoFormulario()
+  const [tipoRef, enfocarTipo] = useFocoFormulario()
 
   function cargarTipos() {
     return api.get('/titulos-impuesto').then(setTipos)
@@ -70,6 +74,7 @@ function ImpRegistrar() {
       setAviso('Tipo de impuesto registrado.')
       setNuevoTipo('')
       await cargarTipos()
+      enfocarTipo()
     } catch (err) {
       setError(err.message)
     }
@@ -89,6 +94,7 @@ function ImpRegistrar() {
       setAviso('Gasto de impuesto registrado.')
       setForm(gastoVacio(tasaActual))
       await cargarRegistros()
+      enfocarFormulario()
     } catch (err) {
       setError(err.message)
     }
@@ -103,7 +109,7 @@ function ImpRegistrar() {
         <p className="ayuda">
           Antes de registrar un gasto debe existir su tipo (ej.: IVSS, Alcaldía, SENIAT).
         </p>
-        <form onSubmit={agregarTipo} className="form linea">
+        <form ref={tipoRef} onSubmit={agregarTipo} className="form linea">
           <input
             type="text"
             value={nuevoTipo}
@@ -132,6 +138,7 @@ function ImpRegistrar() {
       <section className="tarjeta">
         <h2>Registrar gasto de impuesto</h2>
         <GastoForm
+          formRef={formRef}
           form={form}
           cambiar={cambiar}
           titulos={tipos}
@@ -568,6 +575,7 @@ function ImpConsultar() {
   const [tipos, setTipos] = useState([])
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', tituloId: '' })
   const [vistaPrevia, setVistaPrevia] = useState(null)
+  const [pdfPrevia, setPdfPrevia] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -608,7 +616,7 @@ function ImpConsultar() {
   }
 
   function exportarPdf() {
-    window.location.href = urlDescarga(`/export/gastos-impuestos?${params().toString()}`)
+    setPdfPrevia(`/export/gastos-impuestos?${params().toString()}`)
   }
 
   return (
@@ -735,6 +743,14 @@ function ImpConsultar() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {pdfPrevia && (
+        <VistaPreviaPdf
+          ruta={pdfPrevia}
+          titulo="Vista previa · Gastos de impuestos"
+          onClose={() => setPdfPrevia('')}
+        />
       )}
     </>
   )

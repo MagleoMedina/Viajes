@@ -22,6 +22,7 @@ const gasto_gasoil_entity_1 = require("./domain/gasto-gasoil.entity");
 const gasoil_estacionario_entity_1 = require("./domain/gasoil-estacionario.entity");
 const gasto_impuesto_entity_1 = require("./domain/gasto-impuesto.entity");
 const gasto_vario_entity_1 = require("./domain/gasto-vario.entity");
+const ingreso_entity_1 = require("./domain/ingreso.entity");
 const punto_entity_1 = require("./domain/punto.entity");
 const recorrido_entity_1 = require("./domain/recorrido.entity");
 const tasa_entity_1 = require("./domain/tasa.entity");
@@ -35,6 +36,7 @@ const gasto_gasoil_repository_1 = require("./repo/gasto-gasoil.repository");
 const gasoil_estacionario_repository_1 = require("./repo/gasoil-estacionario.repository");
 const gasto_impuesto_repository_1 = require("./repo/gasto-impuesto.repository");
 const gasto_vario_repository_1 = require("./repo/gasto-vario.repository");
+const ingreso_repository_1 = require("./repo/ingreso.repository");
 const punto_repository_1 = require("./repo/punto.repository");
 const recorrido_repository_1 = require("./repo/recorrido.repository");
 const tasa_repository_1 = require("./repo/tasa.repository");
@@ -48,6 +50,7 @@ const gastos_gasoil_service_1 = require("./service/gastos-gasoil.service");
 const gasoil_estacionario_service_1 = require("./service/gasoil-estacionario.service");
 const gastos_impuestos_service_1 = require("./service/gastos-impuestos.service");
 const gastos_varios_service_1 = require("./service/gastos-varios.service");
+const ingresos_service_1 = require("./service/ingresos.service");
 const reporte_empresa_service_1 = require("./service/reporte-empresa.service");
 const relacion_reportes_service_1 = require("./service/relacion-reportes.service");
 const turso_sync_service_1 = require("./service/turso-sync.service");
@@ -59,6 +62,7 @@ const gastos_gasoil_controller_1 = require("./web/gastos-gasoil.controller");
 const gasoil_estacionario_controller_1 = require("./web/gasoil-estacionario.controller");
 const gastos_impuestos_controller_1 = require("./web/gastos-impuestos.controller");
 const gastos_varios_controller_1 = require("./web/gastos-varios.controller");
+const ingresos_controller_1 = require("./web/ingresos.controller");
 const puntos_controller_1 = require("./web/puntos.controller");
 const recorridos_controller_1 = require("./web/recorridos.controller");
 const titulos_gasto_controller_1 = require("./web/titulos-gasto.controller");
@@ -82,6 +86,7 @@ const ENTIDADES = [
     gasoil_estacionario_entity_1.GasoilEstacionario,
     gasto_impuesto_entity_1.GastoImpuesto,
     gasto_vario_entity_1.GastoVario,
+    ingreso_entity_1.Ingreso,
     punto_entity_1.Punto,
     recorrido_entity_1.Recorrido,
     tasa_entity_1.Tasa,
@@ -121,6 +126,7 @@ exports.AppModule = AppModule = __decorate([
             gasoil_estacionario_controller_1.GasoilEstacionarioController,
             gastos_impuestos_controller_1.GastoImpuestoController,
             gastos_varios_controller_1.GastoVarioController,
+            ingresos_controller_1.IngresoController,
             puntos_controller_1.PuntoController,
             recorridos_controller_1.RecorridoController,
             titulos_gasto_controller_1.TituloGastoController,
@@ -140,6 +146,7 @@ exports.AppModule = AppModule = __decorate([
             gasoil_estacionario_repository_1.GasoilEstacionarioRepository,
             gasto_impuesto_repository_1.GastoImpuestoRepository,
             gasto_vario_repository_1.GastoVarioRepository,
+            ingreso_repository_1.IngresoRepository,
             punto_repository_1.PuntoRepository,
             recorrido_repository_1.RecorridoRepository,
             tasa_repository_1.TasaRepository,
@@ -153,6 +160,7 @@ exports.AppModule = AppModule = __decorate([
             gasoil_estacionario_service_1.GasoilEstacionarioService,
             gastos_impuestos_service_1.GastosImpuestosService,
             gastos_varios_service_1.GastosVariosService,
+            ingresos_service_1.IngresosService,
             reporte_empresa_service_1.ReporteEmpresaService,
             relacion_reportes_service_1.RelacionReportesService,
             turso_sync_service_1.TursoSyncService,

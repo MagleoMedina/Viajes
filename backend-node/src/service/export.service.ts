@@ -7,7 +7,10 @@ import { Viaje } from '../domain/viaje.entity';
 import { ViajeRepository } from '../repo/viaje.repository';
 import { EmpresaRepository } from '../repo/empresa.repository';
 import { ResumenGasoil, StockGasoilService } from './stock-gasoil.service';
-import { money, round2 } from '../common/dates';
+import { money, ordenarPorFechaAscendente, round2 } from '../common/dates';
+
+// Se reexporta para los tests del orden del PDF.
+export { ordenarPorFechaAscendente };
 
 const COLUMNAS = [
   'FECHA INICIO',
@@ -322,6 +325,8 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
     `;
 }
 
+/* ----------------------------- PDF ----------------------------- */
+
 @Injectable()
 export class ExportService {
   constructor(
@@ -412,7 +417,7 @@ export class ExportService {
     hasta?: string,
     colorTitulo = '#26324a',
   ): Promise<Buffer> {
-    const viajes = await this.buscar(empresaId, desde, hasta);
+    const viajes = ordenarPorFechaAscendente(await this.buscar(empresaId, desde, hasta));
     const empresaNombre =
       empresaId != null ? (await this.empresas.findById(empresaId))?.nombre ?? '¿?' : null;
     const resumen = await this.stockGasoil.resumen();

@@ -80,7 +80,7 @@ export default function Viajes({ onEditar }) {
   }
 
   return (
-    <div className="vista">
+    <div className="vista ancha">
       <header className="vista-cab">
         <div>
           <h1>Viajes</h1>
@@ -162,7 +162,7 @@ export default function Viajes({ onEditar }) {
       ) : (
         <section className="tarjeta">
           <div className="tabla-envoltura">
-            <table className="tabla">
+            <table className="tabla compacta">
               <thead>
                 <tr>
                   <th>Inicio</th>

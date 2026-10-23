@@ -141,6 +141,8 @@ let GastoVarioController = class GastoVarioController {
             gasto.montoUsd = Number(req.montoUsd) || 0;
         if (req.montoBs != null && Number.isFinite(Number(req.montoBs))) {
             gasto.montoBs = (0, dates_1.round2)(Number(req.montoBs));
+            if (req.montoUsd === undefined)
+                gasto.montoUsd = (0, dates_1.usdDesdeBs)(gasto.montoBs, gasto.tasa);
         }
         else if (esAlta || req.montoUsd !== undefined || req.tasa !== undefined) {
             gasto.montoBs = (0, dates_1.round2)((gasto.montoUsd ?? 0) * (gasto.tasa ?? 0));

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { FiEdit2, FiFileText, FiSearch, FiTrash2 } from 'react-icons/fi'
-import { api, fecha, money, urlDescarga } from '../api/client.js'
+import { api, fecha, money } from '../api/client.js'
 import { estacionarioPayload, estacionarioVacio, num, red2 } from '../api/gastos.js'
 import Modal from './Modal.jsx'
 import Confirmar from './Confirmar.jsx'
+import VistaPreviaPdf from './VistaPreviaPdf.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 
 /** Campos compartidos por el alta y la edición. */
 function CamposEstacionario({ form, cambiar, vehiculos, disponible }) {
@@ -89,8 +91,10 @@ export default function GasoilEstacionario({ onStockCambio }) {
   const [porEliminar, setPorEliminar] = useState(null)
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', vehiculoId: '' })
   const [vistaPrevia, setVistaPrevia] = useState(null)
+  const [pdfPrevia, setPdfPrevia] = useState('')
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [formRef, enfocarFormulario] = useFocoFormulario()
 
   function cargarRegistros() {
     return api.get('/gasoil-estacionario').then(setRegistros)
@@ -150,6 +154,7 @@ export default function GasoilEstacionario({ onStockCambio }) {
       setForm(estacionarioVacio())
       await Promise.all([cargarRegistros(), cargarStock()])
       onStockCambio?.()
+      enfocarFormulario()
     } catch (err) {
       setError(err.message)
     }
@@ -244,9 +249,7 @@ export default function GasoilEstacionario({ onStockCambio }) {
 
   function exportarPdf() {
     const consulta = vistaPrevia?.consulta
-    window.location.href = urlDescarga(
-      `/export/gasoil-estacionario${consulta ? `?${consulta}` : ''}`,
-    )
+    setPdfPrevia(`/export/gasoil-estacionario${consulta ? `?${consulta}` : ''}`)
   }
 
   const ultimos = registros.slice(0, 10)
@@ -260,7 +263,7 @@ export default function GasoilEstacionario({ onStockCambio }) {
           Consumo de vehículos que no están en viaje. Descuenta del stock global, no del resumen
           por vehículo.
         </p>
-        <form onSubmit={guardar} className="form">
+        <form ref={formRef} onSubmit={guardar} className="form">
           <CamposEstacionario
             form={form}
             cambiar={cambiar}
@@ -471,6 +474,14 @@ export default function GasoilEstacionario({ onStockCambio }) {
             </button>
           </div>
         </Modal>
+      )}
+
+      {pdfPrevia && (
+        <VistaPreviaPdf
+          ruta={pdfPrevia}
+          titulo="Vista previa · Gasoil estacionario"
+          onClose={() => setPdfPrevia('')}
+        />
       )}
     </>
   )

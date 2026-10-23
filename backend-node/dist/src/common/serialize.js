@@ -13,6 +13,7 @@ exports.tituloImpuestoJson = tituloImpuestoJson;
 exports.gastoImpuestoJson = gastoImpuestoJson;
 exports.gastoGasoilJson = gastoGasoilJson;
 exports.gasoilEstacionarioJson = gasoilEstacionarioJson;
+exports.ingresoJson = ingresoJson;
 exports.viajeJson = viajeJson;
 const dates_1 = require("./dates");
 const num = (value) => value == null ? undefined : Number(value);
@@ -114,6 +115,21 @@ function gasoilEstacionarioJson(g) {
         litros: num(g.litros),
         referencia: text(g.referencia),
         motivo: text(g.motivo),
+    };
+}
+function ingresoJson(i) {
+    return {
+        id: i.id,
+        fecha: i.fecha == null ? undefined : (0, dates_1.toIsoDate)(i.fecha),
+        empresa: i.empresa ? empresaJson(i.empresa) : undefined,
+        condicionesPago: text(i.condicionesPago),
+        descripcion: text(i.descripcion),
+        cantidad: num(i.cantidad),
+        tasa: num(i.tasa),
+        facturaNum: i.facturaNum == null ? null : Number(i.facturaNum),
+        iva: num(i.iva),
+        montoDivisa: num(i.montoDivisa),
+        montoBs: num(i.montoBs),
     };
 }
 function viajeJson(v) {

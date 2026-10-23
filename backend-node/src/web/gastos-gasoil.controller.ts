@@ -18,7 +18,7 @@ import { GastoGasoilRepository } from '../repo/gasto-gasoil.repository';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { StockGasoilService } from '../service/stock-gasoil.service';
 import { gastoGasoilJson } from '../common/serialize';
-import { dateOnlyToMillis, round2 } from '../common/dates';
+import { dateOnlyToMillis, round2, usdDesdeBs } from '../common/dates';
 import { ApiException, ApiValidationException } from './api-exception';
 
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -133,7 +133,8 @@ export class GastoGasoilController {
 
   /**
    * Aplica los campos presentes. Reglas de montos:
-   * - montoUsd: si no viene y hay litros × precio, se calcula.
+   * - montoUsd: si no viene y hay litros × precio, se calcula; si tampoco,
+   *   se deriva del Monto Bs (Bs ÷ tasa).
    * - montoBs: si no viene, = montoUsd × tasa.
    */
   private aplicar(gasto: GastoGasoil, req: GastoGasoilRequest, esAlta: boolean) {
@@ -151,6 +152,8 @@ export class GastoGasoilController {
       (esAlta && (gasto.litros ?? 0) > 0)
     ) {
       gasto.montoUsd = round2((gasto.litros ?? 0) * (gasto.precioLitro ?? 0));
+    } else if (req.montoBs != null && Number.isFinite(Number(req.montoBs))) {
+      gasto.montoUsd = usdDesdeBs(Number(req.montoBs), gasto.tasa);
     }
 
     if (req.montoBs != null && Number.isFinite(Number(req.montoBs))) {

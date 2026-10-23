@@ -22,6 +22,7 @@ const dates_1 = require("../common/dates");
 const gasto_gasoil_repository_1 = require("../repo/gasto-gasoil.repository");
 const gasto_impuesto_repository_1 = require("../repo/gasto-impuesto.repository");
 const gasto_vario_repository_1 = require("../repo/gasto-vario.repository");
+const ingreso_repository_1 = require("../repo/ingreso.repository");
 const tasa_repository_1 = require("../repo/tasa.repository");
 const viaje_repository_1 = require("../repo/viaje.repository");
 const api_exception_1 = require("../web/api-exception");
@@ -41,18 +42,21 @@ const sumar = (filas) => ({
     usd: (0, dates_1.round2)(filas.reduce((s, f) => s + num(f.montoUsd), 0)),
     bs: (0, dates_1.round2)(filas.reduce((s, f) => s + num(f.montoBs), 0)),
 });
-function resumirIngresos(viajes, tasa) {
+function resumirIngresos(ingresos) {
     const mapa = new Map();
-    for (const v of viajes) {
-        const clave = (v.empresa ?? '').trim() || 'SIN EMPRESA';
-        mapa.set(clave, (0, dates_1.round2)((mapa.get(clave) ?? 0) + num(v.montoViaje)));
+    for (const i of ingresos) {
+        const clave = (i.empresa ?? '').trim() || 'SIN EMPRESA';
+        const suma = mapa.get(clave) ?? { usd: 0, bs: 0 };
+        suma.usd += num(i.montoDivisa);
+        suma.bs += num(i.montoBs);
+        mapa.set(clave, suma);
     }
     return [...mapa.entries()]
         .sort((a, b) => a[0].localeCompare(b[0], 'es'))
-        .map(([etiqueta, montoUsd]) => ({
+        .map(([etiqueta, suma]) => ({
         etiqueta,
-        montoUsd,
-        montoBs: (0, dates_1.round2)(montoUsd * num(tasa)),
+        montoUsd: (0, dates_1.round2)(suma.usd),
+        montoBs: (0, dates_1.round2)(suma.bs),
     }));
 }
 function resumirGastos(fuentes) {
@@ -272,12 +276,14 @@ function htmlRelacion(params) {
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 let RelacionReportesService = class RelacionReportesService {
     viajeRepo;
+    ingresoRepo;
     variosRepo;
     impuestosRepo;
     gasoilRepo;
     tasaRepo;
-    constructor(viajeRepo, variosRepo, impuestosRepo, gasoilRepo, tasaRepo) {
+    constructor(viajeRepo, ingresoRepo, variosRepo, impuestosRepo, gasoilRepo, tasaRepo) {
         this.viajeRepo = viajeRepo;
+        this.ingresoRepo = ingresoRepo;
         this.variosRepo = variosRepo;
         this.impuestosRepo = impuestosRepo;
         this.gasoilRepo = gasoilRepo;
@@ -299,12 +305,13 @@ let RelacionReportesService = class RelacionReportesService {
     }
     async ingresos(desde, hasta) {
         const tasa = await this.tasaVigente();
-        const viajes = await this.viajeRepo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde, hasta);
-        const filas = resumirIngresos(viajes.map((v) => ({
-            empresa: v.empresa?.nombre ?? null,
-            montoViaje: v.montoViaje,
-        })), tasa);
-        return this.resumen('ingresos', tasa, filas, viajes.length);
+        const registros = await this.ingresoRepo.buscar(null, desde, hasta);
+        const filas = resumirIngresos(registros.map((i) => ({
+            empresa: i.empresa?.nombre ?? null,
+            montoDivisa: i.montoDivisa,
+            montoBs: i.montoBs,
+        })));
+        return this.resumen('ingresos', tasa, filas, registros.length);
     }
     async gastos(desde, hasta) {
         const tasa = await this.tasaVigente();
@@ -411,6 +418,7 @@ exports.RelacionReportesService = RelacionReportesService;
 exports.RelacionReportesService = RelacionReportesService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [viaje_repository_1.ViajeRepository,
+        ingreso_repository_1.IngresoRepository,
         gasto_vario_repository_1.GastoVarioRepository,
         gasto_impuesto_repository_1.GastoImpuestoRepository,
         gasto_gasoil_repository_1.GastoGasoilRepository,

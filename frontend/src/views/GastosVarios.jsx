@@ -14,7 +14,7 @@ export default function GastosVarios() {
   const [pestana, setPestana] = useState('registrar')
 
   return (
-    <div className="vista">
+    <div className={`vista${pestana === 'modificar' ? ' ancha' : ''}`}>
       <header className="vista-cab">
         <div>
           <h1>Gastos varios</h1>

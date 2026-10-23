@@ -5,6 +5,7 @@ import { gastoVacio, gastoPayload, tituloExistente } from '../api/gastos.js'
 import Modal from '../components/Modal.jsx'
 import Confirmar from '../components/Confirmar.jsx'
 import GastoForm from '../components/GastoForm.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 
 export default function ModificarGastos() {
   const [titulos, setTitulos] = useState([])
@@ -24,6 +25,7 @@ export default function ModificarGastos() {
   const [porEliminarTitulo, setPorEliminarTitulo] = useState(null)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [tituloRef, enfocarTitulo] = useFocoFormulario()
 
   function cargarTitulos() {
     return api.get('/titulos-gasto').then(setTitulos)
@@ -61,6 +63,7 @@ export default function ModificarGastos() {
       setAviso('Título de gasto registrado.')
       setNuevoTitulo('')
       await cargarTitulos()
+      enfocarTitulo()
     } catch (err) {
       setError(err.message)
     }
@@ -166,9 +169,9 @@ export default function ModificarGastos() {
   return (
     <>
       <div className="rejilla">
-        <section className="tarjeta">
+        <section className="tarjeta ancho-completo">
           <h2>Títulos de gasto</h2>
-          <form onSubmit={agregarTitulo} className="form linea">
+          <form ref={tituloRef} onSubmit={agregarTitulo} className="form linea">
             <input
               type="text"
               value={nuevoTitulo}
@@ -185,7 +188,7 @@ export default function ModificarGastos() {
             <p className="vacio">Sin títulos todavía.</p>
           ) : (
             <div className="tabla-envoltura">
-              <table className="tabla">
+              <table className="tabla limitada">
                 <thead>
                   <tr>
                     <th>Nombre</th>
@@ -250,7 +253,7 @@ export default function ModificarGastos() {
           )}
         </section>
 
-        <section className="tarjeta">
+        <section className="tarjeta ancho-completo">
           <h2>Registros</h2>
           <div className="campos-3">
             <label>
@@ -291,18 +294,18 @@ export default function ModificarGastos() {
             </p>
           ) : (
             <div className="tabla-envoltura">
-              <table className="tabla">
+              <table className="tabla compacta">
                 <thead>
                   <tr>
                     <th>Fecha</th>
-                    <th>Título</th>
-                    <th>N°</th>
-                    <th>Motivo</th>
+                    <th className="texto">Título</th>
+                    <th>N° factura</th>
+                    <th className="texto">Motivo</th>
                     <th className="derecha">Monto $</th>
                     <th className="derecha">Monto Bs</th>
                     <th className="derecha">Tasa</th>
                     <th className="derecha">%DB</th>
-                    <th>N° REF</th>
+                    <th className="texto">N° REF</th>
                     <th className="centro">Acciones</th>
                   </tr>
                 </thead>
@@ -310,14 +313,14 @@ export default function ModificarGastos() {
                   {registros.map((g) => (
                     <tr key={g.id}>
                       <td>{fecha(g.fecha)}</td>
-                      <td>{g.tituloGasto?.nombre}</td>
+                      <td className="texto">{g.tituloGasto?.nombre}</td>
                       <td>{g.numero}</td>
-                      <td>{g.motivo}</td>
+                      <td className="texto">{g.motivo}</td>
                       <td className="derecha">{money(g.montoUsd)}</td>
                       <td className="derecha">{money(g.montoBs)}</td>
                       <td className="derecha">{money(g.tasa)}</td>
                       <td className="derecha">{money(g.porcentajeDb)}</td>
-                      <td>{g.referencia}</td>
+                      <td className="texto">{g.referencia}</td>
                       <td className="centro">
                         <button
                           type="button"
@@ -354,6 +357,7 @@ export default function ModificarGastos() {
             titulos={titulos}
             onSubmit={enviarEdicion}
             etiqueta="Guardar cambios"
+            etiquetaNumero="Número de factura"
             onCancelar={cerrarEdicion}
           />
           {error && <p className="error">{error}</p>}

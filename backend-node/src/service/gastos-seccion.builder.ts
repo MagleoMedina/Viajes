@@ -41,6 +41,8 @@ export interface GastosSeccionHtmlParams {
   /** Texto del subtotal por bloque. Por defecto "SUBTOTAL <clave>"
    * (ej.: "SUBTOTAL IVSS"); el gasoil lo pasa sin la clave. */
   etiquetaSubtotal?: (clave: string) => string;
+  /** Aviso cuando no hay filas. Por defecto "Sin gastos en este intervalo." */
+  mensajeVacio?: string;
 }
 
 const numDe = (v: number | undefined): number => Number(v || 0);
@@ -116,6 +118,7 @@ export function htmlGastosSeccion(params: GastosSeccionHtmlParams): string {
     color,
     logoUri,
     etiquetaSubtotal,
+    mensajeVacio,
   } = params;
 
   const ths = columnas
@@ -169,7 +172,9 @@ export function htmlGastosSeccion(params: GastosSeccionHtmlParams): string {
     )
     .join('');
 
-  const vacio = !bloques.length ? '<p class="vacio">Sin gastos en este intervalo.</p>' : '';
+  const vacio = !bloques.length
+    ? `<p class="vacio">${mensajeVacio ?? 'Sin gastos en este intervalo.'}</p>`
+    : '';
 
   return `
       <!DOCTYPE html>

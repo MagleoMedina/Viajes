@@ -121,6 +121,12 @@
   gap: 6px;
 }
 
+/* Pista de atajos de teclado del pie del sidebar. */
+.pista-teclado {
+  line-height: 1.4;
+  color: #93a3c0;
+}
+
 /* Dirección IP:puerto del servidor; clic = copiar al portapapeles. */
 .dir-servidor {
   display: block;
@@ -330,6 +336,11 @@
   animation: vista-in 0.28s ease both;
 }
 
+/* Tablas largas (viajes, registros de gastos): usan todo el ancho disponible. */
+.vista.ancha {
+  max-width: none;
+}
+
 @keyframes vista-in {
   from {
     opacity: 0;
@@ -463,6 +474,23 @@
   max-height: 65vh;
   border: 1px solid var(--border);
   border-radius: 8px;
+}
+
+/* Tablas con muchas columnas: menos relleno por celda, mismo texto. */
+.tabla.compacta th,
+.tabla.compacta td {
+  padding: 7px 8px;
+}
+
+/* Columnas de texto largo en tablas compactas: envuelven y entran sin scroll. */
+.tabla.compacta .texto {
+  white-space: normal;
+  min-width: 110px;
+}
+
+/* Tabla de títulos dentro de una tarjeta ancha: no estira el contenido. */
+.tabla.limitada {
+  max-width: 680px;
 }
 
 .tabla thead th {
@@ -718,6 +746,20 @@
   max-width: 1100px;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
+}
+
+/* Visor del PDF generado (previsualización antes de descargar). */
+.pdf-vista {
+  width: 100%;
+  height: calc(100vh - 220px);
+  min-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.pdf-pie {
+  margin-top: 14px;
 }
 
 @keyframes overlay-in {

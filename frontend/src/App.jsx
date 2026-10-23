@@ -1,5 +1,6 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import Sidebar from './components/Sidebar.jsx'
+import { instalarEnterNavega } from './utils/enter-navega.js'
 import Choferes from './views/Choferes.jsx'
 import Vehiculos from './views/Vehiculos.jsx'
 import Puntos from './views/Puntos.jsx'
@@ -12,6 +13,7 @@ import Recorridos from './views/Recorridos.jsx'
 import GastosVarios from './views/GastosVarios.jsx'
 import GastosImpuestos from './views/GastosImpuestos.jsx'
 import GastosGasoil from './views/GastosGasoil.jsx'
+import Ingresos from './views/Ingresos.jsx'
 import Relacion from './views/Relacion.jsx'
 import './App.css'
 
@@ -22,6 +24,9 @@ function App() {
   // Cambia al terminar un pull de Turso: remonta la vista activa para que
   // vuelva a leer los datos del backend.
   const [recarga, setRecarga] = useState(0)
+
+  // Enter pasa al siguiente campo y Ctrl+Enter envía el formulario.
+  useEffect(() => instalarEnterNavega(), [])
 
   function editarViaje(viaje) {
     setViajeEditando(viaje)
@@ -65,6 +70,7 @@ function App() {
           {vista === 'gastos-varios' && <GastosVarios />}
           {vista === 'gastos-impuestos' && <GastosImpuestos />}
           {vista === 'gastos-gasoil' && <GastosGasoil />}
+          {vista === 'ingresos' && <Ingresos />}
           {vista === 'relacion' && <Relacion />}
         </Fragment>
       </main>

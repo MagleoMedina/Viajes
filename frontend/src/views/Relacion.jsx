@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { FiFileText, FiCheck, FiTrendingUp, FiTrendingDown, FiActivity } from 'react-icons/fi'
-import { api, money, urlDescarga } from '../api/client.js'
+import { api, money } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
+import VistaPreviaPdf from '../components/VistaPreviaPdf.jsx'
 
 /** Los 3 reportes: mismo endpoint, distinto tipo. */
 const REPORTES = [
   {
     tipo: 'ingresos',
     titulo: 'Reporte ingreso',
-    descripcion: 'Suma de los montos de los viajes ($) agrupada por empresa.',
+    descripcion: 'Suma de los ingresos registrados ($ y Bs) agrupada por empresa.',
     Icono: FiTrendingUp,
   },
   {
@@ -39,6 +40,7 @@ export default function Relacion() {
   const [cargando, setCargando] = useState('')
   const [sinRegistros, setSinRegistros] = useState(false)
   const [resultado, setResultado] = useState(null)
+  const [pdfPrevia, setPdfPrevia] = useState('')
 
   async function generar(tipo) {
     setError('')
@@ -72,7 +74,7 @@ export default function Relacion() {
   function descargarPdf() {
     if (!resultado) return
     const params = new URLSearchParams({ desde, hasta })
-    window.location.href = urlDescarga(`/export/relacion/${resultado.tipo}?${params.toString()}`)
+    setPdfPrevia(`/export/relacion/${resultado.tipo}?${params.toString()}`)
   }
 
   return (
@@ -191,6 +193,14 @@ export default function Relacion() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {pdfPrevia && (
+        <VistaPreviaPdf
+          ruta={pdfPrevia}
+          titulo="Vista previa · Reporte de relación"
+          onClose={() => setPdfPrevia('')}
+        />
       )}
     </div>
   )

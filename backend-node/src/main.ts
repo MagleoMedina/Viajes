@@ -1,7 +1,9 @@
 import 'reflect-metadata';
 import { mkdirSync } from 'fs';
 import { NestFactory } from '@nestjs/core';
+import { DataSource } from 'typeorm';
 import { AppModule } from './app.module';
+import { aplicarMigraciones } from './common/migraciones';
 import { ipsLocales } from './common/sistema';
 
 async function bootstrap() {
@@ -10,6 +12,8 @@ async function bootstrap() {
     mkdirSync('data', { recursive: true });
   }
   const app = await NestFactory.create(AppModule);
+  // Bases de instalaciones anteriores: agrega columnas nuevas antes de atender.
+  await aplicarMigraciones(app.get(DataSource));
   // Cualquier origen (otra PC, el celular) puede llamar /api sin CORS.
   app.enableCors();
   // Volcar la base local al recibir SIGTERM/CTRL+C (DbSaverService.onApplicationShutdown).

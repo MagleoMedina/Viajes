@@ -25,6 +25,25 @@ export function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+/** Monto en $ derivado del monto en Bs: Bs ÷ tasa (tasa 0 -> 0). */
+export function usdDesdeBs(montoBs: number, tasa: number): number {
+  const t = Number(tasa) || 0;
+  return t ? round2((Number(montoBs) || 0) / t) : 0;
+}
+
+/**
+ * Ordena los registros por fecha de inicio ascendente; con la misma fecha
+ * desempata por id. Lo usan los PDF que listan viajes.
+ */
+export function ordenarPorFechaAscendente<T extends { id: number; fechaInicio: Date | string }>(
+  registros: T[],
+): T[] {
+  return [...registros].sort(
+    (a, b) =>
+      new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime() || a.id - b.id,
+  );
+}
+
 /** Formato de numeros aleman (1.234,56), igual que String.format(Locale.GERMANY). */
 export function money(value: number): string {
   return (Number(value) || 0).toLocaleString('de-DE', {

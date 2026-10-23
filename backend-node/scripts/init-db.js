@@ -138,6 +138,31 @@ const MIGRACIONES = [
       motivo varchar(200) NOT NULL DEFAULT ''
     )`,
   },
+  {
+    tabla: 'ingresos',
+    columna: 'id',
+    ddl: `CREATE TABLE IF NOT EXISTS ingresos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa_id bigint NULL REFERENCES empresas(id),
+      fecha integer NOT NULL,
+      condiciones_pago varchar(100) NOT NULL DEFAULT '',
+      descripcion varchar(200) NOT NULL DEFAULT '',
+      cantidad real NOT NULL DEFAULT 0,
+      tasa real NOT NULL DEFAULT 0,
+      monto_divisa real NOT NULL DEFAULT 0,
+      monto_bs real NOT NULL DEFAULT 0
+    )`,
+  },
+  {
+    tabla: 'ingresos',
+    columna: 'factura_num',
+    ddl: 'ALTER TABLE ingresos ADD COLUMN factura_num integer NULL',
+  },
+  {
+    tabla: 'ingresos',
+    columna: 'iva',
+    ddl: 'ALTER TABLE ingresos ADD COLUMN iva real NOT NULL DEFAULT 0',
+  },
 ];
 
 /**
@@ -174,6 +199,31 @@ function permitirVehiculoNulo(db) {
   return true;
 }
 
+/**
+ * FACTURA No. unica: SQLite no permite UNIQUE en ALTER TABLE ADD COLUMN, asi
+ * que la restriccion se agrega como indice (unico, y admite varias filas NULL
+ * para los ingresos historicos sin factura).
+ */
+function crearIndiceFacturaUnica(db) {
+  const info = db.exec('PRAGMA table_info(ingresos)');
+  if (!info.length) return false;
+  const columnas = info[0].values.map((v) => v[1]);
+  if (!columnas.includes('factura_num')) return false;
+  const yaExiste = db.exec(
+    "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_ingresos_factura_num'",
+  );
+  if (yaExiste.length && yaExiste[0].values.length) return false;
+  try {
+    db.run(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_ingresos_factura_num ON ingresos(factura_num)',
+    );
+  } catch (e) {
+    console.warn(`[!] No se pudo crear el indice unico de facturas: ${e.message}`);
+    return false;
+  }
+  return true;
+}
+
 async function main() {
   const dbFile = process.argv[2] || process.env.DB_PATH || path.join(__dirname, '..', 'data', 'viajes.db');
   const seedFile = path.join(__dirname, '..', 'test', 'seed.db');
@@ -207,6 +257,10 @@ async function main() {
 
   if (permitirVehiculoNulo(db)) {
     aplicadas.push('gastos_gasoil.vehiculo_id (opcional)');
+  }
+
+  if (crearIndiceFacturaUnica(db)) {
+    aplicadas.push('ingresos.factura_num (unico)');
   }
 
   guardar();

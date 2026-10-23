@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FiFileText } from 'react-icons/fi'
-import { api, urlDescarga } from '../api/client.js'
+import { api } from '../api/client.js'
+import VistaPreviaPdf from '../components/VistaPreviaPdf.jsx'
 
 export default function ReporteEmpresa() {
   const [empresas, setEmpresas] = useState([])
@@ -9,6 +10,7 @@ export default function ReporteEmpresa() {
   const [hasta, setHasta] = useState('')
   const [color, setColor] = useState('#8c3b87')
   const [error, setError] = useState('')
+  const [pdfPrevia, setPdfPrevia] = useState('')
 
   useEffect(() => {
     api.get('/empresas').then(setEmpresas).catch((e) => setError(e.message))
@@ -22,7 +24,7 @@ export default function ReporteEmpresa() {
     if (desde) params.set('desde', desde)
     if (hasta) params.set('hasta', hasta)
     params.set('color', color)
-    window.location.href = urlDescarga(`/export/reporte?${params.toString()}`)
+    setPdfPrevia(`/export/reporte?${params.toString()}`)
   }
 
   return (
@@ -79,6 +81,14 @@ export default function ReporteEmpresa() {
           </button>
         </div>
       </section>
+
+      {pdfPrevia && (
+        <VistaPreviaPdf
+          ruta={pdfPrevia}
+          titulo="Vista previa · Reporte por empresa"
+          onClose={() => setPdfPrevia('')}
+        />
+      )}
     </div>
   )
 }

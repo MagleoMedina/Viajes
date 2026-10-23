@@ -42,7 +42,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExportService = void 0;
+exports.ExportService = exports.ordenarPorFechaAscendente = void 0;
 exports.htmlViajes = htmlViajes;
 const common_1 = require("@nestjs/common");
 const ExcelJS = __importStar(require("exceljs"));
@@ -53,6 +53,7 @@ const viaje_repository_1 = require("../repo/viaje.repository");
 const empresa_repository_1 = require("../repo/empresa.repository");
 const stock_gasoil_service_1 = require("./stock-gasoil.service");
 const dates_1 = require("../common/dates");
+Object.defineProperty(exports, "ordenarPorFechaAscendente", { enumerable: true, get: function () { return dates_1.ordenarPorFechaAscendente; } });
 const COLUMNAS = [
     'FECHA INICIO',
     'FECHA FIN',
@@ -387,7 +388,7 @@ let ExportService = class ExportService {
         });
     }
     async crearPdf(empresaId, desde, hasta, colorTitulo = '#26324a') {
-        const viajes = await this.buscar(empresaId, desde, hasta);
+        const viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.buscar(empresaId, desde, hasta));
         const empresaNombre = empresaId != null ? (await this.empresas.findById(empresaId))?.nombre ?? '¿?' : null;
         const resumen = await this.stockGasoil.resumen();
         const htmlContent = htmlViajes(viajes, {

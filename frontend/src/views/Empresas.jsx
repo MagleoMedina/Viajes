@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FiPlus, FiSave, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Confirmar from '../components/Confirmar.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 
 const VACIO = { nombre: '', direccion: '' }
 
@@ -13,6 +14,7 @@ export default function Empresas() {
   const [aviso, setAviso] = useState('')
   const [confirmarGuardado, setConfirmarGuardado] = useState(false)
   const [porEliminar, setPorEliminar] = useState(null)
+  const [formRef, enfocarFormulario] = useFocoFormulario()
 
   function cargar() {
     return api.get('/empresas').then(setLista)
@@ -54,6 +56,7 @@ export default function Empresas() {
       }
       limpiar()
       await cargar()
+      enfocarFormulario()
     } catch (err) {
       setError(err.message)
     }
@@ -88,7 +91,7 @@ export default function Empresas() {
       <div className="rejilla">
         <section className="tarjeta">
           <h2>{editandoId == null ? 'Nueva empresa' : 'Editar empresa'}</h2>
-          <form onSubmit={enviar} className="form">
+          <form ref={formRef} onSubmit={enviar} className="form">
             <label>
               Nombre
               <input

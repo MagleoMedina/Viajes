@@ -18,6 +18,7 @@ import {
   FiClipboard,
   FiDroplet,
   FiPieChart,
+  FiTrendingUp,
 } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Modal from './Modal.jsx'
@@ -245,6 +246,19 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
 
         <button
           type="button"
+          className={`nav-tasa${vista === 'ingresos' ? ' activo' : ''}`}
+          onClick={() => onNavigate('ingresos')}
+          title="Ingresos"
+        >
+          <span className="nav-padre-eti">
+            <FiTrendingUp aria-hidden="true" />
+            <span className="txt">Ingresos</span>
+          </span>
+          <span className="etiqueta">cobros</span>
+        </button>
+
+        <button
+          type="button"
           className={`nav-tasa${vista === 'relacion' ? ' activo' : ''}`}
           onClick={() => onNavigate('relacion')}
           title="Relación"
@@ -303,6 +317,9 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
       </nav>
 
       <footer className="sidebar-pie">
+        <span className="pista-teclado">
+          Enter: siguiente campo · Ctrl+Enter: guardar
+        </span>
         <span>SpeedGroup · {new Date().getFullYear()}</span>
         {dirServidor && (
           <button

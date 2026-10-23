@@ -28,7 +28,14 @@ export default function ChipsInput({ value, onChange, placeholder }) {
   }
 
   function tecla(e) {
-    if (e.key === 'Enter' || e.key === ',') {
+    if (e.key === 'Enter' && !e.ctrlKey) {
+      // Sin texto no hay chip: deja que Enter pase al siguiente campo.
+      if (!texto.trim()) return
+      e.preventDefault()
+      agregar(texto)
+      return
+    }
+    if (e.key === ',') {
       e.preventDefault()
       agregar(texto)
       return

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi'
-import { api, fecha, money, urlDescarga } from '../api/client.js'
+import { api, fecha, money } from '../api/client.js'
 import { agruparGastos, gasoilPayload, gasoilVacio, vehiculoExistente } from '../api/gastos.js'
 import GastoGasoilForm from '../components/GastoGasoilForm.jsx'
 import GasoilEstacionario from '../components/GasoilEstacionario.jsx'
 import StockGasoilPanel from '../components/StockGasoilPanel.jsx'
 import Modal from '../components/Modal.jsx'
 import Confirmar from '../components/Confirmar.jsx'
+import VistaPreviaPdf from '../components/VistaPreviaPdf.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 
 const PESTANAS = [
   { id: 'registrar', label: 'Registrar' },
@@ -23,6 +25,7 @@ function GasRegistrar({ onStockCambio }) {
   const [registros, setRegistros] = useState([])
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [formRef, enfocarFormulario] = useFocoFormulario()
 
   function cargarVehiculos() {
     return api.get('/vehiculos').then(setVehiculos)
@@ -65,6 +68,7 @@ function GasRegistrar({ onStockCambio }) {
       setForm(gasoilVacio(tasaActual))
       await cargarRegistros()
       onStockCambio?.()
+      enfocarFormulario()
     } catch (err) {
       setError(err.message)
     }
@@ -80,6 +84,7 @@ function GasRegistrar({ onStockCambio }) {
           La placa es opcional; si la escribe debe existir en Vehículos. Monto $ = Litros × Precio $/L.
         </p>
         <GastoGasoilForm
+          formRef={formRef}
           form={form}
           cambiar={cambiar}
           vehiculos={vehiculos}
@@ -377,6 +382,7 @@ function GasConsultar() {
   const [vehiculos, setVehiculos] = useState([])
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', vehiculoId: '' })
   const [vistaPrevia, setVistaPrevia] = useState(null)
+  const [pdfPrevia, setPdfPrevia] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -417,7 +423,7 @@ function GasConsultar() {
   }
 
   function exportarPdf() {
-    window.location.href = urlDescarga(`/export/gastos-gasoil?${params().toString()}`)
+    setPdfPrevia(`/export/gastos-gasoil?${params().toString()}`)
   }
 
   return (
@@ -548,6 +554,14 @@ function GasConsultar() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {pdfPrevia && (
+        <VistaPreviaPdf
+          ruta={pdfPrevia}
+          titulo="Vista previa · Gastos de gasoil"
+          onClose={() => setPdfPrevia('')}
+        />
       )}
     </>
   )

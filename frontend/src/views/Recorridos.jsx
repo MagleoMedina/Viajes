@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FiPlus, FiTrash2 } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Confirmar from '../components/Confirmar.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 
 export default function Recorridos() {
   const [lista, setLista] = useState([])
@@ -9,6 +10,7 @@ export default function Recorridos() {
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const [porEliminar, setPorEliminar] = useState(null)
+  const [formRef, enfocarFormulario] = useFocoFormulario()
 
   function cargar() {
     return api.get('/recorridos').then(setLista)
@@ -27,6 +29,7 @@ export default function Recorridos() {
       setNombre('')
       await cargar()
       setAviso('Recorrido guardado.')
+      enfocarFormulario()
     } catch (err) {
       setError(err.message)
     }
@@ -59,7 +62,7 @@ export default function Recorridos() {
       <div className="rejilla">
         <section className="tarjeta">
           <h2>Nuevo recorrido</h2>
-          <form onSubmit={agregar} className="form">
+          <form ref={formRef} onSubmit={agregar} className="form">
             <label>
               Nombre
               <input

@@ -60,7 +60,7 @@ function agruparPor(filas, claveDe) {
     return bloques;
 }
 function htmlGastosSeccion(params) {
-    const { titulo, rango, columnas, bloques, totalUsd, totalBs, cantidad, color, logoUri, etiquetaSubtotal, } = params;
+    const { titulo, rango, columnas, bloques, totalUsd, totalBs, cantidad, color, logoUri, etiquetaSubtotal, mensajeVacio, } = params;
     const ths = columnas
         .map((c) => `<th class="${c.num ? 'num' : ''}">${(0, exports.escapar)(c.encabezado)}</th>`)
         .join('');
@@ -93,7 +93,9 @@ function htmlGastosSeccion(params) {
           </tbody>
         </table>`)
         .join('');
-    const vacio = !bloques.length ? '<p class="vacio">Sin gastos en este intervalo.</p>' : '';
+    const vacio = !bloques.length
+        ? `<p class="vacio">${mensajeVacio ?? 'Sin gastos en este intervalo.'}</p>`
+        : '';
     return `
       <!DOCTYPE html>
       <html lang="es">

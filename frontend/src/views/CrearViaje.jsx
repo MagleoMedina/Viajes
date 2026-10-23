@@ -4,6 +4,7 @@ import { api, hoy, money, fecha } from '../api/client.js'
 import { red2 } from '../api/gastos.js'
 import ChipsInput from '../components/ChipsInput.jsx'
 import Modal from '../components/Modal.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 
 const VACIO = {
   fechaInicio: hoy(),
@@ -92,6 +93,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const [confirmar, setConfirmar] = useState(false)
   const [stock, setStock] = useState(null)
   const [stockTick, setStockTick] = useState(0)
+  const [formRef, enfocarFormulario] = useFocoFormulario()
 
   function cargar() {
     return Promise.all([
@@ -272,6 +274,11 @@ export default function CrearViaje({ viaje, onGuardado }) {
     }
   }
 
+  function cerrarGuardado() {
+    setGuardado('')
+    enfocarFormulario()
+  }
+
   function cancelar() {
     if (viaje) {
       onGuardado?.()
@@ -310,7 +317,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
         </div>
       </header>
 
-      <form onSubmit={enviar} className="form viaje">
+      <form ref={formRef} onSubmit={enviar} className="form viaje">
         <section className="tarjeta">
           <h2>Ruta</h2>
           <div className="campos-4">
@@ -547,7 +554,7 @@ export default function CrearViaje({ viaje, onGuardado }) {
                 Tasa del día
                 <input
                   type="number"
-                  step="0.01"
+                  step="any"
                   min="0"
                   value={form.tasa}
                   onChange={(e) => set('tasa', e.target.value)}
@@ -676,14 +683,14 @@ export default function CrearViaje({ viaje, onGuardado }) {
       )}
 
       {guardado && (
-        <Modal titulo={guardado} onClose={() => setGuardado('')}>
+        <Modal titulo={guardado} onClose={cerrarGuardado}>
           <p className="ok">
             {viaje
               ? 'Los cambios del viaje se guardaron correctamente.'
               : 'El viaje se registró correctamente.'}
           </p>
           <div className="acciones">
-            <button type="button" className="btn primario" onClick={() => setGuardado('')}>
+            <button type="button" className="btn primario" onClick={cerrarGuardado}>
               <FiCheck aria-hidden="true" /> Aceptar
             </button>
           </div>

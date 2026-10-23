@@ -5,6 +5,7 @@ import { join } from 'path';
 import { EmpresaRepository } from '../repo/empresa.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
 import { Viaje } from '../domain/viaje.entity';
+import { ordenarPorFechaAscendente } from '../common/dates';
 
 export interface ParametrosReporte {
   empresaId: number;
@@ -265,8 +266,9 @@ export class ReporteEmpresaService {
     // 2. Intervalo dinámico de fechas
     const rangoFechas = this.formatearRangoFechas(desde, hasta);
 
-    // 3. Viajes del intervalo/empresa (mismo filtro que el listado de la app)
-    const viajes = await this.consultar(empresaId, desde, hasta);
+    // 3. Viajes del intervalo/empresa (mismo filtro que el listado de la app),
+    //    siempre de la fecha más antigua a la más reciente.
+    const viajes = ordenarPorFechaAscendente(await this.consultar(empresaId, desde, hasta));
 
     // 4. Logo en Base64
     const logoUri = this.obtenerLogoDataUri();

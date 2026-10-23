@@ -17,6 +17,7 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const empresa_repository_1 = require("../repo/empresa.repository");
 const viaje_repository_1 = require("../repo/viaje.repository");
+const dates_1 = require("../common/dates");
 const COLS_CON_MONTO = 8;
 const escapar = (str) => String(str ?? '')
     .replace(/&/g, '&amp;')
@@ -213,7 +214,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             direccionParam ||
             'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
         const rangoFechas = this.formatearRangoFechas(desde, hasta);
-        const viajes = await this.consultar(empresaId, desde, hasta);
+        const viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.consultar(empresaId, desde, hasta));
         const logoUri = this.obtenerLogoDataUri();
         const filas = viajes.map((v) => {
             const celdas = [

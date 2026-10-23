@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { FiFileText, FiSearch } from 'react-icons/fi'
-import { api, fecha, money, urlDescarga } from '../api/client.js'
+import { api, fecha, money } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
+import VistaPreviaPdf from '../components/VistaPreviaPdf.jsx'
 
 const red2 = (v) => Math.round((v + Number.EPSILON) * 100) / 100
 
@@ -31,6 +32,7 @@ export default function ConsultarGastos() {
   const [titulos, setTitulos] = useState([])
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', tituloId: '' })
   const [vistaPrevia, setVistaPrevia] = useState(null) // { bloques, cantidad, totalUsd, totalBs }
+  const [pdfPrevia, setPdfPrevia] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function ConsultarGastos() {
     if (filtros.desde) params.set('desde', filtros.desde)
     if (filtros.hasta) params.set('hasta', filtros.hasta)
     if (filtros.tituloId) params.set('tituloId', filtros.tituloId)
-    window.location.href = urlDescarga(`/export/gastos-varios?${params.toString()}`)
+    setPdfPrevia(`/export/gastos-varios?${params.toString()}`)
   }
 
   return (
@@ -152,7 +154,7 @@ export default function ConsultarGastos() {
                       <thead>
                         <tr>
                           <th>Fecha</th>
-                          <th>N°</th>
+                          <th>N° factura</th>
                           <th>Motivo</th>
                           <th className="derecha">Monto $</th>
                           <th className="derecha">Monto Bs</th>
@@ -204,6 +206,14 @@ export default function ConsultarGastos() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {pdfPrevia && (
+        <VistaPreviaPdf
+          ruta={pdfPrevia}
+          titulo="Vista previa · Gastos varios"
+          onClose={() => setPdfPrevia('')}
+        />
       )}
     </>
   )

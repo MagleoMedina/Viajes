@@ -9,6 +9,8 @@
     "start:dev": "nest start --watch",
     "test": "jest --runInBand",
     "db:init": "node scripts/init-db.js",
+    "pull:turso": "node scripts/pull-merge-turso.js",
+    "sync:local": "node scripts/sync-local-desde-turso.js",
     "sync:turso": "node --env-file=.env scripts/sync-turso.js"
   },
   "dependencies": {

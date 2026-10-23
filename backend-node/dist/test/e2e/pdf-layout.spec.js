@@ -33,6 +33,16 @@ describe('Layout PDF: listado visible con referencia del reporte con montos', ()
         if (browser)
             await browser.close();
     });
+    it('ordena los viajes del PDF por fecha ascendente (y por id en empate)', () => {
+        const { ordenarPorFechaAscendente } = require('../../src/service/export.service');
+        const orden = ordenarPorFechaAscendente([
+            { id: 9, fechaInicio: new Date(Date.UTC(2026, 2, 3)) },
+            { id: 5, fechaInicio: new Date(Date.UTC(2026, 0, 1)) },
+            { id: 2, fechaInicio: new Date(Date.UTC(2026, 0, 1)) },
+            { id: 1, fechaInicio: new Date(Date.UTC(2025, 11, 31)) },
+        ]).map((v) => v.id);
+        expect(orden).toEqual([1, 2, 5, 9]);
+    });
     it('celdas del listado no desbordan y usan fuente comparable al reporte', async () => {
         const { htmlViajes } = require('../../src/service/export.service');
         const { htmlReporte } = require('../../src/service/reporte-empresa.service');

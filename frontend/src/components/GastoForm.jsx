@@ -1,9 +1,11 @@
+import { useRef } from 'react'
 import { num, red2 } from '../api/gastos.js'
 
-/** Los 9 campos de un gasto vario. Monto Bs se recalcula solo
- * (Monto $ × tasa del día) salvo que se edite a mano.
+/** Los 9 campos de un gasto vario. El Monto Bs es la fuente: el Monto $
+ * se calcula con la tasa del día (Bs ÷ tasa) salvo que se edite a mano.
  * `etiquetaCampo`/`placeholderCampo` renombran el campo Título
  * (ej.: "Tipo de impuesto" en la sección de impuestos).
+ * `etiquetaNumero` renombra el campo N° (ej.: "Número de factura").
  */
 export default function GastoForm({
   form,
@@ -16,29 +18,52 @@ export default function GastoForm({
   placeholderCampo = 'Escriba o elija un título',
   datalistId = 'titulos-gasto-datalist',
   placeholderMonto = '0.00',
+  etiquetaNumero = 'N°',
+  placeholderNumero = 'N° de comprobante',
+  formRef,
 }) {
-  /** %DB = Monto Bs × 0.3: se recalcula con cada cambio del Monto Bs. */
-  function setMontoBs(valor) {
+  /** Último monto editado ('bs' o 'usd'): decide qué campo recalcula la tasa. */
+  const origen = useRef('bs')
+
+  /** %DB = Monto Bs × 0.03: se recalcula junto con el Monto Bs. */
+  function ponerMontoBs(valor) {
     cambiar('montoBs', valor)
     cambiar('porcentajeDb', valor === '' ? '' : String(red2(num(valor) * 0.03)))
   }
 
-  function setMonto(valor) {
+  /** Monto $ = Monto Bs ÷ tasa (tasa 0 o vacía -> sin monto). */
+  function usdDesdeBs(bs, tasa) {
+    const t = num(tasa)
+    return bs === '' || !t ? '' : String(red2(num(bs) / t))
+  }
+
+  function setMontoBs(valor) {
+    origen.current = 'bs'
+    ponerMontoBs(valor)
+    cambiar('montoUsd', usdDesdeBs(valor, form.tasa))
+  }
+
+  function setMontoUsd(valor) {
+    origen.current = 'usd'
     cambiar('montoUsd', valor)
-    setMontoBs(valor === '' ? '' : String(red2(num(valor) * num(form.tasa))))
+    const t = num(form.tasa)
+    ponerMontoBs(valor === '' || !t ? '' : String(red2(num(valor) * t)))
   }
 
   function setTasa(valor) {
     cambiar('tasa', valor)
-    setMontoBs(
-      valor === '' || form.montoUsd === ''
-        ? form.montoBs
-        : String(red2(num(form.montoUsd) * num(valor))),
-    )
+    if (origen.current === 'usd') {
+      const t = num(valor)
+      ponerMontoBs(
+        form.montoUsd === '' || !t ? '' : String(red2(num(form.montoUsd) * t)),
+      )
+    } else {
+      cambiar('montoUsd', usdDesdeBs(form.montoBs, valor))
+    }
   }
 
   return (
-    <form onSubmit={onSubmit} className="form">
+    <form ref={formRef} onSubmit={onSubmit} className="form">
       <div className="campos-3">
         <label>
           {etiquetaCampo}
@@ -66,12 +91,12 @@ export default function GastoForm({
         />
       </label>
       <label>
-        N°
+        {etiquetaNumero}
         <input
           type="text"
           value={form.numero}
           onChange={(e) => cambiar('numero', e.target.value)}
-          placeholder="N° de comprobante"
+          placeholder={placeholderNumero}
         />
       </label>
       <label>
@@ -85,13 +110,13 @@ export default function GastoForm({
         />
       </label>
       <label>
-        Monto $
+        Monto Bs
         <input
           type="number"
           step="0.01"
           min="0"
-          value={form.montoUsd}
-          onChange={(e) => setMonto(e.target.value)}
+          value={form.montoBs}
+          onChange={(e) => setMontoBs(e.target.value)}
           placeholder={placeholderMonto}
         />
       </label>
@@ -99,20 +124,21 @@ export default function GastoForm({
         Tasa del día
         <input
           type="number"
-          step="0.01"
+          step="any"
           min="0"
           value={form.tasa}
           onChange={(e) => setTasa(e.target.value)}
-          placeholder="0.00"
+          placeholder="0.000000"
         />
       </label>
       <label>
-        Monto Bs
+        Monto $
         <input
           type="number"
           step="0.01"
-          value={form.montoBs}
-          onChange={(e) => setMontoBs(e.target.value)}
+          min="0"
+          value={form.montoUsd}
+          onChange={(e) => setMontoUsd(e.target.value)}
           placeholder="Se calcula solo"
         />
       </label>

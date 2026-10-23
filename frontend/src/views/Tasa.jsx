@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FiSave, FiRefreshCw, FiX, FiCheck } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 
 export default function Tasa({ onClose }) {
   const [actual, setActual] = useState(null)
@@ -10,6 +11,7 @@ export default function Tasa({ onClose }) {
   const [aviso, setAviso] = useState('')
   const [refrescando, setRefrescando] = useState(false)
   const [modalOk, setModalOk] = useState(false)
+  const [formRef, enfocarFormulario] = useFocoFormulario()
 
   useEffect(() => {
     cargarActual().catch((e) => setError(e.message))
@@ -32,6 +34,7 @@ export default function Tasa({ onClose }) {
       const guardada = await api.put('/tasa', { valor: Number(valor) })
       setActual(guardada)
       setAviso('Tasa actualizada.')
+      enfocarFormulario()
     } catch (err) {
       setError(err.message)
     }
@@ -56,7 +59,7 @@ export default function Tasa({ onClose }) {
   return (
     <>
       <Modal titulo="Tasa del día" onClose={onClose}>
-        <form onSubmit={guardar} className="form">
+        <form ref={formRef} onSubmit={guardar} className="form">
           <p className="ayuda">
             {actual
               ? `Tasa vigente: ${Number(actual.valor).toLocaleString('es-VE')} (registrada ${actual.fecha ?? ''}${actual.origen ? ` · ${actual.origen}` : ''})`
@@ -69,11 +72,11 @@ export default function Tasa({ onClose }) {
             Nueva tasa
             <input
               type="number"
-              step="0.01"
+              step="any"
               min="0"
               value={valor}
               onChange={(e) => setValor(e.target.value)}
-              placeholder="0,00"
+              placeholder="0,000000"
               required
               autoFocus
             />

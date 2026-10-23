@@ -149,6 +149,9 @@ let GastoGasoilController = class GastoGasoilController {
             (esAlta && (gasto.litros ?? 0) > 0)) {
             gasto.montoUsd = (0, dates_1.round2)((gasto.litros ?? 0) * (gasto.precioLitro ?? 0));
         }
+        else if (req.montoBs != null && Number.isFinite(Number(req.montoBs))) {
+            gasto.montoUsd = (0, dates_1.usdDesdeBs)(Number(req.montoBs), gasto.tasa);
+        }
         if (req.montoBs != null && Number.isFinite(Number(req.montoBs))) {
             gasto.montoBs = (0, dates_1.round2)(Number(req.montoBs));
         }

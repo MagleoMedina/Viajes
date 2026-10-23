@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { FiFileText, FiFile, FiCheck } from 'react-icons/fi'
-import { api, urlDescarga } from '../api/client.js'
+import { api } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
+import VistaPreviaPdf from '../components/VistaPreviaPdf.jsx'
 
 export default function Exportar() {
   const [empresas, setEmpresas] = useState([])
@@ -11,6 +12,7 @@ export default function Exportar() {
   const [color, setColor] = useState('#26324a')
   const [error, setError] = useState('')
   const [sinViajes, setSinViajes] = useState(false)
+  const [pdfPrevia, setPdfPrevia] = useState('')
 
   useEffect(() => {
     api.get('/empresas').then(setEmpresas).catch((e) => setError(e.message))
@@ -40,7 +42,7 @@ export default function Exportar() {
         params2.set('sinChofer', 'true')
       }
       params2.set('color', color)
-      window.location.href = urlDescarga(`/export/${tipo}?${params2.toString()}`)
+      setPdfPrevia(`/export/${tipo}?${params2.toString()}`)
     } catch (err) {
       setError(err.message)
     }
@@ -142,6 +144,14 @@ export default function Exportar() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {pdfPrevia && (
+        <VistaPreviaPdf
+          ruta={pdfPrevia}
+          titulo="Vista previa · Exportar viajes"
+          onClose={() => setPdfPrevia('')}
+        />
       )}
     </div>
   )

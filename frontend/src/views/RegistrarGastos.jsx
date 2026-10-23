@@ -3,6 +3,7 @@ import { FiPlus } from 'react-icons/fi'
 import { api, fecha, money } from '../api/client.js'
 import { gastoVacio, gastoPayload, tituloExistente } from '../api/gastos.js'
 import GastoForm from '../components/GastoForm.jsx'
+import { useFocoFormulario } from '../utils/enter-navega.js'
 
 /** Columna de dinero alineada a la derecha (igual que las tablas de viajes). */
 const num = (v) => money(v)
@@ -15,6 +16,8 @@ export default function RegistrarGastos() {
   const [registros, setRegistros] = useState([])
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [formRef, enfocarFormulario] = useFocoFormulario()
+  const [tituloRef, enfocarTitulo] = useFocoFormulario()
 
   function cargarTitulos() {
     return api.get('/titulos-gasto').then(setTitulos)
@@ -51,6 +54,7 @@ export default function RegistrarGastos() {
       setAviso('Título de gasto registrado.')
       setNuevoTitulo('')
       await cargarTitulos()
+      enfocarTitulo()
     } catch (err) {
       setError(err.message)
     }
@@ -70,6 +74,7 @@ export default function RegistrarGastos() {
       setAviso('Gasto registrado.')
       setForm(gastoVacio(tasaActual))
       await cargarRegistros()
+      enfocarFormulario()
     } catch (err) {
       setError(err.message)
     }
@@ -84,7 +89,7 @@ export default function RegistrarGastos() {
           <p className="ayuda">
             Antes de registrar un gasto debe existir su título (ej.: Alcaldía, Papelería).
           </p>
-          <form onSubmit={agregarTitulo} className="form linea">
+          <form ref={tituloRef} onSubmit={agregarTitulo} className="form linea">
             <input
               type="text"
               value={nuevoTitulo}
@@ -113,11 +118,13 @@ export default function RegistrarGastos() {
         <section className="tarjeta">
           <h2>Registrar gasto</h2>
           <GastoForm
+            formRef={formRef}
             form={form}
             cambiar={cambiar}
             titulos={titulos}
             onSubmit={guardar}
             etiqueta="Registrar gasto"
+            etiquetaNumero="Número de factura"
           />
           {error && <p className="error">{error}</p>}
           {aviso && <p className="ok">{aviso}</p>}
@@ -134,7 +141,7 @@ export default function RegistrarGastos() {
                   <tr>
                     <th>Fecha</th>
                     <th>Título</th>
-                    <th>N°</th>
+                    <th>N° factura</th>
                     <th>Motivo</th>
                     <th className="derecha">Monto $</th>
                     <th className="derecha">Monto Bs</th>

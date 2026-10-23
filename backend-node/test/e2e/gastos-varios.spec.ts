@@ -124,6 +124,22 @@ describe('Gastos varios (titulo_gasto + gastos_varios)', () => {
       expect(res.body.montoBs).toBe(123);
     });
 
+    it('POST deriva el Monto $ del Monto Bs cuando solo viene el de Bs', async () => {
+      const res = await request(server())
+        .post('/api/gastos-varios')
+        .send(
+          gastoBase({
+            montoUsd: undefined,
+            tasa: 12.5,
+            montoBs: 250,
+            fecha: '2026-06-15',
+          }),
+        )
+        .expect(200);
+      expect(res.body.montoBs).toBe(250);
+      expect(res.body.montoUsd).toBe(20);
+    });
+
     it('POST con título inexistente responde 404', async () => {
       await request(server())
         .post('/api/gastos-varios')

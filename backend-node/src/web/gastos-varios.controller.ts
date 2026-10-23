@@ -17,7 +17,7 @@ import { TituloGasto } from '../domain/titulo-gasto.entity';
 import { GastoVarioRepository } from '../repo/gasto-vario.repository';
 import { TituloGastoRepository } from '../repo/titulo-gasto.repository';
 import { gastoVarioJson } from '../common/serialize';
-import { dateOnlyToMillis, round2 } from '../common/dates';
+import { dateOnlyToMillis, round2, usdDesdeBs } from '../common/dates';
 import { ApiException, ApiValidationException } from './api-exception';
 
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -119,7 +119,8 @@ export class GastoVarioController {
     await this.repo.deleteById(id);
   }
 
-  /** Aplica los campos presentes; montoBs se calcula salvo que venga a mano. */
+  /** Aplica los campos presentes. El Monto Bs es la fuente: si viene sin
+   *  Monto $, el de $ se deriva con la tasa (Bs ÷ tasa). */
   private aplicar(gasto: GastoVario, req: GastoVarioRequest, esAlta: boolean) {
     if (!esAlta || req.fecha) {
       gasto.fecha = new Date(dateOnlyToMillis(req.fecha));
@@ -132,6 +133,7 @@ export class GastoVarioController {
 
     if (req.montoBs != null && Number.isFinite(Number(req.montoBs))) {
       gasto.montoBs = round2(Number(req.montoBs));
+      if (req.montoUsd === undefined) gasto.montoUsd = usdDesdeBs(gasto.montoBs, gasto.tasa);
     } else if (esAlta || req.montoUsd !== undefined || req.tasa !== undefined) {
       gasto.montoBs = round2((gasto.montoUsd ?? 0) * (gasto.tasa ?? 0));
     }

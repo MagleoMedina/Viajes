@@ -233,5 +233,32 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
             expect(cd).not.toMatch(/filename="viajes\.pdf"/i);
         });
     });
+    describe('T7: reporte con montos, sin montos y sin chofer ordena por fecha ascendente', () => {
+        let empresaId;
+        beforeAll(async () => {
+            empresaId = (await request(server())
+                .post('/api/empresas')
+                .send({ nombre: 'ORDEN-FECHAS' })
+                .expect(200)).body.id;
+            for (const fecha of ['2026-03-15', '2026-02-10', '2026-04-20']) {
+                await request(server())
+                    .post('/api/viajes')
+                    .send(viajeBase({ empresaId, fechaInicio: fecha, fechaFin: fecha }))
+                    .expect(200);
+            }
+        });
+        const fechasDelPdf = (texto) => [...texto.matchAll(/(\d{2})\/(\d{2})\/(\d{4})/g)].map((m) => `${m[3]}-${m[2]}-${m[1]}`);
+        for (const [nombre, extra] of [
+            ['con montos', ''],
+            ['sin montos', '&conMonto=false'],
+            ['sin monto y sin chofer', '&conMonto=false&sinChofer=true'],
+        ]) {
+            it(nombre, async () => {
+                const r = await descargar(app, `/api/export/reporte?empresaId=${empresaId}&desde=2026-02-01&hasta=2026-04-30${extra}`);
+                const { text } = await pdfParse(r.buffer);
+                expect(fechasDelPdf(text)).toEqual(['2026-02-10', '2026-03-15', '2026-04-20']);
+            });
+        }
+    });
 });
 //# sourceMappingURL=nuevas-funciones.spec.js.map
