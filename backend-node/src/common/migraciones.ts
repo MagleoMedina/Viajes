@@ -35,7 +35,13 @@ const COLUMNAS: ColumnaNueva[] = [
 export async function aplicarMigraciones(dataSource: DataSource): Promise<void> {
   const driver = dataSource.driver as SqljsDriver;
   const db = driver.databaseConnection;
-  if (!db) return;
+  const origen = (dataSource.options as { location?: string }).location ?? '(en memoria)';
+  if (!db) {
+    logger.warn(`Sin conexion a la base (${origen}): no se pudo comprobar el esquema`);
+    return;
+  }
+
+  reportarEsquemaPrevio(db, origen);
 
   const aplicadas: string[] = [];
   for (const m of COLUMNAS) {
@@ -55,7 +61,22 @@ export async function aplicarMigraciones(dataSource: DataSource): Promise<void> 
 
   if (!aplicadas.length) return;
   await driver.save();
-  logger.log(`Migrado: + ${aplicadas.join(', ')}`);
+  logger.log(`Migrado (${origen}): + ${aplicadas.join(', ')}`);
+}
+
+/**
+ * Deja en el log el estado previo de la tabla ingresos: si una migracion no
+ * llega a correr, el problema se ve aqui en vez de traducirse en un 409
+ * confuso al abrir el apartado de Ingresos.
+ */
+function reportarEsquemaPrevio(db: any, origen: string): void {
+  if (!existeTabla(db, 'ingresos')) return;
+  const columnas = columnasDe(db, 'ingresos');
+  const requeridas = ['factura_num', 'iva'];
+  const faltan = requeridas.filter((c) => !columnas.includes(c));
+  if (faltan.length) {
+    logger.warn(`Esquema previo de ${origen}: faltan columnas ${faltan.join(', ')}`);
+  }
 }
 
 function existeTabla(db: any, tabla: string): boolean {

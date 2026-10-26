@@ -11,6 +11,39 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("typeorm");
 const api_exception_1 = require("./api-exception");
 const INTEGRIDAD = 'Registro en uso: otro registro lo referencia o ya existe un valor duplicado.';
+const logger = new common_1.Logger('ApiExceptionFilter');
+function detalleSql(error) {
+    return error.driverError?.message ?? error.message;
+}
+function responder(res, error) {
+    const detalle = detalleSql(error);
+    if (/UNIQUE constraint failed:\s*ingresos\.factura_num/i.test(detalle)) {
+        return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+            status: 400,
+            message: 'Ya existe una factura con ese número',
+            fields: { facturaNum: 'Ya existe una factura con ese número' },
+        });
+    }
+    if (/UNIQUE constraint failed:\s*([^\s]+)/i.test(detalle)) {
+        const [, tabla, columna] = /UNIQUE constraint failed:\s*([^\s]+?)\.([^\s]+)/i.exec(detalle) ?? [];
+        return res.status(common_1.HttpStatus.CONFLICT).json({
+            status: 409,
+            message: `Valor duplicado en ${tabla}.${columna}`,
+            fields: { [columna]: 'Ya existe un registro con ese valor' },
+        });
+    }
+    if (/FOREIGN KEY constraint failed/i.test(detalle)) {
+        return res.status(common_1.HttpStatus.CONFLICT).json({
+            status: 409,
+            message: INTEGRIDAD,
+        });
+    }
+    logger.error(`Fallo de base de datos: ${detalle}`);
+    return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+        status: 500,
+        message: `Error de base de datos: ${detalle}`,
+    });
+}
 let ApiExceptionFilter = class ApiExceptionFilter {
     catch(exception, host) {
         const res = host.switchToHttp().getResponse();
@@ -25,9 +58,7 @@ let ApiExceptionFilter = class ApiExceptionFilter {
             return res.status(status).json({ status, message: exception.message });
         }
         if (exception instanceof typeorm_1.QueryFailedError) {
-            return res
-                .status(common_1.HttpStatus.CONFLICT)
-                .json({ status: 409, message: INTEGRIDAD });
+            return responder(res, exception);
         }
         if (exception instanceof common_1.HttpException) {
             const status = exception.getStatus();

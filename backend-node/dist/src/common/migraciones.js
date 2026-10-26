@@ -18,8 +18,12 @@ const COLUMNAS = [
 async function aplicarMigraciones(dataSource) {
     const driver = dataSource.driver;
     const db = driver.databaseConnection;
-    if (!db)
+    const origen = dataSource.options.location ?? '(en memoria)';
+    if (!db) {
+        logger.warn(`Sin conexion a la base (${origen}): no se pudo comprobar el esquema`);
         return;
+    }
+    reportarEsquemaPrevio(db, origen);
     const aplicadas = [];
     for (const m of COLUMNAS) {
         if (!existeTabla(db, m.tabla))
@@ -40,7 +44,17 @@ async function aplicarMigraciones(dataSource) {
     if (!aplicadas.length)
         return;
     await driver.save();
-    logger.log(`Migrado: + ${aplicadas.join(', ')}`);
+    logger.log(`Migrado (${origen}): + ${aplicadas.join(', ')}`);
+}
+function reportarEsquemaPrevio(db, origen) {
+    if (!existeTabla(db, 'ingresos'))
+        return;
+    const columnas = columnasDe(db, 'ingresos');
+    const requeridas = ['factura_num', 'iva'];
+    const faltan = requeridas.filter((c) => !columnas.includes(c));
+    if (faltan.length) {
+        logger.warn(`Esquema previo de ${origen}: faltan columnas ${faltan.join(', ')}`);
+    }
 }
 function existeTabla(db, tabla) {
     const res = db.exec(`SELECT name FROM sqlite_master WHERE type='table' AND name='${tabla.replace(/'/g, "''")}'`);
