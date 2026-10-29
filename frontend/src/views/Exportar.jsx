@@ -3,6 +3,8 @@ import { FiFileText, FiFile, FiCheck } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Modal from '../components/Modal.jsx'
 import VistaPreviaPdf from '../components/VistaPreviaPdf.jsx'
+import ViajesPersonalizadosExport from './ViajesPersonalizadosExport.jsx'
+import VehiculosPrivadosExport from './VehiculosPrivadosExport.jsx'
 
 export default function Exportar() {
   const [empresas, setEmpresas] = useState([])
@@ -54,7 +56,7 @@ export default function Exportar() {
   }
 
   return (
-    <div className="vista">
+    <div className="vista ancha">
       <header className="vista-cab">
         <div>
           <h1>Exportar</h1>
@@ -64,96 +66,104 @@ export default function Exportar() {
 
       {error && <p className="error">{error}</p>}
 
-      <section className="tarjeta ancho-medio">
-        <h2>Filtros</h2>
-        <p className="ayuda">
-          Todo vacío exporta el histórico completo. Empresa y vehículo son opcionales: sin elegir
-          ninguno se listan todos los viajes.
-        </p>
-        <div className="campos-4">
-          <label>
-            Empresa
-            <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}>
-              <option value="">Todas las empresas</option>
-              {empresas.map((em) => (
-                <option key={em.id} value={em.id}>
-                  {em.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Vehículo
-            <select value={vehiculoId} onChange={(e) => setVehiculoId(e.target.value)}>
-              <option value="">Todos los vehículos</option>
-              {vehiculos.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.marca || v.modelo ? `${v.marca ?? ''} ${v.modelo ?? ''}`.trim() : 'Vehículo'}
-                  {v.placa ? ` (${v.placa})` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Desde
-            <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-          </label>
-          <label>
-            Hasta
-            <input type="date" value={hasta} min={desde} onChange={(e) => setHasta(e.target.value)} />
-          </label>
-        </div>
+      <div className="disposicion-exportar">
+        <section className="tarjeta">
+          <h2>Filtros</h2>
+          <p className="ayuda">
+            Todo vacío exporta el histórico completo. Empresa y vehículo son opcionales: sin elegir
+            ninguno se listan todos los viajes.
+          </p>
+          <div className="campos-4">
+            <label>
+              Empresa
+              <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}>
+                <option value="">Todas las empresas</option>
+                {empresas.map((em) => (
+                  <option key={em.id} value={em.id}>
+                    {em.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Vehículo
+              <select value={vehiculoId} onChange={(e) => setVehiculoId(e.target.value)}>
+                <option value="">Todos los vehículos</option>
+                {vehiculos.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.marca || v.modelo ? `${v.marca ?? ''} ${v.modelo ?? ''}`.trim() : 'Vehículo'}
+                    {v.placa ? ` (${v.placa})` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Desde
+              <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+            </label>
+            <label>
+              Hasta
+              <input
+                type="date"
+                value={hasta}
+                min={desde}
+                onChange={(e) => setHasta(e.target.value)}
+              />
+            </label>
+          </div>
 
-        <label className="campo-color">
-          Color del título de la empresa (PDF)
-          <span className="control-color">
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              aria-label="Color del nombre de la empresa en el PDF"
-            />
-            <code>{color}</code>
-          </span>
-        </label>
+          <label className="campo-color">
+            Color del título de la empresa (PDF)
+            <span className="control-color">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                aria-label="Color del nombre de la empresa en el PDF"
+              />
+              <code>{color}</code>
+            </span>
+          </label>
 
-        <div className="acciones">
-          <button type="button" className="btn primario" onClick={() => descargar('pdf')}>
-            <FiFileText aria-hidden="true" /> Exportar a PDF
-          </button>
-        </div>
-      </section>
+          <div className="acciones">
+            <button type="button" className="btn primario" onClick={() => descargar('pdf')}>
+              <FiFileText aria-hidden="true" /> Exportar a PDF
+            </button>
+          </div>
 
-      <section className="tarjeta ancho-medio">
-        <h2>Reporte histórico (PDF)</h2>
-        <p className="ayuda">
-          Usa los mismos filtros de arriba. Escoja el formato: con la columna MONTO y el total,
-          sin ella, o sin montos ni chofer.
-        </p>
-        <div className="acciones">
-          <button
-            type="button"
-            className="btn primario"
-            onClick={() => descargar('reporte', { conMonto: true })}
-          >
-            <FiFileText aria-hidden="true" /> Reporte con montos
-          </button>
-          <button
-            type="button"
-            className="btn"
-            onClick={() => descargar('reporte', { conMonto: false })}
-          >
-            <FiFile aria-hidden="true" /> Reporte sin montos
-          </button>
-          <button
-            type="button"
-            className="btn"
-            onClick={() => descargar('reporte', { conMonto: false, sinChofer: true })}
-          >
-            <FiFile aria-hidden="true" /> Reporte sin monto y sin chofer
-          </button>
-        </div>
-      </section>
+          <h3 className="subtitulo-bloque">Reporte histórico (PDF)</h3>
+          <p className="ayuda">
+            Usa los mismos filtros de arriba. Escoja el formato: con la columna MONTO y el total,
+            sin ella, o sin montos ni chofer.
+          </p>
+          <div className="acciones">
+            <button
+              type="button"
+              className="btn primario"
+              onClick={() => descargar('reporte', { conMonto: true })}
+            >
+              <FiFileText aria-hidden="true" /> Reporte con montos
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => descargar('reporte', { conMonto: false })}
+            >
+              <FiFile aria-hidden="true" /> Reporte sin montos
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => descargar('reporte', { conMonto: false, sinChofer: true })}
+            >
+              <FiFile aria-hidden="true" /> Reporte sin monto y sin chofer
+            </button>
+          </div>
+        </section>
+
+        <ViajesPersonalizadosExport />
+        <VehiculosPrivadosExport />
+      </div>
 
       {sinViajes && (
         <Modal titulo="Sin viajes" onClose={() => setSinViajes(false)}>

@@ -162,9 +162,10 @@ export default function Viajes({ onEditar }) {
       ) : (
         <section className="tarjeta">
           <div className="tabla-envoltura">
-            <table className="tabla compacta">
+            <table className="tabla compacta viajes">
               <thead>
                 <tr>
+                  <th className="centro">Acciones</th>
                   <th>Inicio</th>
                   <th>Fin</th>
                   <th>Empresa</th>
@@ -177,12 +178,23 @@ export default function Viajes({ onEditar }) {
                   <th className="derecha">Total BS</th>
                   <th className="derecha">Tasa</th>
                   <th className="derecha">Total $</th>
-                  <th className="centro">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {filas.map((viaje) => (
                   <tr key={viaje.id}>
+                    <td className="centro">
+                      <button type="button" className="btn-pequeno" onClick={() => onEditar(viaje)}>
+                        <FiEdit2 aria-hidden="true" /> Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn pequeno peligro"
+                        onClick={() => setPorEliminar(viaje)}
+                      >
+                        <FiTrash2 aria-hidden="true" /> Eliminar
+                      </button>
+                    </td>
                     <td>{fecha(viaje.fechaInicio)}</td>
                     <td>{fecha(viaje.fechaFin)}</td>
                     <td>{viaje.empresa?.nombre || 'Sin empresa'}</td>
@@ -210,18 +222,6 @@ export default function Viajes({ onEditar }) {
                     <td className="derecha">{money(viaje.totalBs)}</td>
                     <td className="derecha">{money(viaje.tasa)}</td>
                     <td className="derecha">{money(viaje.totalUsd)}</td>
-                    <td className="centro">
-                      <button type="button" className="btn-pequeno" onClick={() => onEditar(viaje)}>
-                        <FiEdit2 aria-hidden="true" /> Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="btn pequeno peligro"
-                        onClick={() => setPorEliminar(viaje)}
-                      >
-                        <FiTrash2 aria-hidden="true" /> Eliminar
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>

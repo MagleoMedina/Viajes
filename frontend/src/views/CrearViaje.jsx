@@ -15,6 +15,7 @@ const VACIO = {
   puntoSalidaId: '',
   puntoLlegadaId: '',
   vehiculoId: '',
+  tituloViajeId: '',
   montoViaje: '',
   combustible: '',
   refCombustible: '',
@@ -54,6 +55,7 @@ function desdeViaje(viaje) {
     puntoSalidaId: aTexto(viaje.puntoSalida?.id),
     puntoLlegadaId: aTexto(viaje.puntoLlegada?.id),
     vehiculoId: aTexto(viaje.vehiculo?.id),
+    tituloViajeId: aTexto(viaje.tituloViaje?.id),
     montoViaje: aTexto(viaje.montoViaje),
     combustible: aTexto(viaje.combustible),
     refCombustible: aTexto(viaje.refCombustible),
@@ -78,13 +80,14 @@ function numero(valor) {
   return Number.isFinite(n) ? n : 0
 }
 
-export default function CrearViaje({ viaje, onGuardado }) {
+export default function CrearViaje({ viaje, onGuardado, personalizado = false }) {
   const [form, setForm] = useState(() => (viaje ? desdeViaje(viaje) : { ...VACIO }))
   const [choferes, setChoferes] = useState([])
   const [empresas, setEmpresas] = useState([])
   const [puntos, setPuntos] = useState([])
   const [vehiculos, setVehiculos] = useState([])
   const [recorridos, setRecorridos] = useState([])
+  const [titulos, setTitulos] = useState([])
   const [finManual, setFinManual] = useState(() => Boolean(viaje && viaje.fechaFin !== viaje.fechaInicio))
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -96,20 +99,24 @@ export default function CrearViaje({ viaje, onGuardado }) {
   const [formRef, enfocarFormulario] = useFocoFormulario()
 
   function cargar() {
-    return Promise.all([
+    const pendientes = [
       api.get('/choferes'),
       api.get('/empresas'),
       api.get('/puntos'),
       api.get('/vehiculos'),
       api.get('/tasa'),
       api.get('/recorridos'),
-    ])
-      .then(([c, e, p, vh, t, r]) => {
+    ]
+    // El título solo aplica al viaje personalizado.
+    if (personalizado) pendientes.push(api.get('/titulos-viaje'))
+    return Promise.all(pendientes)
+      .then(([c, e, p, vh, t, r, tv]) => {
         setChoferes(conElegido(c, viaje?.chofer))
         setEmpresas(conElegido(e, viaje?.empresa))
         setPuntos(conElegido(conElegido(p, viaje?.puntoSalida), viaje?.puntoLlegada))
         setVehiculos(conElegido(vh, viaje?.vehiculo))
         setRecorridos(r)
+        if (personalizado) setTitulos(conElegido(tv ?? [], viaje?.tituloViaje))
         if (t?.valor != null) {
           setForm((f) => (f.tasa ? f : { ...f, tasa: String(t.valor) }))
         }
@@ -158,8 +165,12 @@ export default function CrearViaje({ viaje, onGuardado }) {
     setForm((f) => ({ ...f, fechaInicio: valor, fechaFin: finManual ? f.fechaFin : valor }))
   }
 
+  // El viaje personalizado no registra viáticos: no se descuentan.
   const gastosBs =
-    numero(form.combustible) + numero(form.viaticos) + numero(form.peajes) + numero(form.pagoChofer)
+    numero(form.combustible) +
+    (personalizado ? 0 : numero(form.viaticos)) +
+    numero(form.peajes) +
+    numero(form.pagoChofer)
   const gastosVarios = (form.gastos || []).reduce((suma, g) => suma + numero(g.monto), 0)
   const tasa = numero(form.tasa)
   // El monto del viaje se digita en $ y se multiplica por la tasa para obtener Bs.
@@ -242,11 +253,13 @@ export default function CrearViaje({ viaje, onGuardado }) {
       puntoSalidaId: form.puntoSalidaId ? Number(form.puntoSalidaId) : null,
       puntoLlegadaId: form.puntoLlegadaId ? Number(form.puntoLlegadaId) : null,
       vehiculoId: form.vehiculoId ? Number(form.vehiculoId) : null,
+      // El personalizado siempre lleva título; el normal, nunca.
+      tituloViajeId: personalizado && form.tituloViajeId ? Number(form.tituloViajeId) : null,
       montoViaje: numero(form.montoViaje),
       combustible: numero(form.combustible),
       refCombustible: form.refCombustible.trim(),
-      viaticos: numero(form.viaticos),
-      refViaticos: form.refViaticos.trim(),
+      viaticos: personalizado ? 0 : numero(form.viaticos),
+      refViaticos: personalizado ? '0' : form.refViaticos.trim(),
       peajes: numero(form.peajes),
       refPeajes: form.refPeajes.trim(),
       pagoChofer: numero(form.pagoChofer),
@@ -287,11 +300,15 @@ export default function CrearViaje({ viaje, onGuardado }) {
     limpiarFormulario()
   }
 
-  if (!cargando && (choferes.length === 0 || empresas.length === 0)) {
+  if (
+    !cargando &&
+    (choferes.length === 0 || empresas.length === 0 || (personalizado && titulos.length === 0))
+  ) {
     let falta = ''
     if (choferes.length === 0 && empresas.length === 0) falta = 'choferes y empresas'
     else if (choferes.length === 0) falta = 'choferes'
-    else falta = 'empresas'
+    else if (empresas.length === 0) falta = 'empresas'
+    else falta = 'títulos de viaje personalizado'
     return (
       <div className="vista">
         <header className="vista-cab">
@@ -312,7 +329,9 @@ export default function CrearViaje({ viaje, onGuardado }) {
     <div className="vista">
       <header className="vista-cab">
         <div>
-          <h1>{viaje ? 'Editar viaje' : 'Crear viajes'}</h1>
+          <h1>
+            {viaje ? 'Editar viaje' : personalizado ? 'Crear viajes personalizados' : 'Crear viajes'}
+          </h1>
           <p className="sub">Complete los datos. Totales calculados automáticamente.</p>
         </div>
       </header>
@@ -420,6 +439,23 @@ export default function CrearViaje({ viaje, onGuardado }) {
                 ))}
               </select>
             </label>
+            {personalizado && (
+              <label>
+                Título del viaje
+                <select
+                  value={form.tituloViajeId}
+                  onChange={(e) => set('tituloViajeId', e.target.value)}
+                  required
+                >
+                  <option value="">Seleccione...</option>
+                  {titulos.map((tv) => (
+                    <option key={tv.id} value={tv.id}>
+                      {tv.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="ancho-completo">
               Recorrido
               <input
@@ -480,26 +516,31 @@ export default function CrearViaje({ viaje, onGuardado }) {
                   placeholder="Nro. transacción"
                 />
               </label>
-              <label>
-                Viáticos (Bs)
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.viaticos}
-                  onChange={(e) => set('viaticos', e.target.value)}
-                />
-              </label>
-              <label>
-                Ref. viáticos
-                <input
-                  type="text"
-                  maxLength="100"
-                  value={form.refViaticos}
-                  onChange={(e) => set('refViaticos', e.target.value)}
-                  placeholder="Nro. transacción"
-                />
-              </label>
+              {/* El viaje personalizado no registra viáticos. */}
+              {!personalizado && (
+                <label>
+                  Viáticos (Bs)
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.viaticos}
+                    onChange={(e) => set('viaticos', e.target.value)}
+                  />
+                </label>
+              )}
+              {!personalizado && (
+                <label>
+                  Ref. viáticos
+                  <input
+                    type="text"
+                    maxLength="100"
+                    value={form.refViaticos}
+                    onChange={(e) => set('refViaticos', e.target.value)}
+                    placeholder="Nro. transacción"
+                  />
+                </label>
+              )}
               <label>
                 Peajes (Bs)
                 <input
@@ -618,7 +659,11 @@ export default function CrearViaje({ viaje, onGuardado }) {
               <strong>{money(montoBs)} Bs</strong>
             </div>
             <div className="fila-total">
-              <span>Combustible + Viáticos + Peajes + Pago a choferes (se resta)</span>
+              <span>
+                {personalizado
+                  ? 'Combustible + Peajes + Pago a choferes (se resta)'
+                  : 'Combustible + Viáticos + Peajes + Pago a choferes (se resta)'}
+              </span>
               <strong>− {money(gastosBs)} Bs</strong>
             </div>
             <div className="fila-total">

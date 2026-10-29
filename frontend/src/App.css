@@ -21,10 +21,19 @@
 
 .nav {
   flex: 1;
+  min-height: 0;
+  overflow-y: scroll;
+  /* Barra invisible: el scroll sigue con rueda, teclado y arrastre. */
+  scrollbar-width: none;
   padding: 14px 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.nav::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .nav-padre,
@@ -422,6 +431,37 @@
   align-items: start;
 }
 
+/* Reporte normal, personalizados y privados: tarjetas del mismo ancho,
+   alineadas arriba. */
+.disposicion-exportar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .disposicion-exportar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .disposicion-exportar {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Segundo bloque dentro de una tarjeta (p. ej. Reporte histórico). */
+.subtitulo-bloque {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -491,6 +531,17 @@
 /* Tabla de títulos dentro de una tarjeta ancha: no estira el contenido. */
 .tabla.limitada {
   max-width: 680px;
+}
+
+/* Listado de viajes: ancho según el contenido y filas alternadas suaves. */
+.tabla.viajes {
+  width: auto;
+}
+.tabla.viajes tbody tr:nth-child(even) td {
+  background: #f5f8fc;
+}
+.tabla.viajes tbody tr:hover td {
+  background: #eaf1fa;
 }
 
 .tabla thead th {

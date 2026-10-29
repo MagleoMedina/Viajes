@@ -6,6 +6,7 @@ import Vehiculos from './views/Vehiculos.jsx'
 import Puntos from './views/Puntos.jsx'
 import Empresas from './views/Empresas.jsx'
 import CrearViaje from './views/CrearViaje.jsx'
+import CrearViajePersonalizado from './views/CrearViajePersonalizado.jsx'
 import Viajes from './views/Viajes.jsx'
 import Exportar from './views/Exportar.jsx'
 import Tasa from './views/Tasa.jsx'
@@ -64,6 +65,7 @@ function App() {
           {vista === 'crear' && (
             <CrearViaje key={viajeEditando?.id ?? 'nuevo'} viaje={viajeEditando} onGuardado={viajeListo} />
           )}
+          {vista === 'crear-personalizado' && <CrearViajePersonalizado />}
           {vista === 'viajes' && <Viajes onEditar={editarViaje} />}
           {vista === 'exportar' && <Exportar />}
           {vista === 'recorridos' && <Recorridos />}

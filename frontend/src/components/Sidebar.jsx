@@ -19,6 +19,7 @@ import {
   FiDroplet,
   FiPieChart,
   FiTrendingUp,
+  FiStar,
 } from 'react-icons/fi'
 import { api } from '../api/client.js'
 import Modal from './Modal.jsx'
@@ -29,6 +30,7 @@ const SUBMENU = [
   { id: 'puntos', label: 'Puntos', Icono: FiMapPin },
   { id: 'empresas', label: 'Empresas', Icono: FiBriefcase },
   { id: 'crear', label: 'Crear viajes', Icono: FiPlusCircle },
+  { id: 'crear-personalizado', label: 'Crear viajes personalizados', Icono: FiStar },
   { id: 'viajes', label: 'Viajes', Icono: FiList },
   { id: 'exportar', label: 'Reporte detallado', Icono: FiDownload },
   { id: 'recorridos', label: 'Recorridos', Icono: FiNavigation },
@@ -196,6 +198,7 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
               <li key={id}>
                 <button
                   type="button"
+                  id={id}
                   className={`nav-hijo${vista === id ? ' activo' : ''}`}
                   onClick={() => onNavigate(id)}
                   title={label}
@@ -232,6 +235,7 @@ export default function Sidebar({ vista, onNavigate, onTasa, onPullCompletado })
               <li key={id}>
                 <button
                   type="button"
+                  id={id}
                   className={`nav-hijo${vista === id ? ' activo' : ''}`}
                   onClick={() => onNavigate(id)}
                   title={label}
