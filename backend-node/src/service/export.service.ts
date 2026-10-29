@@ -6,6 +6,7 @@ import { join } from 'path';
 import { Viaje } from '../domain/viaje.entity';
 import { ViajeRepository } from '../repo/viaje.repository';
 import { EmpresaRepository } from '../repo/empresa.repository';
+import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { ResumenGasoil, StockGasoilService } from './stock-gasoil.service';
 import { money, ordenarPorFechaAscendente, round2 } from '../common/dates';
 
@@ -119,6 +120,8 @@ const periodoViajes = (viajes: Viaje[], desde?: string, hasta?: string): string 
 export interface OpcionesViajes {
   empresaId?: number | null;
   empresaNombre?: string | null;
+  /** Vehículo filtrado: se muestra como chip junto al de la empresa. */
+  vehiculoNombre?: string | null;
   desde?: string;
   hasta?: string;
   color?: string;
@@ -173,13 +176,17 @@ function htmlResumenGasoil(resumen: ResumenGasoil): string {
 
 /** Construye el HTML del listado de viajes (función pura, testeable). */
 export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
-  const { empresaNombre = null, desde, hasta, color = '#26324a' } = opts;
+  const { empresaNombre = null, vehiculoNombre = null, desde, hasta, color = '#26324a' } = opts;
   const sumas = sumarViajes(viajes);
   const titulo = empresaNombre == null ? 'Viajes realizados' : `Viajes ${esc(empresaNombre)}`;
   const empresaBox =
     empresaNombre == null
       ? ''
       : `<span class="dato"><span class="k">EMPRESA</span>${esc(empresaNombre)}</span>`;
+  const vehiculoBox =
+    vehiculoNombre == null
+      ? ''
+      : `<span class="dato"><span class="k">VEHÍCULO</span>${esc(vehiculoNombre)}</span>`;
   const periodo = periodoViajes(viajes, desde, hasta);
   const cantidad = viajes.length;
 
@@ -313,6 +320,7 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
               <span class="dato"><span class="k">PERIODO</span>${periodo}</span>
               <span class="dato"><span class="k">VIAJES</span>${cantidad}</span>
               ${empresaBox}
+              ${vehiculoBox}
             </div></td></tr>
             <tr>${thsHtml}</tr>
           </thead>
@@ -332,13 +340,19 @@ export class ExportService {
   constructor(
     private readonly repo: ViajeRepository,
     private readonly empresas: EmpresaRepository,
+    private readonly vehiculos: VehiculoRepository,
     private readonly stockGasoil: StockGasoilService,
   ) {}
 
   /* ----------------------------- EXCEL ----------------------------- */
 
-  crearXlsx(empresaId: number | null, desde?: string, hasta?: string): Promise<Buffer> {
-    return this.buscar(empresaId, desde, hasta).then((viajes) => {
+  crearXlsx(
+    empresaId: number | null,
+    vehiculoId: number | null,
+    desde?: string,
+    hasta?: string,
+  ): Promise<Buffer> {
+    return this.repo.buscar(empresaId, vehiculoId, desde, hasta).then((viajes) => {
       const sumas = sumarViajes(viajes);
       const wb = new ExcelJS.Workbook();
       const hoja = wb.addWorksheet('Viajes');
@@ -413,17 +427,22 @@ export class ExportService {
 
   async crearPdf(
     empresaId: number | null,
+    vehiculoId: number | null,
     desde?: string,
     hasta?: string,
     colorTitulo = '#26324a',
   ): Promise<Buffer> {
-    const viajes = ordenarPorFechaAscendente(await this.buscar(empresaId, desde, hasta));
+    const viajes = ordenarPorFechaAscendente(
+      await this.repo.buscar(empresaId, vehiculoId, desde, hasta),
+    );
     const empresaNombre =
       empresaId != null ? (await this.empresas.findById(empresaId))?.nombre ?? '¿?' : null;
+    const vehiculoNombre = vehiculoId != null ? await this.nombreVehiculo(vehiculoId) : null;
     const resumen = await this.stockGasoil.resumen();
     const htmlContent = htmlViajes(viajes, {
       empresaId,
       empresaNombre,
+      vehiculoNombre,
       desde,
       hasta,
       color: colorTitulo,
@@ -445,27 +464,17 @@ export class ExportService {
     }
   }
 
-  /* ----------------------------- BÚSQUEDA ----------------------------- */
-
-  private buscar(empresaId: number | null, desde?: string, hasta?: string): Promise<Viaje[]> {
-    const conFechas = Boolean(desde && hasta);
-    if (empresaId != null && conFechas) {
-      return this.repo.findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(
-        empresaId,
-        desde!,
-        hasta!,
-      );
-    }
-    if (empresaId != null) {
-      return this.repo.findByEmpresaIdOrderByFechaInicioDesc(empresaId);
-    }
-    if (conFechas) {
-      return this.repo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde!, hasta!);
-    }
-    return this.repo.findAllByOrderByFechaInicioDesc();
-  }
-
   /* ----------------------------- HELPERS DE EXCEL ----------------------------- */
+
+  /** "Toyota Hilux (AB123)" para el chip del vehículo filtrado. */
+  private async nombreVehiculo(vehiculoId: number): Promise<string | null> {
+    const v = await this.vehiculos.findById(vehiculoId);
+    if (!v) return null;
+    const partes = [v.marca, v.modelo].filter((x) => x && x.trim()).join(' ').trim();
+    const placa = v.placa?.trim();
+    if (partes && placa) return `${partes} (${placa})`;
+    return partes || placa || null;
+  }
 
   private numero(celda: ExcelJS.Cell, valor?: number | null) {
     celda.value = nulo(valor);

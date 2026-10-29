@@ -9,6 +9,7 @@ import { ordenarPorFechaAscendente } from '../common/dates';
 
 export interface ParametrosReporte {
   empresaId: number;
+  vehiculoId?: number | null; // Vehículo opcional: sin él se listan todos
   desde?: string; // Formato YYYY-MM-DD
   hasta?: string; // Formato YYYY-MM-DD
   direccion?: string; // Dirección opcional si no existe en la base de datos
@@ -251,7 +252,7 @@ export class ReporteEmpresaService {
   ) {}
 
   async generarPdf(params: ParametrosReporte): Promise<Buffer> {
-    const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color } = params;
+    const { empresaId, vehiculoId = null, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color } = params;
 
     // 1. Obtener la información de la empresa
     const empresa = Number.isFinite(empresaId) && empresaId > 0
@@ -266,9 +267,11 @@ export class ReporteEmpresaService {
     // 2. Intervalo dinámico de fechas
     const rangoFechas = this.formatearRangoFechas(desde, hasta);
 
-    // 3. Viajes del intervalo/empresa (mismo filtro que el listado de la app),
-    //    siempre de la fecha más antigua a la más reciente.
-    const viajes = ordenarPorFechaAscendente(await this.consultar(empresaId, desde, hasta));
+    // 3. Viajes del intervalo/empresa/vehículo (mismo filtro que el listado de la
+    //    app), siempre de la fecha más antigua a la más reciente.
+    const viajes = ordenarPorFechaAscendente(
+      await this.consultar(empresaId, vehiculoId, desde, hasta),
+    );
 
     // 4. Logo en Base64
     const logoUri = this.obtenerLogoDataUri();
@@ -332,19 +335,19 @@ export class ReporteEmpresaService {
   }
 
   /** Mismo criterio de filtrado que GET /api/viajes. */
-  private consultar(empresaId: number, desde?: string, hasta?: string): Promise<Viaje[]> {
+  private consultar(
+    empresaId: number,
+    vehiculoId?: number | null,
+    desde?: string,
+    hasta?: string,
+  ): Promise<Viaje[]> {
     const conEmpresa = Number.isFinite(empresaId) && empresaId > 0;
-    const conFechas = Boolean(desde && hasta);
-    if (conEmpresa && conFechas) {
-      return this.viajeRepo.findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(
-        empresaId,
-        desde!,
-        hasta!,
-      );
-    }
-    if (conEmpresa) return this.viajeRepo.findByEmpresaIdOrderByFechaInicioDesc(empresaId);
-    if (conFechas) return this.viajeRepo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde!, hasta!);
-    return this.viajeRepo.findAllByOrderByFechaInicioDesc();
+    return this.viajeRepo.buscar(
+      conEmpresa ? empresaId : null,
+      vehiculoId ?? null,
+      desde,
+      hasta,
+    );
   }
 
   private fechaCorta(fecha: Date): string {

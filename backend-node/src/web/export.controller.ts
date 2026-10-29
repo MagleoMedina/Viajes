@@ -63,11 +63,13 @@ export class ExportController {
   async xlsx(
     @Res() res: Response,
     @Query('empresaId') empresaId?: string,
+    @Query('vehiculoId') vehiculoId?: string,
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
   ) {
     const idEmpresa = empresaId ? Number(empresaId) : null;
-    const buffer = await this.servicio.crearXlsx(idEmpresa, desde, hasta);
+    const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
+    const buffer = await this.servicio.crearXlsx(idEmpresa, idVehiculo, desde, hasta);
     const nombre = await this.nombre(idEmpresa, 'viajes', desde, hasta);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}.xlsx"`);
@@ -79,12 +81,20 @@ export class ExportController {
   async pdf(
     @Res() res: Response,
     @Query('empresaId') empresaId?: string,
+    @Query('vehiculoId') vehiculoId?: string,
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
     @Query('color') color?: string,
   ) {
     const idEmpresa = empresaId ? Number(empresaId) : null;
-    const buffer = await this.servicio.crearPdf(idEmpresa, desde, hasta, colorDe(color, '#26324a'));
+    const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
+    const buffer = await this.servicio.crearPdf(
+      idEmpresa,
+      idVehiculo,
+      desde,
+      hasta,
+      colorDe(color, '#26324a'),
+    );
     const nombre = await this.nombre(idEmpresa, 'viajes', desde, hasta);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
@@ -96,6 +106,7 @@ export class ExportController {
   async reporte(
     @Res() res: Response,
     @Query('empresaId') empresaId?: string,
+    @Query('vehiculoId') vehiculoId?: string,
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
     @Query('direccion') direccion?: string,
@@ -104,8 +115,10 @@ export class ExportController {
     @Query('color') color?: string,
   ) {
     const idEmpresa = empresaId ? Number(empresaId) : 0;
+    const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
     const buffer = await this.reporteServicio.generarPdf({
       empresaId: idEmpresa,
+      vehiculoId: idVehiculo,
       desde,
       hasta,
       direccion,

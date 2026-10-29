@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, FindOptionsRelations, Repository } from 'typeorm';
+import { Between, FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
 import { Viaje } from '../domain/viaje.entity';
 import { dateOnlyToMillis } from '../common/dates';
 
@@ -19,39 +19,31 @@ export class ViajeRepository {
     @InjectRepository(Viaje) private readonly repo: Repository<Viaje>,
   ) {}
 
-  findByFechaInicioBetweenOrderByFechaInicioDesc(
-    desde: string,
-    hasta: string,
+  /**
+   * Filtros combinables: empresa, vehiculo y/o intervalo de fechas
+   * (YYYY-MM-DD, solo si vienen las dos). Sin filtros devuelve el historico.
+   */
+  buscar(
+    empresaId?: number | null,
+    vehiculoId?: number | null,
+    desde?: string,
+    hasta?: string,
   ): Promise<Viaje[]> {
+    const where: FindOptionsWhere<Viaje> = {};
+    if (empresaId != null && Number.isFinite(empresaId) && empresaId > 0) {
+      where.empresa = { id: empresaId };
+    }
+    if (vehiculoId != null && Number.isFinite(vehiculoId) && vehiculoId > 0) {
+      where.vehiculo = { id: vehiculoId };
+    }
+    if (desde && hasta) {
+      where.fechaInicio = Between(
+        new Date(dateOnlyToMillis(desde)),
+        new Date(dateOnlyToMillis(hasta)),
+      );
+    }
     return this.repo.find({
-      where: { fechaInicio: this.entre(desde, hasta) },
-      relations: RELATIONS,
-      order: { fechaInicio: 'DESC' },
-    });
-  }
-
-  findByEmpresaIdOrderByFechaInicioDesc(empresaId: number): Promise<Viaje[]> {
-    return this.repo.find({
-      where: { empresa: { id: empresaId } },
-      relations: RELATIONS,
-      order: { fechaInicio: 'DESC' },
-    });
-  }
-
-  findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(
-    empresaId: number,
-    desde: string,
-    hasta: string,
-  ): Promise<Viaje[]> {
-    return this.repo.find({
-      where: { empresa: { id: empresaId }, fechaInicio: this.entre(desde, hasta) },
-      relations: RELATIONS,
-      order: { fechaInicio: 'DESC' },
-    });
-  }
-
-  findAllByOrderByFechaInicioDesc(): Promise<Viaje[]> {
-    return this.repo.find({
+      where,
       relations: RELATIONS,
       order: { fechaInicio: 'DESC' },
     });
@@ -110,12 +102,5 @@ export class ViajeRepository {
 
   deleteById(id: number): Promise<void> {
     return this.repo.delete(id).then(() => undefined);
-  }
-
-  private entre(desde: string, hasta: string) {
-    return Between(
-      new Date(dateOnlyToMillis(desde)),
-      new Date(dateOnlyToMillis(hasta)),
-    );
   }
 }

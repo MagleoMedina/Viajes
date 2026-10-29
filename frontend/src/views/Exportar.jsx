@@ -6,7 +6,9 @@ import VistaPreviaPdf from '../components/VistaPreviaPdf.jsx'
 
 export default function Exportar() {
   const [empresas, setEmpresas] = useState([])
+  const [vehiculos, setVehiculos] = useState([])
   const [empresaId, setEmpresaId] = useState('')
+  const [vehiculoId, setVehiculoId] = useState('')
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
   const [color, setColor] = useState('#26324a')
@@ -16,10 +18,13 @@ export default function Exportar() {
 
   useEffect(() => {
     api.get('/empresas').then(setEmpresas).catch((e) => setError(e.message))
+    // El vehículo es opcional: vacío lista todos los viajes.
+    api.get('/vehiculos').then(setVehiculos).catch(() => {})
   }, [])
 
   const params = new URLSearchParams()
   if (empresaId) params.set('empresaId', empresaId)
+  if (vehiculoId) params.set('vehiculoId', vehiculoId)
   if (desde) params.set('desde', desde)
   if (hasta) params.set('hasta', hasta)
   const sufijo = params.toString() ? `?${params.toString()}` : ''
@@ -61,8 +66,11 @@ export default function Exportar() {
 
       <section className="tarjeta ancho-medio">
         <h2>Filtros</h2>
-        <p className="ayuda">Todo vacío exporta el histórico completo.</p>
-        <div className="campos-3">
+        <p className="ayuda">
+          Todo vacío exporta el histórico completo. Empresa y vehículo son opcionales: sin elegir
+          ninguno se listan todos los viajes.
+        </p>
+        <div className="campos-4">
           <label>
             Empresa
             <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}>
@@ -70,6 +78,18 @@ export default function Exportar() {
               {empresas.map((em) => (
                 <option key={em.id} value={em.id}>
                   {em.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Vehículo
+            <select value={vehiculoId} onChange={(e) => setVehiculoId(e.target.value)}>
+              <option value="">Todos los vehículos</option>
+              {vehiculos.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.marca || v.modelo ? `${v.marca ?? ''} ${v.modelo ?? ''}`.trim() : 'Vehículo'}
+                  {v.placa ? ` (${v.placa})` : ''}
                 </option>
               ))}
             </select>
@@ -137,7 +157,7 @@ export default function Exportar() {
 
       {sinViajes && (
         <Modal titulo="Sin viajes" onClose={() => setSinViajes(false)}>
-          <p>No hay viajes para esta empresa en este intervalo de fechas.</p>
+          <p>No hay viajes para estos filtros (empresa, vehículo e intervalo de fechas).</p>
           <div className="acciones">
             <button type="button" className="btn primario" onClick={() => setSinViajes(false)}>
               <FiCheck aria-hidden="true" /> Aceptar

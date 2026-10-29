@@ -67,28 +67,32 @@ let ExportController = class ExportController {
         const h = fechaArchivo(hasta, 'hoy');
         return `${prefijo}_${empresaSlug}_${d}_${h}`;
     }
-    async xlsx(res, empresaId, desde, hasta) {
+    async xlsx(res, empresaId, vehiculoId, desde, hasta) {
         const idEmpresa = empresaId ? Number(empresaId) : null;
-        const buffer = await this.servicio.crearXlsx(idEmpresa, desde, hasta);
+        const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
+        const buffer = await this.servicio.crearXlsx(idEmpresa, idVehiculo, desde, hasta);
         const nombre = await this.nombre(idEmpresa, 'viajes', desde, hasta);
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${nombre}.xlsx"`);
         res.setHeader('Content-Length', String(buffer.length));
         res.end(buffer);
     }
-    async pdf(res, empresaId, desde, hasta, color) {
+    async pdf(res, empresaId, vehiculoId, desde, hasta, color) {
         const idEmpresa = empresaId ? Number(empresaId) : null;
-        const buffer = await this.servicio.crearPdf(idEmpresa, desde, hasta, colorDe(color, '#26324a'));
+        const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
+        const buffer = await this.servicio.crearPdf(idEmpresa, idVehiculo, desde, hasta, colorDe(color, '#26324a'));
         const nombre = await this.nombre(idEmpresa, 'viajes', desde, hasta);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
         res.setHeader('Content-Length', String(buffer.length));
         res.end(buffer);
     }
-    async reporte(res, empresaId, desde, hasta, direccion, conMonto, sinChofer, color) {
+    async reporte(res, empresaId, vehiculoId, desde, hasta, direccion, conMonto, sinChofer, color) {
         const idEmpresa = empresaId ? Number(empresaId) : 0;
+        const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
         const buffer = await this.reporteServicio.generarPdf({
             empresaId: idEmpresa,
+            vehiculoId: idVehiculo,
             desde,
             hasta,
             direccion,
@@ -179,35 +183,38 @@ __decorate([
     (0, common_1.Get)('xlsx'),
     __param(0, (0, common_1.Res)()),
     __param(1, (0, common_1.Query)('empresaId')),
-    __param(2, (0, common_1.Query)('desde')),
-    __param(3, (0, common_1.Query)('hasta')),
+    __param(2, (0, common_1.Query)('vehiculoId')),
+    __param(3, (0, common_1.Query)('desde')),
+    __param(4, (0, common_1.Query)('hasta')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ExportController.prototype, "xlsx", null);
 __decorate([
     (0, common_1.Get)('pdf'),
     __param(0, (0, common_1.Res)()),
     __param(1, (0, common_1.Query)('empresaId')),
-    __param(2, (0, common_1.Query)('desde')),
-    __param(3, (0, common_1.Query)('hasta')),
-    __param(4, (0, common_1.Query)('color')),
+    __param(2, (0, common_1.Query)('vehiculoId')),
+    __param(3, (0, common_1.Query)('desde')),
+    __param(4, (0, common_1.Query)('hasta')),
+    __param(5, (0, common_1.Query)('color')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ExportController.prototype, "pdf", null);
 __decorate([
     (0, common_1.Get)('reporte'),
     __param(0, (0, common_1.Res)()),
     __param(1, (0, common_1.Query)('empresaId')),
-    __param(2, (0, common_1.Query)('desde')),
-    __param(3, (0, common_1.Query)('hasta')),
-    __param(4, (0, common_1.Query)('direccion')),
-    __param(5, (0, common_1.Query)('conMonto')),
-    __param(6, (0, common_1.Query)('sinChofer')),
-    __param(7, (0, common_1.Query)('color')),
+    __param(2, (0, common_1.Query)('vehiculoId')),
+    __param(3, (0, common_1.Query)('desde')),
+    __param(4, (0, common_1.Query)('hasta')),
+    __param(5, (0, common_1.Query)('direccion')),
+    __param(6, (0, common_1.Query)('conMonto')),
+    __param(7, (0, common_1.Query)('sinChofer')),
+    __param(8, (0, common_1.Query)('color')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ExportController.prototype, "reporte", null);
 __decorate([

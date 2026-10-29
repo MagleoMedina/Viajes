@@ -102,18 +102,11 @@ let ViajeController = class ViajeController {
         this.stockGasoil = stockGasoil;
         this.gastoRepo = gastoRepo;
     }
-    listar(empresaId, desde, hasta) {
-        const idEmpresa = empresaId ? Number(empresaId) : null;
-        const conFechas = Boolean(desde && hasta);
+    listar(empresaId, vehiculoId, desde, hasta) {
         this.validarFechas(desde, hasta);
-        const promesa = idEmpresa != null && conFechas
-            ? this.repo.findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(idEmpresa, desde, hasta)
-            : idEmpresa != null
-                ? this.repo.findByEmpresaIdOrderByFechaInicioDesc(idEmpresa)
-                : conFechas
-                    ? this.repo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde, hasta)
-                    : this.repo.findAllByOrderByFechaInicioDesc();
-        return promesa.then((lista) => lista.map(serialize_1.viajeJson));
+        return this.repo
+            .buscar(empresaId ? Number(empresaId) : null, vehiculoId ? Number(vehiculoId) : null, desde, hasta)
+            .then((lista) => lista.map(serialize_1.viajeJson));
     }
     crear(req) {
         const viaje = new viaje_entity_1.Viaje();
@@ -259,10 +252,11 @@ exports.ViajeController = ViajeController;
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('empresaId')),
-    __param(1, (0, common_1.Query)('desde')),
-    __param(2, (0, common_1.Query)('hasta')),
+    __param(1, (0, common_1.Query)('vehiculoId')),
+    __param(2, (0, common_1.Query)('desde')),
+    __param(3, (0, common_1.Query)('hasta')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], ViajeController.prototype, "listar", null);
 __decorate([

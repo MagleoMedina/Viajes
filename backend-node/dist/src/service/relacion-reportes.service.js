@@ -316,7 +316,7 @@ let RelacionReportesService = class RelacionReportesService {
     async gastos(desde, hasta) {
         const tasa = await this.tasaVigente();
         const [viajes, varios, impuestos, gasoil] = await Promise.all([
-            this.viajeRepo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde, hasta),
+            this.viajeRepo.buscar(null, null, desde, hasta),
             this.variosRepo.buscar(null, desde, hasta),
             this.impuestosRepo.buscar(null, desde, hasta),
             this.gasoilRepo.buscar(null, desde, hasta),

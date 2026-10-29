@@ -205,7 +205,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
         this.viajeRepo = viajeRepo;
     }
     async generarPdf(params) {
-        const { empresaId, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color } = params;
+        const { empresaId, vehiculoId = null, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color } = params;
         const empresa = Number.isFinite(empresaId) && empresaId > 0
             ? await this.empresaRepo.findById(empresaId)
             : null;
@@ -214,7 +214,7 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             direccionParam ||
             'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
         const rangoFechas = this.formatearRangoFechas(desde, hasta);
-        const viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.consultar(empresaId, desde, hasta));
+        const viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.consultar(empresaId, vehiculoId, desde, hasta));
         const logoUri = this.obtenerLogoDataUri();
         const filas = viajes.map((v) => {
             const celdas = [
@@ -266,17 +266,9 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             await browser.close();
         }
     }
-    consultar(empresaId, desde, hasta) {
+    consultar(empresaId, vehiculoId, desde, hasta) {
         const conEmpresa = Number.isFinite(empresaId) && empresaId > 0;
-        const conFechas = Boolean(desde && hasta);
-        if (conEmpresa && conFechas) {
-            return this.viajeRepo.findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(empresaId, desde, hasta);
-        }
-        if (conEmpresa)
-            return this.viajeRepo.findByEmpresaIdOrderByFechaInicioDesc(empresaId);
-        if (conFechas)
-            return this.viajeRepo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde, hasta);
-        return this.viajeRepo.findAllByOrderByFechaInicioDesc();
+        return this.viajeRepo.buscar(conEmpresa ? empresaId : null, vehiculoId ?? null, desde, hasta);
     }
     fechaCorta(fecha) {
         if (!fecha)

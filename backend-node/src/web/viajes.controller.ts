@@ -87,20 +87,19 @@ export class ViajeController {
   @Get()
   listar(
     @Query('empresaId') empresaId?: string,
+    @Query('vehiculoId') vehiculoId?: string,
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
   ) {
-    const idEmpresa = empresaId ? Number(empresaId) : null;
-    const conFechas = Boolean(desde && hasta);
     this.validarFechas(desde, hasta);
-    const promesa = idEmpresa != null && conFechas
-      ? this.repo.findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(idEmpresa, desde!, hasta!)
-      : idEmpresa != null
-        ? this.repo.findByEmpresaIdOrderByFechaInicioDesc(idEmpresa)
-        : conFechas
-          ? this.repo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde!, hasta!)
-          : this.repo.findAllByOrderByFechaInicioDesc();
-    return promesa.then((lista) => lista.map(viajeJson));
+    return this.repo
+      .buscar(
+        empresaId ? Number(empresaId) : null,
+        vehiculoId ? Number(vehiculoId) : null,
+        desde,
+        hasta,
+      )
+      .then((lista) => lista.map(viajeJson));
   }
 
   @HttpCode(HttpStatus.OK)

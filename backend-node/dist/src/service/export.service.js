@@ -51,6 +51,7 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const viaje_repository_1 = require("../repo/viaje.repository");
 const empresa_repository_1 = require("../repo/empresa.repository");
+const vehiculo_repository_1 = require("../repo/vehiculo.repository");
 const stock_gasoil_service_1 = require("./stock-gasoil.service");
 const dates_1 = require("../common/dates");
 Object.defineProperty(exports, "ordenarPorFechaAscendente", { enumerable: true, get: function () { return dates_1.ordenarPorFechaAscendente; } });
@@ -172,12 +173,15 @@ function htmlResumenGasoil(resumen) {
       </div>`;
 }
 function htmlViajes(viajes, opts = {}) {
-    const { empresaNombre = null, desde, hasta, color = '#26324a' } = opts;
+    const { empresaNombre = null, vehiculoNombre = null, desde, hasta, color = '#26324a' } = opts;
     const sumas = sumarViajes(viajes);
     const titulo = empresaNombre == null ? 'Viajes realizados' : `Viajes ${esc(empresaNombre)}`;
     const empresaBox = empresaNombre == null
         ? ''
         : `<span class="dato"><span class="k">EMPRESA</span>${esc(empresaNombre)}</span>`;
+    const vehiculoBox = vehiculoNombre == null
+        ? ''
+        : `<span class="dato"><span class="k">VEHÍCULO</span>${esc(vehiculoNombre)}</span>`;
     const periodo = periodoViajes(viajes, desde, hasta);
     const cantidad = viajes.length;
     let cuerpoHtml = '';
@@ -301,6 +305,7 @@ function htmlViajes(viajes, opts = {}) {
               <span class="dato"><span class="k">PERIODO</span>${periodo}</span>
               <span class="dato"><span class="k">VIAJES</span>${cantidad}</span>
               ${empresaBox}
+              ${vehiculoBox}
             </div></td></tr>
             <tr>${thsHtml}</tr>
           </thead>
@@ -315,14 +320,16 @@ function htmlViajes(viajes, opts = {}) {
 let ExportService = class ExportService {
     repo;
     empresas;
+    vehiculos;
     stockGasoil;
-    constructor(repo, empresas, stockGasoil) {
+    constructor(repo, empresas, vehiculos, stockGasoil) {
         this.repo = repo;
         this.empresas = empresas;
+        this.vehiculos = vehiculos;
         this.stockGasoil = stockGasoil;
     }
-    crearXlsx(empresaId, desde, hasta) {
-        return this.buscar(empresaId, desde, hasta).then((viajes) => {
+    crearXlsx(empresaId, vehiculoId, desde, hasta) {
+        return this.repo.buscar(empresaId, vehiculoId, desde, hasta).then((viajes) => {
             const sumas = sumarViajes(viajes);
             const wb = new ExcelJS.Workbook();
             const hoja = wb.addWorksheet('Viajes');
@@ -387,13 +394,15 @@ let ExportService = class ExportService {
             return wb.xlsx.writeBuffer().then((buf) => Buffer.from(buf));
         });
     }
-    async crearPdf(empresaId, desde, hasta, colorTitulo = '#26324a') {
-        const viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.buscar(empresaId, desde, hasta));
+    async crearPdf(empresaId, vehiculoId, desde, hasta, colorTitulo = '#26324a') {
+        const viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.repo.buscar(empresaId, vehiculoId, desde, hasta));
         const empresaNombre = empresaId != null ? (await this.empresas.findById(empresaId))?.nombre ?? '¿?' : null;
+        const vehiculoNombre = vehiculoId != null ? await this.nombreVehiculo(vehiculoId) : null;
         const resumen = await this.stockGasoil.resumen();
         const htmlContent = htmlViajes(viajes, {
             empresaId,
             empresaNombre,
+            vehiculoNombre,
             desde,
             hasta,
             color: colorTitulo,
@@ -413,18 +422,15 @@ let ExportService = class ExportService {
             await browser.close();
         }
     }
-    buscar(empresaId, desde, hasta) {
-        const conFechas = Boolean(desde && hasta);
-        if (empresaId != null && conFechas) {
-            return this.repo.findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(empresaId, desde, hasta);
-        }
-        if (empresaId != null) {
-            return this.repo.findByEmpresaIdOrderByFechaInicioDesc(empresaId);
-        }
-        if (conFechas) {
-            return this.repo.findByFechaInicioBetweenOrderByFechaInicioDesc(desde, hasta);
-        }
-        return this.repo.findAllByOrderByFechaInicioDesc();
+    async nombreVehiculo(vehiculoId) {
+        const v = await this.vehiculos.findById(vehiculoId);
+        if (!v)
+            return null;
+        const partes = [v.marca, v.modelo].filter((x) => x && x.trim()).join(' ').trim();
+        const placa = v.placa?.trim();
+        if (partes && placa)
+            return `${partes} (${placa})`;
+        return partes || placa || null;
     }
     numero(celda, valor) {
         celda.value = nulo(valor);
@@ -456,6 +462,7 @@ exports.ExportService = ExportService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [viaje_repository_1.ViajeRepository,
         empresa_repository_1.EmpresaRepository,
+        vehiculo_repository_1.VehiculoRepository,
         stock_gasoil_service_1.StockGasoilService])
 ], ExportService);
 class Sumas {

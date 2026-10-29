@@ -31,29 +31,19 @@ let ViajeRepository = class ViajeRepository {
     constructor(repo) {
         this.repo = repo;
     }
-    findByFechaInicioBetweenOrderByFechaInicioDesc(desde, hasta) {
+    buscar(empresaId, vehiculoId, desde, hasta) {
+        const where = {};
+        if (empresaId != null && Number.isFinite(empresaId) && empresaId > 0) {
+            where.empresa = { id: empresaId };
+        }
+        if (vehiculoId != null && Number.isFinite(vehiculoId) && vehiculoId > 0) {
+            where.vehiculo = { id: vehiculoId };
+        }
+        if (desde && hasta) {
+            where.fechaInicio = (0, typeorm_2.Between)(new Date((0, dates_1.dateOnlyToMillis)(desde)), new Date((0, dates_1.dateOnlyToMillis)(hasta)));
+        }
         return this.repo.find({
-            where: { fechaInicio: this.entre(desde, hasta) },
-            relations: RELATIONS,
-            order: { fechaInicio: 'DESC' },
-        });
-    }
-    findByEmpresaIdOrderByFechaInicioDesc(empresaId) {
-        return this.repo.find({
-            where: { empresa: { id: empresaId } },
-            relations: RELATIONS,
-            order: { fechaInicio: 'DESC' },
-        });
-    }
-    findByEmpresaIdAndFechaInicioBetweenOrderByFechaInicioDesc(empresaId, desde, hasta) {
-        return this.repo.find({
-            where: { empresa: { id: empresaId }, fechaInicio: this.entre(desde, hasta) },
-            relations: RELATIONS,
-            order: { fechaInicio: 'DESC' },
-        });
-    }
-    findAllByOrderByFechaInicioDesc() {
-        return this.repo.find({
+            where,
             relations: RELATIONS,
             order: { fechaInicio: 'DESC' },
         });
@@ -103,9 +93,6 @@ let ViajeRepository = class ViajeRepository {
     }
     deleteById(id) {
         return this.repo.delete(id).then(() => undefined);
-    }
-    entre(desde, hasta) {
-        return (0, typeorm_2.Between)(new Date((0, dates_1.dateOnlyToMillis)(desde)), new Date((0, dates_1.dateOnlyToMillis)(hasta)));
     }
 };
 exports.ViajeRepository = ViajeRepository;
