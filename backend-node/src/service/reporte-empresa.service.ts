@@ -3,9 +3,13 @@ import { lanzarChrome } from '../common/chromium';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { EmpresaRepository } from '../repo/empresa.repository';
+import { TituloViajeRepository } from '../repo/titulo-viaje.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
+import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { Viaje } from '../domain/viaje.entity';
-import { ordenarPorFechaAscendente } from '../common/dates';
+import { formatearRangoFechas, ordenarPorFechaAscendente } from '../common/dates';
+import { htmlResumenGasoil, htmlResumenTipos } from './export.service';
+import { StockGasoilService } from './stock-gasoil.service';
 
 export interface ParametrosReporte {
   empresaId: number;
@@ -13,13 +17,14 @@ export interface ParametrosReporte {
   desde?: string; // Formato YYYY-MM-DD
   hasta?: string; // Formato YYYY-MM-DD
   direccion?: string; // Dirección opcional si no existe en la base de datos
-  conMonto?: boolean; // Segundo formato: sin la columna MONTO ni el TOTAL
+  conMonto?: boolean; // Segundo formato: sin la columna MONTO
   sinChofer?: boolean; // Tercer formato: sin la columna CHOFER
   color?: string; // Color (#rrggbb) del nombre de la empresa en el encabezado
+  /** Viajes personalizados: filtra por título y usa el título como nombre. */
+  tituloViajeId?: number | null;
+  /** Reporte de vehículos cuya marca contiene «PRIVADO». */
+  soloPrivados?: boolean;
 }
-
-/** Cantidad de columnas del cuerpo: 8 con MONTO, 7 sin él. */
-const COLS_CON_MONTO = 8;
 
 /** Datos ya resueltos para armar el HTML del reporte (función pura). */
 export interface ReporteHtmlParams {
@@ -31,9 +36,14 @@ export interface ReporteHtmlParams {
   conMonto: boolean;
   /** Recuento de viajes del intervalo (chip superior, igual que el reporte detallado). */
   cantidadViajes?: number;
-  total?: number;
   color?: string;
   logoUri?: string;
+  /** Cabecera ya armada; si falta, se construye con los datos. */
+  cabeceraHtml?: string;
+  /** Página de gasoil (solo viajes personalizados). */
+  gasoilHtml?: string;
+  /** HTML de la página final: resumen por tipo de vehículo. */
+  resumenTiposHtml?: string;
 }
 
 const escapar = (str: string): string =>
@@ -59,9 +69,11 @@ export function htmlReporte(params: ReporteHtmlParams): string {
     filas,
     conMonto,
     cantidadViajes = filas.length,
-    total = 0,
     color,
     logoUri,
+    cabeceraHtml = '',
+    gasoilHtml = '',
+    resumenTiposHtml = '',
   } = params;
 
   // Sin ancho fijo por columna: cada th toma el ancho de su texto (table-layout auto).
@@ -85,13 +97,17 @@ export function htmlReporte(params: ReporteHtmlParams): string {
         .join('')
     : `<tr><td colspan="${columnas.length}" class="vacio">Sin viajes en este intervalo.</td></tr>`;
 
-  const pie =
-    conMonto && filas.length
-      ? `<tr class="total">
-             <td colspan="${COLS_CON_MONTO - 1}">TOTAL</td>
-             <td class="num">$ ${formatearDinero(total)}</td>
-           </tr>`
-      : '';
+  const pie = '';
+
+  // Cabecera repetida en la página de gasoil y en la del resumen por tipo.
+  const cabecera = cabeceraHtml || `
+        <div class="header-container">
+          ${logoUri ? `<img class="logo" src="${logoUri}" alt="Logo" />` : ''}
+          <div class="slogan">Sin pausa, sin excusas, sin limites</div>
+          <div class="titulo-reporte">REPORTE VIAJES DESDE EL ${rangoFechas}</div>
+          <div class="nombre-empresa">${escapar(nombreEmpresa)}</div>
+          ${direccionEmpresa ? `<div class="direccion-empresa">${escapar(direccionEmpresa)}</div>` : ''}
+        </div>`;
 
   return `
       <!DOCTYPE html>
@@ -122,7 +138,7 @@ export function htmlReporte(params: ReporteHtmlParams): string {
           .logo {
             max-width: 200px;
             height: auto;
-            margin-bottom: 6px;
+            margin-bottom: 0;
           }
           .slogan {
             font-size: 10px;
@@ -182,13 +198,13 @@ export function htmlReporte(params: ReporteHtmlParams): string {
           th, td {
             border: 1px solid #c9d2e0;
             padding: 5px 6px;
-            font-size: 10pt;
+            font-size: 7pt;
             overflow-wrap: break-word;
           }
           th {
             background-color: #26324a;
             color: #ffffff;
-            font-size: 10pt;
+            font-size: 7pt;
             font-weight: bold;
             text-align: left;
             text-transform: uppercase;
@@ -212,18 +228,56 @@ export function htmlReporte(params: ReporteHtmlParams): string {
             font-weight: bold;
             font-size: 10pt;
           }
+
+          /* Página de gasoil (viajes personalizados) */
+          .pagina-gasoil { page-break-before: always; break-before: page; }
+          .gas-titulo {
+            margin: 0 0 8px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+          }
+          .tabla-gasoil { width: 100%; margin-top: 0; }
+          .tabla-gasoil th, .tabla-gasoil td { font-size: 10pt; padding: 5px 6px; }
+          .tabla-gasoil tr.totales td {
+            background-color: #26324a;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 10pt;
+          }
+
+          /* Página final: resumen por tipo de vehículo */
+          .pagina-tipos { page-break-before: always; break-before: page; }
+          .tipos-titulo {
+            margin: 0 0 8px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+          }
+          .tabla-tipos { width: 55%; margin-top: 0; }
+          .tabla-tipos th, .tabla-tipos td { font-size: 10pt; padding: 5px 6px; }
+          .tabla-tipos td.vacio {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 14px;
+          }
+          .tabla-tipos tr.totales td {
+            background-color: #26324a;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 10pt;
+          }
         </style>
       </head>
       <body>
 
         <!-- Cabecera en el medio de la hoja -->
-        <div class="header-container">
-          ${logoUri ? `<img class="logo" src="${logoUri}" alt="Logo" />` : ''}
-          <div class="slogan">Sin pausa, sin excusas, sin limites</div>
-          <div class="titulo-reporte">REPORTE VIAJES DESDE EL ${rangoFechas}</div>
-          <div class="nombre-empresa">${escapar(nombreEmpresa)}</div>
-          <div class="direccion-empresa">${escapar(direccionEmpresa)}</div>
-        </div>
+        ${cabecera}
 
         <div class="resumen">
           <span class="dato"><span class="k">VIAJES</span>${cantidadViajes}</span>
@@ -239,6 +293,9 @@ export function htmlReporte(params: ReporteHtmlParams): string {
           </tbody>
         </table>
 
+        ${gasoilHtml}
+        ${resumenTiposHtml}
+
       </body>
       </html>
     `;
@@ -249,32 +306,75 @@ export class ReporteEmpresaService {
   constructor(
     private readonly empresaRepo: EmpresaRepository,
     private readonly viajeRepo: ViajeRepository,
+    private readonly tituloRepo: TituloViajeRepository,
+    private readonly vehiculoRepo: VehiculoRepository,
+    private readonly stockGasoil: StockGasoilService,
   ) {}
 
   async generarPdf(params: ParametrosReporte): Promise<Buffer> {
-    const { empresaId, vehiculoId = null, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color } = params;
+    const { empresaId, vehiculoId = null, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color, tituloViajeId = null, soloPrivados = false } = params;
 
-    // 1. Obtener la información de la empresa
+    // 1. Obtener la información de la empresa y, si es un viaje personalizado,
+    //    el título que reemplaza al nombre de la empresa.
     const empresa = Number.isFinite(empresaId) && empresaId > 0
       ? await this.empresaRepo.findById(empresaId)
       : null;
-    const nombreEmpresa = empresa?.nombre ?? 'TODAS LAS EMPRESAS';
-    const direccionEmpresa =
-      empresa?.direccion?.trim() ||
-      direccionParam ||
-      'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
+    const titulo = tituloViajeId != null ? await this.tituloRepo.findById(tituloViajeId) : null;
+    const nombreEmpresa = titulo?.nombre ?? empresa?.nombre ?? 'TODAS LAS EMPRESAS';
+    // Personalizado sin empresa filtrada: no se imprime dirección.
+    const direccionEmpresa = titulo
+      ? (empresa?.direccion?.trim() || direccionParam || '')
+      : (empresa?.direccion?.trim() ||
+        direccionParam ||
+        'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar');
 
     // 2. Intervalo dinámico de fechas
-    const rangoFechas = this.formatearRangoFechas(desde, hasta);
+    const rangoFechas = formatearRangoFechas(desde, hasta);
 
     // 3. Viajes del intervalo/empresa/vehículo (mismo filtro que el listado de la
     //    app), siempre de la fecha más antigua a la más reciente.
-    const viajes = ordenarPorFechaAscendente(
-      await this.consultar(empresaId, vehiculoId, desde, hasta),
-    );
+    //    En el reporte de privados se buscan los vehículos en cada pedido para
+    //    incluir los recién registrados.
+    let vehiculosPrivados: number[] = [];
+    let viajes: Viaje[];
+    if (soloPrivados) {
+      vehiculosPrivados = (await this.vehiculoRepo.vehiculosPrivados()).map((v) => v.id);
+      viajes = ordenarPorFechaAscendente(
+        await this.viajeRepo.buscarPorVehiculos(vehiculosPrivados, empresaId, desde, hasta),
+      );
+    } else {
+      viajes = ordenarPorFechaAscendente(
+        await this.consultar(empresaId, vehiculoId, desde, hasta, tituloViajeId),
+      );
+    }
 
     // 4. Logo en Base64
     const logoUri = this.obtenerLogoDataUri();
+
+    // Cabecera reutilizada en la página de gasoil y en el resumen por tipo.
+    const cabeceraHtml = `
+        <div class="header-container">
+          ${logoUri ? `<img class="logo" src="${logoUri}" alt="Logo" />` : ''}
+          <div class="slogan">Sin pausa, sin excusas, sin limites</div>
+          <div class="titulo-reporte">REPORTE VIAJES ${soloPrivados ? 'PRIVADOS ' : ''}DESDE EL ${rangoFechas}</div>
+          <div class="nombre-empresa">${escapar(nombreEmpresa)}</div>
+          ${direccionEmpresa ? `<div class="direccion-empresa">${escapar(direccionEmpresa)}</div>` : ''}
+        </div>`;
+
+    // Solo los viajes personalizados y los de privados llevan página de gasoil.
+    let gasoilHtml = '';
+    if (soloPrivados) {
+      const resumenGasoil = await this.stockGasoil.resumenPorVehiculos(
+        vehiculosPrivados,
+        empresaId,
+        desde,
+        hasta,
+      );
+      gasoilHtml = htmlResumenGasoil(resumenGasoil, cabeceraHtml, 'vehículos privados');
+    } else if (titulo != null && tituloViajeId != null) {
+      const resumenGasoil = await this.stockGasoil.resumenPorTitulo(tituloViajeId);
+      gasoilHtml = htmlResumenGasoil(resumenGasoil, cabeceraHtml, titulo.nombre);
+    }
 
     const filas = viajes.map((v) => {
       const celdas = [
@@ -290,7 +390,6 @@ export class ReporteEmpresaService {
       return celdas;
     });
 
-    const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
     let columnas = conMonto
       ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
       : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
@@ -311,9 +410,11 @@ export class ReporteEmpresaService {
       filas,
       conMonto,
       cantidadViajes: viajes.length,
-      total,
       color,
       logoUri,
+      cabeceraHtml,
+      gasoilHtml,
+      resumenTiposHtml: htmlResumenTipos(viajes, color ?? '#8c3b87', conMonto, cabeceraHtml),
     });
 
     // 5. Generación con Puppeteer
@@ -340,6 +441,7 @@ export class ReporteEmpresaService {
     vehiculoId?: number | null,
     desde?: string,
     hasta?: string,
+    tituloViajeId?: number | null,
   ): Promise<Viaje[]> {
     const conEmpresa = Number.isFinite(empresaId) && empresaId > 0;
     return this.viajeRepo.buscar(
@@ -347,6 +449,7 @@ export class ReporteEmpresaService {
       vehiculoId ?? null,
       desde,
       hasta,
+      tituloViajeId ?? null,
     );
   }
 
@@ -376,35 +479,6 @@ export class ReporteEmpresaService {
 
   private dinero(valor: number): string {
     return formatearDinero(valor);
-  }
-
-  /**
-   * Formatea el rango de fechas dinámico (ej: "22/09 AL 30/09/26")
-   */
-  private formatearRangoFechas(desde?: string, hasta?: string): string {
-    if (!desde && !hasta) return 'HISTÓRICO GENERAL';
-
-    const parsear = (fechaIso: string) => {
-      const [y, m, d] = fechaIso.split('-');
-      return {
-        diaMes: `${d}/${m}`,
-        anioCorto: y ? y.slice(-2) : '',
-      };
-    };
-
-    if (desde && hasta) {
-      const d = parsear(desde);
-      const h = parsear(hasta);
-      return `${d.diaMes} AL ${h.diaMes}/${h.anioCorto}`;
-    }
-
-    if (desde) {
-      const d = parsear(desde);
-      return `${d.diaMes}/${d.anioCorto} EN ADELANTE`;
-    }
-
-    const h = parsear(hasta!);
-    return `HASTA EL ${h.diaMes}/${h.anioCorto}`;
   }
 
   private obtenerLogoDataUri(): string {

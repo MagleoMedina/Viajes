@@ -85,7 +85,7 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
       expect(td).toBeLessThanOrEqual(9);
     });
 
-    it('reporte (referencia): th y td 10pt', () => {
+    it('reporte: tabla de viajes a 7pt (30% menos)', () => {
       const { htmlReporte } = require('../../src/service/reporte-empresa.service');
       const html = htmlReporte({
         empresaId: 1,
@@ -99,8 +99,12 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
       });
       const th = extraerPt(html, /th\s*\{[^}]*font-size:\s*([\d.]+)pt/);
       const td = extraerPt(html, /th\s*,\s*td\s*\{[^}]*font-size:\s*([\d.]+)pt/);
-      expect(th).toBeGreaterThanOrEqual(10 - 0.01);
-      expect(td).toBeGreaterThanOrEqual(10 - 0.01);
+      expect(th).toBeCloseTo(7, 1);
+      expect(td).toBeCloseTo(7, 1);
+
+      // Los cuadros de gasoil y resumen por tipo conservan 10pt.
+      expect(html).toMatch(/\.tabla-gasoil th, \.tabla-gasoil td \{ font-size: 10pt/);
+      expect(html).toMatch(/\.tabla-tipos th, \.tabla-tipos td \{ font-size: 10pt/);
     });
   });
 
@@ -393,8 +397,8 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
       const r = await descargar(app, '/api/export/pdf');
       const { text } = await pdfParse(r.buffer);
       const plano = text.replace(/\s+/g, '');
-      // Las placas si aparecen (resumen de gasoil); el chip, no.
-      expect(plano).not.toContain('ToyotaHilux');
+      // El nombre aparece en el resumen de gasoil, pero el chip VEHÍCULO no.
+      expect(plano).not.toContain('VEHÍCULOToyota');
     });
 
     it('el XLSX filtrado solo incluye los viajes del vehiculo', async () => {

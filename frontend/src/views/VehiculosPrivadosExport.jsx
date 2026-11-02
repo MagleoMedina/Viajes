@@ -29,9 +29,7 @@ export default function VehiculosPrivadosExport() {
     try {
       // Siempre se consulta la lista: así entran los vehículos nuevos.
       const vehiculos = await api.get('/vehiculos')
-      const privados = vehiculos.filter((v) =>
-        String(v.marca ?? '').toUpperCase().includes('PRIVADO'),
-      )
+      const privados = vehiculos.filter((v) => v.privado === true)
       if (privados.length === 0) {
         setSinVehiculos(true)
         return
@@ -60,8 +58,7 @@ export default function VehiculosPrivadosExport() {
       <section className="tarjeta">
         <h2>Vehículos privados</h2>
         <p className="ayuda">
-          Incluye los viajes de vehículos cuya marca contiene «PRIVADO». Los filtros son
-          opcionales.
+          Incluye los viajes de los vehículos marcados como privados. Los filtros son opcionales.
         </p>
         <div className="campos-4">
           <label>
@@ -131,7 +128,7 @@ export default function VehiculosPrivadosExport() {
       {sinVehiculos && (
         <Modal titulo="Sin vehículos privados" onClose={() => setSinVehiculos(false)}>
           <p>
-            No hay vehículos cuya marca contenga «PRIVADO». Regístrelos en el módulo Vehículos.
+            No hay vehículos marcados como privados. Márquelos en el módulo Vehículos.
           </p>
           <div className="acciones">
             <button type="button" className="btn primario" onClick={() => setSinVehiculos(false)}>

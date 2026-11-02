@@ -17,6 +17,10 @@ export class Vehiculo {
   @Column({ unique: true })
   placa: string;
 
+  /** true = vehículo privado (reporte de privados). */
+  @Column({ type: 'boolean', default: false })
+  privado: boolean;
+
   /** true = oculto del frontend, conservado para los viajes historicos. */
   @Column({ type: 'boolean', default: false })
   eliminado: boolean;

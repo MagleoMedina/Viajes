@@ -108,7 +108,7 @@ describe('backend Node', () => {
             }
             expect(texto).toContain('MONTO ($)');
             expect(texto).toContain('Neveras');
-            expect(texto).toContain('TOTAL');
+            expect(texto).not.toMatch(/TOTAL\s*\$\s*[\d.,]+/);
         });
         it('reporte-empresa-sin-monto', async () => {
             const buf = await traerBinario(app, '/api/export/reporte?empresaId=2&desde=2026-10-01&hasta=2026-10-31&conMonto=false');
@@ -120,7 +120,9 @@ describe('backend Node', () => {
                 expect(texto).toContain(header);
             }
             expect(texto).not.toContain('MONTO ($)');
-            expect(texto).not.toContain('TOTAL');
+            expect(texto).not.toContain('SUMA');
+            expect(texto).toMatch(/resumen por tipo de vehículo/i);
+            expect(texto).not.toContain('MONTO VIAJE $');
         });
     });
 });

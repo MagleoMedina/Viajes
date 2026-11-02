@@ -13,6 +13,17 @@ export class VehiculoRepository {
     return this.repo.find({ where: { eliminado: false } });
   }
 
+  /**
+   * Vehículos marcados como privados. Se consulta en cada pedido para incluir
+   * los vehículos recién registrados.
+   */
+  vehiculosPrivados(): Promise<Vehiculo[]> {
+    return this.repo.find({
+      where: { privado: true, eliminado: false },
+      order: { id: 'ASC' },
+    });
+  }
+
   findById(id: number): Promise<Vehiculo | null> {
     return this.repo.findOneBy({ id });
   }

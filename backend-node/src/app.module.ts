@@ -19,6 +19,7 @@ import { Recorrido } from './domain/recorrido.entity';
 import { Tasa } from './domain/tasa.entity';
 import { TituloGasto } from './domain/titulo-gasto.entity';
 import { TituloImpuesto } from './domain/titulo-impuesto.entity';
+import { TituloViaje } from './domain/titulo-viaje.entity';
 import { Vehiculo } from './domain/vehiculo.entity';
 import { Viaje } from './domain/viaje.entity';
 import { ChoferRepository } from './repo/chofer.repository';
@@ -33,6 +34,7 @@ import { RecorridoRepository } from './repo/recorrido.repository';
 import { TasaRepository } from './repo/tasa.repository';
 import { TituloGastoRepository } from './repo/titulo-gasto.repository';
 import { TituloImpuestoRepository } from './repo/titulo-impuesto.repository';
+import { TituloViajeRepository } from './repo/titulo-viaje.repository';
 import { VehiculoRepository } from './repo/vehiculo.repository';
 import { ViajeRepository } from './repo/viaje.repository';
 import { TasaService } from './service/tasa.service';
@@ -58,6 +60,7 @@ import { PuntoController } from './web/puntos.controller';
 import { RecorridoController } from './web/recorridos.controller';
 import { TituloGastoController } from './web/titulos-gasto.controller';
 import { TituloImpuestoController } from './web/titulos-impuesto.controller';
+import { TituloViajeController } from './web/titulos-viaje.controller';
 import { VehiculoController } from './web/vehiculos.controller';
 import { ViajeController } from './web/viajes.controller';
 import { TasaController } from './web/tasa.controller';
@@ -84,6 +87,7 @@ const ENTIDADES = [
   Tasa,
   TituloGasto,
   TituloImpuesto,
+  TituloViaje,
   Vehiculo,
   Viaje,
 ];
@@ -123,6 +127,7 @@ const ENTIDADES = [
     RecorridoController,
     TituloGastoController,
     TituloImpuestoController,
+    TituloViajeController,
     VehiculoController,
     ViajeController,
     TasaController,
@@ -144,6 +149,7 @@ const ENTIDADES = [
     TasaRepository,
     TituloGastoRepository,
     TituloImpuestoRepository,
+    TituloViajeRepository,
     VehiculoRepository,
     ViajeRepository,
     TasaService,

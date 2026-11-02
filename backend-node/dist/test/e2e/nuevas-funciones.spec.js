@@ -69,7 +69,7 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
             expect(td).toBeGreaterThanOrEqual(6);
             expect(td).toBeLessThanOrEqual(9);
         });
-        it('reporte (referencia): th y td 10pt', () => {
+        it('reporte: tabla de viajes a 7pt (30% menos)', () => {
             const { htmlReporte } = require('../../src/service/reporte-empresa.service');
             const html = htmlReporte({
                 empresaId: 1,
@@ -83,8 +83,10 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
             });
             const th = extraerPt(html, /th\s*\{[^}]*font-size:\s*([\d.]+)pt/);
             const td = extraerPt(html, /th\s*,\s*td\s*\{[^}]*font-size:\s*([\d.]+)pt/);
-            expect(th).toBeGreaterThanOrEqual(10 - 0.01);
-            expect(td).toBeGreaterThanOrEqual(10 - 0.01);
+            expect(th).toBeCloseTo(7, 1);
+            expect(td).toBeCloseTo(7, 1);
+            expect(html).toMatch(/\.tabla-gasoil th, \.tabla-gasoil td \{ font-size: 10pt/);
+            expect(html).toMatch(/\.tabla-tipos th, \.tabla-tipos td \{ font-size: 10pt/);
         });
     });
     describe('T2: PDF en hoja carta (letter) con margenes', () => {
@@ -259,6 +261,85 @@ describe('Nuevas funcionalidades (plan de accion)', () => {
                 expect(fechasDelPdf(text)).toEqual(['2026-02-10', '2026-03-15', '2026-04-20']);
             });
         }
+    });
+    describe('T8: filtro por vehiculo opcional', () => {
+        let vehA;
+        let vehB;
+        beforeAll(async () => {
+            const crearVehiculo = async (placa) => (await request(server())
+                .post('/api/vehiculos')
+                .send({ marca: 'Toyota', modelo: 'Hilux', tipo: 'Camioneta', placa })
+                .expect(200)).body.id;
+            vehA = await crearVehiculo('FILA-A1');
+            vehB = await crearVehiculo('FILA-B1');
+            await request(server())
+                .post('/api/viajes')
+                .send(viajeBase({ carga: 'CARGA-VIA', vehiculoId: vehA }))
+                .expect(200);
+            await request(server())
+                .post('/api/viajes')
+                .send(viajeBase({
+                carga: 'CARGA-VIB',
+                vehiculoId: vehB,
+                fechaInicio: '2026-01-03',
+                fechaFin: '2026-01-04',
+            }))
+                .expect(200);
+            await request(server())
+                .post('/api/viajes')
+                .send(viajeBase({ carga: 'CARGA-SINVEH', fechaInicio: '2026-01-05', fechaFin: '2026-01-06' }))
+                .expect(200);
+        });
+        it('GET /api/viajes sin vehiculoId lista todos los viajes', async () => {
+            const res = await request(server()).get('/api/viajes').expect(200);
+            const cargas = res.body.map((v) => v.carga);
+            expect(cargas).toEqual(expect.arrayContaining(['CARGA-VIA', 'CARGA-VIB', 'CARGA-SINVEH']));
+        });
+        it('GET /api/viajes?vehiculoId= lista solo los viajes de ese vehiculo', async () => {
+            const res = await request(server()).get(`/api/viajes?vehiculoId=${vehA}`).expect(200);
+            expect(res.body.length).toBeGreaterThan(0);
+            expect(res.body.every((v) => v.vehiculo?.id === vehA)).toBe(true);
+            const cargas = res.body.map((v) => v.carga);
+            expect(cargas).toContain('CARGA-VIA');
+            expect(cargas).not.toContain('CARGA-VIB');
+            expect(cargas).not.toContain('CARGA-SINVEH');
+        });
+        it('el PDF filtrado muestra el chip del vehiculo y oculta las demas cargas', async () => {
+            const r = await descargar(app, `/api/export/pdf?vehiculoId=${vehA}`);
+            const { text } = await pdfParse(r.buffer);
+            const plano = text.replace(/\s+/g, '');
+            expect(plano).toContain('ToyotaHilux');
+            expect(plano).toContain('FILA-A1');
+            expect(plano).toContain('CARGA-VIA');
+            expect(plano).not.toContain('CARGA-VIB');
+            expect(plano).not.toContain('CARGA-SINVEH');
+        });
+        it('el PDF sin vehiculoId no muestra el chip de ningun vehiculo', async () => {
+            const r = await descargar(app, '/api/export/pdf');
+            const { text } = await pdfParse(r.buffer);
+            const plano = text.replace(/\s+/g, '');
+            expect(plano).not.toContain('VEHÍCULOToyota');
+        });
+        it('el XLSX filtrado solo incluye los viajes del vehiculo', async () => {
+            const ExcelJS = require('exceljs');
+            const r = await descargar(app, `/api/export/xlsx?vehiculoId=${vehB}`);
+            const wb = new ExcelJS.Workbook();
+            await wb.xlsx.load(r.buffer);
+            const textos = [];
+            wb.worksheets[0].eachRow((fila) => fila.eachCell((c) => textos.push(String(c.value))));
+            const celdas = textos.join(' ');
+            expect(celdas).toContain('CARGA-VIB');
+            expect(celdas).not.toContain('CARGA-VIA');
+            expect(celdas).not.toContain('CARGA-SINVEH');
+        });
+        it('el reporte filtrado solo incluye los viajes del vehiculo', async () => {
+            const r = await descargar(app, `/api/export/reporte?empresaId=1&vehiculoId=${vehA}`);
+            const { text } = await pdfParse(r.buffer);
+            const plano = text.replace(/\s+/g, '');
+            expect(plano).toContain('CARGA-VIA');
+            expect(plano).not.toContain('CARGA-VIB');
+            expect(plano).not.toContain('CARGA-SINVEH');
+        });
     });
 });
 //# sourceMappingURL=nuevas-funciones.spec.js.map

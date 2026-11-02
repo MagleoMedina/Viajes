@@ -10,6 +10,7 @@ import { Chofer } from './chofer.entity';
 import { Empresa } from './empresa.entity';
 import { Gasto } from './gasto.entity';
 import { Punto } from './punto.entity';
+import { TituloViaje } from './titulo-viaje.entity';
 import { Vehiculo } from './vehiculo.entity';
 import { epochMs } from '../common/epoch.transformer';
 
@@ -35,6 +36,14 @@ export class Viaje {
   @ManyToOne(() => Vehiculo, { nullable: true })
   @JoinColumn({ name: 'vehiculo_id' })
   vehiculo: Vehiculo | null;
+
+  /**
+   * Título del viaje personalizado: null = viaje normal (el listado y los
+   * reportes generales no lo muestran).
+   */
+  @ManyToOne(() => TituloViaje, { nullable: true })
+  @JoinColumn({ name: 'titulo_viaje_id' })
+  tituloViaje: TituloViaje | null;
 
   @Column()
   carga: string;

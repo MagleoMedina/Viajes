@@ -9,8 +9,8 @@
   position: sticky;
   top: 0;
   align-self: flex-start;
-  width: 244px;
-  min-width: 244px;
+  width: 236px;
+  min-width: 236px;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -44,21 +44,28 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   background: transparent;
   color: #cbd5e1;
   font-size: 14px;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 .nav-padre:hover,
 .nav-tasa:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
   color: #fff;
+}
+
+.nav-padre:active,
+.nav-hijo:active,
+.nav-tasa:active {
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .nav-padre-eti {
@@ -92,31 +99,32 @@
 }
 
 .nav-hijo:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
   color: #fff;
 }
 
 .nav-hijo.activo {
-  background: var(--accent);
+  background: var(--primary-2);
   color: #fff;
+  box-shadow: inset 3px 0 0 var(--marker);
 }
 
 .nav-tasa {
   margin-top: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: none;
 }
 
 .nav-tasa.activo {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--primary-2);
+  border-color: transparent;
   color: #fff;
+  box-shadow: inset 3px 0 0 var(--marker);
 }
 
 .etiqueta {
   font-size: 10px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #93a3c0;
 }
 
@@ -277,12 +285,24 @@
 }
 
 .btn-pequeno {
-   background: #007bff; 
-   border: 3px solid #007bff; 
-   border-radius: 4px;
-   color: #fff; 
-   paddig: 4px 8px;
-   margin: 5px;
+  padding: 4px 10px;
+  margin: 2px;
+  border: 1px solid var(--primary);
+  border-radius: 4px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.btn-pequeno:hover {
+  background: var(--primary-2);
+  border-color: var(--primary-2);
+}
+
+.btn-pequeno:active {
+  background: #0f1722;
 }
 /* ---------- Campo de color ---------- */
 
@@ -324,25 +344,22 @@
 }
 
 .cabecera {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
 }
 
 .cabecera-logo {
   display: block;
-  width: 40%;
-  max-width: 40%;
+  width: 240px;
+  max-width: 60%;
   height: auto;
-  margin: 0 auto;
+  margin: 0 0 6px;
 }
 
 .vista {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   max-width: 1200px;
-  animation: vista-in 0.28s ease both;
 }
 
 /* Tablas largas (viajes, registros de gastos): usan todo el ancho disponible. */
@@ -363,10 +380,12 @@
 
 .vista-cab {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 3px solid var(--marker);
 }
 
 .vista-cab .sub {
@@ -376,20 +395,22 @@
 }
 
 .contador {
-  padding: 6px 12px;
+  padding: 5px 10px;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
+  border-radius: 3px;
+  background: #ffffff;
+  font-family: var(--display);
   font-size: 13px;
   font-weight: 600;
-  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
   white-space: nowrap;
 }
 
 .contador.acento {
   color: var(--accent);
-  border-color: var(--accent-soft);
   background: var(--accent-soft);
+  border-color: #e3d2a6;
 }
 
 .totales {
@@ -413,7 +434,6 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -513,7 +533,8 @@
   overflow: auto;
   max-height: 65vh;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 4px;
+  background: #ffffff;
 }
 
 /* Tablas con muchas columnas: menos relleno por celda, mismo texto. */
@@ -538,10 +559,10 @@
   width: auto;
 }
 .tabla.viajes tbody tr:nth-child(even) td {
-  background: #f5f8fc;
+  background: #f6f5f0;
 }
 .tabla.viajes tbody tr:hover td {
-  background: #eaf1fa;
+  background: var(--accent-soft);
 }
 
 .tabla thead th {
@@ -786,8 +807,9 @@
   width: 100%;
   max-width: 420px;
   background: var(--surface);
-  border-radius: 14px;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-modal);
   padding: 18px;
   animation: modal-in 0.22s ease both;
 }
@@ -879,6 +901,8 @@
     width: 100%;
     min-width: 0;
     height: auto;
+    /* Barra superior acotada: la vista queda visible debajo. */
+    max-height: 60vh;
     transition: none;
   }
 

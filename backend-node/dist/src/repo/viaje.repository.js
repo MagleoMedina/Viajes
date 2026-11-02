@@ -22,6 +22,7 @@ const RELATIONS = {
     chofer: true,
     empresa: true,
     vehiculo: true,
+    tituloViaje: true,
     puntoSalida: true,
     puntoLlegada: true,
     gastos: true,
@@ -31,22 +32,62 @@ let ViajeRepository = class ViajeRepository {
     constructor(repo) {
         this.repo = repo;
     }
-    buscar(empresaId, vehiculoId, desde, hasta) {
-        const where = {};
+    buscar(empresaId, vehiculoId, desde, hasta, tituloViajeId) {
+        const qb = this.repo
+            .createQueryBuilder('v')
+            .leftJoinAndSelect('v.chofer', 'chofer')
+            .leftJoinAndSelect('v.empresa', 'empresa')
+            .leftJoinAndSelect('v.vehiculo', 'vehiculo')
+            .leftJoinAndSelect('v.tituloViaje', 'tituloViaje')
+            .leftJoinAndSelect('v.puntoSalida', 'puntoSalida')
+            .leftJoinAndSelect('v.puntoLlegada', 'puntoLlegada')
+            .leftJoinAndSelect('v.gastos', 'gastos')
+            .orderBy('v.fechaInicio', 'DESC');
+        if (tituloViajeId != null && Number.isFinite(tituloViajeId) && tituloViajeId > 0) {
+            qb.andWhere('v.titulo_viaje_id = :tituloId', { tituloId: tituloViajeId });
+        }
+        else {
+            qb.andWhere('v.titulo_viaje_id IS NULL');
+        }
         if (empresaId != null && Number.isFinite(empresaId) && empresaId > 0) {
-            where.empresa = { id: empresaId };
+            qb.andWhere('empresa.id = :empresaId', { empresaId });
         }
         if (vehiculoId != null && Number.isFinite(vehiculoId) && vehiculoId > 0) {
-            where.vehiculo = { id: vehiculoId };
+            qb.andWhere('vehiculo.id = :vehiculoId', { vehiculoId });
         }
         if (desde && hasta) {
-            where.fechaInicio = (0, typeorm_2.Between)(new Date((0, dates_1.dateOnlyToMillis)(desde)), new Date((0, dates_1.dateOnlyToMillis)(hasta)));
+            qb.andWhere('v.fechaInicio BETWEEN :desde AND :hasta', {
+                desde: (0, dates_1.dateOnlyToMillis)(desde),
+                hasta: (0, dates_1.dateOnlyToMillis)(hasta),
+            });
         }
-        return this.repo.find({
-            where,
-            relations: RELATIONS,
-            order: { fechaInicio: 'DESC' },
-        });
+        return qb.getMany();
+    }
+    buscarPorVehiculos(vehiculoIds, empresaId, desde, hasta) {
+        if (vehiculoIds.length === 0)
+            return Promise.resolve([]);
+        const qb = this.repo
+            .createQueryBuilder('v')
+            .leftJoinAndSelect('v.chofer', 'chofer')
+            .leftJoinAndSelect('v.empresa', 'empresa')
+            .leftJoinAndSelect('v.vehiculo', 'vehiculo')
+            .leftJoinAndSelect('v.tituloViaje', 'tituloViaje')
+            .leftJoinAndSelect('v.puntoSalida', 'puntoSalida')
+            .leftJoinAndSelect('v.puntoLlegada', 'puntoLlegada')
+            .leftJoinAndSelect('v.gastos', 'gastos')
+            .where('v.titulo_viaje_id IS NULL')
+            .andWhere('v.vehiculo_id IN (:...vehiculoIds)', { vehiculoIds })
+            .orderBy('v.fechaInicio', 'DESC');
+        if (empresaId != null && Number.isFinite(empresaId) && empresaId > 0) {
+            qb.andWhere('empresa.id = :empresaId', { empresaId });
+        }
+        if (desde && hasta) {
+            qb.andWhere('v.fechaInicio BETWEEN :desde AND :hasta', {
+                desde: (0, dates_1.dateOnlyToMillis)(desde),
+                hasta: (0, dates_1.dateOnlyToMillis)(hasta),
+            });
+        }
+        return qb.getMany();
     }
     findById(id) {
         return this.repo.findOne({ where: { id }, relations: RELATIONS });

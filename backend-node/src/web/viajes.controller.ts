@@ -22,6 +22,7 @@ import { EmpresaRepository } from '../repo/empresa.repository';
 import { PuntoRepository } from '../repo/punto.repository';
 import { RecorridoRepository } from '../repo/recorrido.repository';
 import { TasaRepository } from '../repo/tasa.repository';
+import { TituloViajeRepository } from '../repo/titulo-viaje.repository';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
 import { StockGasoilService } from '../service/stock-gasoil.service';
@@ -53,6 +54,8 @@ export class ViajeRequest {
   puntoSalidaId?: number;
   puntoLlegadaId?: number;
   vehiculoId?: number;
+  /** Viaje personalizado: id del título (vacío = viaje normal). */
+  tituloViajeId?: number;
   montoViaje?: number;
   combustible?: number;
   viaticos?: number;
@@ -80,6 +83,7 @@ export class ViajeController {
     private readonly tasaRepo: TasaRepository,
     private readonly recorridoRepo: RecorridoRepository,
     private readonly vehiculoRepo: VehiculoRepository,
+    private readonly tituloViajeRepo: TituloViajeRepository,
     private readonly stockGasoil: StockGasoilService,
     @InjectRepository(Gasto) private readonly gastoRepo: Repository<Gasto>,
   ) {}
@@ -90,6 +94,7 @@ export class ViajeController {
     @Query('vehiculoId') vehiculoId?: string,
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
+    @Query('tituloViajeId') tituloViajeId?: string,
   ) {
     this.validarFechas(desde, hasta);
     return this.repo
@@ -98,6 +103,7 @@ export class ViajeController {
         vehiculoId ? Number(vehiculoId) : null,
         desde,
         hasta,
+        tituloViajeId ? Number(tituloViajeId) : null,
       )
       .then((lista) => lista.map(viajeJson));
   }
@@ -175,6 +181,7 @@ export class ViajeController {
     viaje.puntoSalida = await this.punto(req.puntoSalidaId);
     viaje.puntoLlegada = await this.punto(req.puntoLlegadaId);
     viaje.vehiculo = await this.vehiculo(req.vehiculoId);
+    viaje.tituloViaje = await this.tituloViaje(req.tituloViajeId);
     viaje.montoViaje = cero(req.montoViaje);
     viaje.combustible = cero(req.combustible);
     viaje.viaticos = cero(req.viaticos);
@@ -262,6 +269,16 @@ export class ViajeController {
     const vehiculo = await this.vehiculoRepo.findById(id);
     if (!vehiculo) throw new ApiException(404, 'Vehiculo no encontrado');
     return vehiculo;
+  }
+
+  /** Título del viaje personalizado: vacío = viaje normal. */
+  private async tituloViaje(id?: number) {
+    if (id == null) return null;
+    const titulo = await this.tituloViajeRepo.findById(id);
+    if (!titulo || titulo.eliminado) {
+      throw new ApiException(404, 'Titulo de viaje no encontrado');
+    }
+    return titulo;
   }
 
   private async empresa(id: number) {

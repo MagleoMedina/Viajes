@@ -17,6 +17,7 @@ let Vehiculo = class Vehiculo {
     modelo;
     tipo;
     placa;
+    privado;
     eliminado;
 };
 exports.Vehiculo = Vehiculo;
@@ -40,6 +41,10 @@ __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
 ], Vehiculo.prototype, "placa", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], Vehiculo.prototype, "privado", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'boolean', default: false }),
     __metadata("design:type", Boolean)

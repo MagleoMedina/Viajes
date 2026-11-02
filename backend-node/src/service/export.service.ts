@@ -6,9 +6,11 @@ import { join } from 'path';
 import { Viaje } from '../domain/viaje.entity';
 import { ViajeRepository } from '../repo/viaje.repository';
 import { EmpresaRepository } from '../repo/empresa.repository';
+import { TituloViajeRepository } from '../repo/titulo-viaje.repository';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { ResumenGasoil, StockGasoilService } from './stock-gasoil.service';
-import { money, ordenarPorFechaAscendente, round2 } from '../common/dates';
+import { formatearRangoFechas, money, ordenarPorFechaAscendente, round2 } from '../common/dates';
+import { ApiException } from '../web/api-exception';
 
 // Se reexporta para los tests del orden del PDF.
 export { ordenarPorFechaAscendente };
@@ -97,31 +99,19 @@ const sumarViajes = (viajes: Viaje[]): Sumas => {
   return sumas;
 };
 
-const periodoViajes = (viajes: Viaje[], desde?: string, hasta?: string): string => {
-  if (viajes.length > 0) {
-    const min = viajes.reduce(
-      (a, b) => (new Date(b.fechaInicio) < new Date(a) ? b.fechaInicio : a),
-      viajes[0].fechaInicio,
-    );
-    const max = viajes.reduce(
-      (a, b) => (new Date(b.fechaFin) > new Date(a) ? b.fechaFin : a),
-      viajes[0].fechaFin,
-    );
-    return `${fmtFecha(min)} al ${fmtFecha(max)}`;
-  }
-  if (desde != null || hasta != null) {
-    return `${desde == null ? 'inicio' : fmtFecha(desde)} al ${
-      hasta == null ? 'hoy' : fmtFecha(hasta)
-    }`;
-  }
-  return 'sin viajes';
-};
-
 export interface OpcionesViajes {
   empresaId?: number | null;
   empresaNombre?: string | null;
   /** Vehículo filtrado: se muestra como chip junto al de la empresa. */
   vehiculoNombre?: string | null;
+  /** Viaje personalizado: el título se muestra como H1 del documento. */
+  tituloPersonalizado?: string | null;
+  /** Viajes personalizados: se omite la columna VIATICOS (no se registra). */
+  sinViaticos?: boolean;
+  /** Cabecera centrada estilo «reporte con monto» (logo, rango y nombre grande). */
+  cabeceraReporte?: boolean;
+  /** Dirección de la empresa filtrada; vacío = no se imprime la línea. */
+  empresaDireccion?: string | null;
   desde?: string;
   hasta?: string;
   color?: string;
@@ -129,8 +119,92 @@ export interface OpcionesViajes {
   resumen?: ResumenGasoil;
 }
 
+/** Fila del cuadro por tipo de vehículo. */
+export interface FilaTipoVehiculo {
+  tipo: string;
+  cantidad: number;
+  monto: number;
+}
+
+/**
+ * Agrupa viajes por TIPO de vehículo: cantidad de viajes y suma de MONTO
+ * VIAJE $ (bruto, sin descontar gastos). Sin vehículo -> «Sin vehículo»;
+ * vehículo sin tipo -> «Sin tipo».
+ */
+export function resumirTipos(viajes: Viaje[]): FilaTipoVehiculo[] {
+  const grupos = new Map<string, FilaTipoVehiculo>();
+  for (const v of viajes) {
+    const tipo = v.vehiculo
+      ? (v.vehiculo.tipo?.trim() || 'Sin tipo')
+      : 'Sin vehículo';
+    const fila = grupos.get(tipo) ?? { tipo, cantidad: 0, monto: 0 };
+    fila.cantidad += 1;
+    fila.monto += nulo(v.montoViaje);
+    grupos.set(tipo, fila);
+  }
+  const especiales = new Set(['Sin tipo', 'Sin vehículo']);
+  return [...grupos.values()].sort((a, b) => {
+    const ea = especiales.has(a.tipo) ? 1 : 0;
+    const eb = especiales.has(b.tipo) ? 1 : 0;
+    if (ea !== eb) return ea - eb;
+    return a.tipo.localeCompare(b.tipo, 'es');
+  });
+}
+
+/**
+ * Página aparte al final de todos los PDF del módulo: resumen por tipo de
+ * vehículo (viajes y $) con fila TOTAL. `conMonto: false` omite la columna
+ * de dinero: sirve al reporte «sin montos», que no debe mostrar importes.
+ */
+export function htmlResumenTipos(
+  viajes: Viaje[],
+  color = '#26324a',
+  conMonto = true,
+  cabeceraHtml = '',
+): string {
+  const filas = resumirTipos(viajes);
+  const totalCantidad = filas.reduce((s, f) => s + f.cantidad, 0);
+  const totalMonto = filas.reduce((s, f) => s + f.monto, 0);
+  const celdaMonto = (valor: string) => (conMonto ? `<td class="num">${valor}</td>` : '');
+  const cuerpo = filas
+    .map(
+      (f, i) => `
+        <tr${i % 2 === 0 ? '' : ' class="par"'}>
+          <td>${esc(f.tipo)}</td>
+          <td class="num">${f.cantidad}</td>${celdaMonto(dolar(f.monto))}
+        </tr>`,
+    )
+    .join('');
+  const columnas = conMonto ? 3 : 2;
+  return `
+      <div class="pagina-tipos">
+      ${cabeceraHtml}
+      <div class="tipos-titulo">Resumen por tipo de vehículo</div>
+      <table class="tabla-tipos">
+        <thead>
+          <tr>
+            <th>TIPO DE VEHÍCULO</th>
+            <th class="num">VIAJES</th>${conMonto ? '<th class="num">MONTO VIAJE $</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>${cuerpo || `<tr><td colspan="${columnas}" class="vacio">Sin viajes.</td></tr>`}</tbody>
+        <tfoot>
+          <tr class="totales">
+            <td>TOTAL</td>
+            <td class="num">${totalCantidad}</td>${celdaMonto(dolar(totalMonto))}
+          </tr>
+        </tfoot>
+      </table>
+      </div>`;
+}
+
 /** Bloque «Resumen de gasoil» del PDF: por vehículo + fila TOTAL. */
-function htmlResumenGasoil(resumen: ResumenGasoil): string {
+export function htmlResumenGasoil(
+  resumen: ResumenGasoil,
+  cabeceraHtml = '',
+  etiqueta = 'todos los vehículos',
+): string {
+  const bs = (valor: number) => `Bs ${money(valor)}`;
   const filas = resumen.filas
     .map(
       (f, i) => `
@@ -138,16 +212,17 @@ function htmlResumenGasoil(resumen: ResumenGasoil): string {
           <td>${esc(f.placa)}</td>
           <td class="num">${money(f.comprado)}</td>
           <td class="num">${dolar(f.compradoUsd)}</td>
-          <td class="num">${dolar(f.compradoBs)}</td>
+          <td class="num">${bs(f.compradoBs)}</td>
           <td class="num">${money(f.usado)}</td>
-          <td class="num">${dolar(f.usadoBs)}</td>
+          <td class="num">${bs(f.usadoBs)}</td>
         </tr>`,
     )
     .join('');
   const t = resumen.total;
   return `
       <div class="pagina-gasoil">
-      <div class="gas-titulo">Resumen de gasoil — todos los vehículos</div>
+      ${cabeceraHtml}
+      <div class="gas-titulo">Resumen de gasoil — ${esc(etiqueta)}</div>
       <table class="tabla-gasoil">
         <thead>
           <tr>
@@ -165,9 +240,9 @@ function htmlResumenGasoil(resumen: ResumenGasoil): string {
             <td>TOTAL</td>
             <td class="num">${money(t.comprado)}</td>
             <td class="num">${dolar(t.compradoUsd)}</td>
-            <td class="num">${dolar(t.compradoBs)}</td>
+            <td class="num">${bs(t.compradoBs)}</td>
             <td class="num">${money(t.usado)}</td>
-            <td class="num">${dolar(t.usadoBs)}</td>
+            <td class="num">${bs(t.usadoBs)}</td>
           </tr>
         </tfoot>
       </table>
@@ -176,23 +251,59 @@ function htmlResumenGasoil(resumen: ResumenGasoil): string {
 
 /** Construye el HTML del listado de viajes (función pura, testeable). */
 export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
-  const { empresaNombre = null, vehiculoNombre = null, desde, hasta, color = '#26324a' } = opts;
+  const {
+    empresaNombre = null,
+    vehiculoNombre = null,
+    tituloPersonalizado = null,
+    sinViaticos = false,
+    cabeceraReporte = false,
+    empresaDireccion = null,
+    desde,
+    hasta,
+    color = '#26324a',
+  } = opts;
   const sumas = sumarViajes(viajes);
-  const titulo = empresaNombre == null ? 'Viajes realizados' : `Viajes ${esc(empresaNombre)}`;
+  const columnas = sinViaticos ? COLUMNAS.filter((c) => c !== 'VIATICOS') : COLUMNAS;
+  const titulo =
+    tituloPersonalizado != null
+      ? esc(tituloPersonalizado)
+      : empresaNombre == null
+        ? 'TODAS LAS EMPRESAS'
+        : esc(empresaNombre);
   const empresaBox =
-    empresaNombre == null
+    empresaNombre == null || cabeceraReporte
       ? ''
       : `<span class="dato"><span class="k">EMPRESA</span>${esc(empresaNombre)}</span>`;
   const vehiculoBox =
     vehiculoNombre == null
       ? ''
       : `<span class="dato"><span class="k">VEHÍCULO</span>${esc(vehiculoNombre)}</span>`;
-  const periodo = periodoViajes(viajes, desde, hasta);
   const cantidad = viajes.length;
+  // Cabecera común: se repite en la página del listado y en las páginas de
+  // gasoil y resumen por tipo.
+  const cabeceraHtml = cabeceraReporte
+    ? `<div class="cab-reporte">
+          ${LOGO_URI ? `<img class="logo-centrado" src="${LOGO_URI}" alt="Logo" />` : ''}
+          <div class="slogan">Sin pausa, sin excusas, sin limites</div>
+          <div class="titulo-reporte">REPORTE VIAJES DESDE EL ${formatearRangoFechas(desde, hasta)}</div>
+          <div class="nombre-empresa">${titulo}</div>
+          ${empresaDireccion ? `<div class="direccion-empresa">${esc(empresaDireccion)}</div>` : ''}
+        </div>`
+    : `<div class="cab">
+          ${LOGO_URI ? `<img class="logo" src="${LOGO_URI}" alt="Logo" />` : ''}
+          <div class="cab-texto">
+            <h1>${titulo}</h1>
+            <div class="rango">Histórico de viajes</div>
+          </div>
+        </div>`;
 
   let cuerpoHtml = '';
   viajes.forEach((v, indice) => {
     const claseTr = indice % 2 === 0 ? '' : ' class="par"';
+    const celdaViaticos = sinViaticos
+      ? ''
+      : `
+          <td class="num">${dualPdf(v.viaticos, v.tasa)}</td>`;
     cuerpoHtml += `
         <tr${claseTr}>
           <td>${fmtFecha(v.fechaInicio)}</td>
@@ -203,8 +314,7 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
           <td>${esc(v.puntoSalida?.nombre ?? '')}</td>
           <td>${esc(v.puntoLlegada?.nombre ?? '')}</td>
           <td class="num">${dolar(v.montoViaje)}</td>
-          <td class="num">${dualPdf(v.combustible, v.tasa)}</td>
-          <td class="num">${dualPdf(v.viaticos, v.tasa)}</td>
+          <td class="num">${dualPdf(v.combustible, v.tasa)}</td>${celdaViaticos}
           <td class="num">${dualPdf(v.peajes, v.tasa)}</td>
           <td class="num">${dualPdf(v.pagoChofer, v.tasa)}</td>
           <td class="num">${money(nulo(v.litros))}</td>
@@ -215,13 +325,16 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
         </tr>`;
   });
 
-  // Fila de totales acumulados (17 columnas)
+  // Fila de totales acumulados
+  const celdaViaticosTotales = sinViaticos
+    ? ''
+    : `
+        <td class="num">${dualValoresPdf(sumas.viaticos, sumas.viaticosUsd)}</td>`;
   cuerpoHtml += `
       <tr class="totales">
         <td colspan="7"></td>
         <td class="num">${dolar(sumas.monto)}</td>
-        <td class="num">${dualValoresPdf(sumas.combustible, sumas.combustibleUsd)}</td>
-        <td class="num">${dualValoresPdf(sumas.viaticos, sumas.viaticosUsd)}</td>
+        <td class="num">${dualValoresPdf(sumas.combustible, sumas.combustibleUsd)}</td>${celdaViaticosTotales}
         <td class="num">${dualValoresPdf(sumas.peajes, sumas.peajesUsd)}</td>
         <td class="num">${dualValoresPdf(sumas.pagoChofer, sumas.pagoChoferUsd)}</td>
         <td class="num">${money(sumas.litros)}</td>
@@ -234,13 +347,13 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
   // Fila final de SUMA TOTAL $
   cuerpoHtml += `
       <tr class="suma">
-        <td colspan="16" class="etiqueta">SUMA TOTAL $</td>
+        <td colspan="${columnas.length - 1}" class="etiqueta">SUMA TOTAL $</td>
         <td class="num">${dolar(sumas.totalUsd)}</td>
       </tr>`;
 
   // Sin ancho fijo por columna: table-layout auto (ver CSS) reparte el ancho
   // segun el contenido de cada celda.
-  const thsHtml = COLUMNAS.map((col) => `<th>${col}</th>`).join('');
+  const thsHtml = columnas.map((col) => `<th>${col}</th>`).join('');
   const pieTexto = `Generado el ${marca()} - ${cantidad} ${cantidad === 1 ? 'viaje' : 'viajes'}`;
 
   const fontStyles = `
@@ -278,6 +391,15 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
           .cab-texto { display: inline-block; vertical-align: middle; margin-left: 8px; }
           h1 { font-size: 15px; margin: 0 0 2px; color: ${color}; font-family: 'DejaVu Sans', sans-serif; }
           .rango { color: #6b7280; font-size: 8.5px; }
+          /* Cabecera centrada, igual que el reporte por empresa. */
+          .cab-reporte { text-align: center; margin-bottom: 10px; }
+          .cab-reporte .logo-centrado { display: block; margin: 0 auto; height: 56px; }
+          .cab-reporte .slogan { font-size: 8.5px; color: #111827; font-weight: 500; margin-bottom: 4px; }
+          .cab-reporte .titulo-reporte { font-size: 12px; font-weight: 800; color: #111827;
+                  letter-spacing: 0.5px; margin: 0 0 3px; text-transform: uppercase; }
+          .cab-reporte .nombre-empresa { font-size: 13px; font-weight: 900; color: ${color};
+                  letter-spacing: 0.8px; margin: 0 0 3px; text-transform: uppercase; }
+          .cab-reporte .direccion-empresa { font-size: 7.5px; color: #4b5563; margin: 0; }
           .resumen { margin: 0 0 8px; }
           /* Fila de filtros dentro del thead: sin bordes, solo espaciado. */
           thead tr:first-child td { border: none; background: transparent; padding: 0; font-size: 7px; }
@@ -302,22 +424,23 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
           .tabla-gasoil th, .tabla-gasoil td { font-size: 12px; padding: 6px 8px; }
           .tabla-gasoil th { font-size: 11px; }
           .tabla-gasoil tr.totales td { font-size: 12px; }
+          /* Resumen por tipo de vehículo: página propia al final del documento. */
+          .pagina-tipos { page-break-before: always; break-before: page; }
+          .tipos-titulo { margin: 0 0 8px; font-size: 16px; font-weight: bold; color: ${color}; }
+          .tabla-tipos { width: 55%; margin-bottom: 6px; }
+          .tabla-tipos th, .tabla-tipos td { font-size: 12px; padding: 6px 8px; }
+          .tabla-tipos th { font-size: 11px; }
+          .tabla-tipos td.vacio { text-align: center; color: #6b7280; font-style: italic; padding: 14px; }
+          .tabla-tipos tr.totales td { font-size: 12px; }
           .pie { margin-top: 8px; color: #6b7280; font-size: 7.5px; }
         </style>
       </head>
       <body>
-        <div class="cab">
-          ${LOGO_URI ? `<img class="logo" src="${LOGO_URI}" alt="Logo" />` : ''}
-          <div class="cab-texto">
-            <h1>${titulo}</h1>
-            <div class="rango">Histórico de viajes</div>
-          </div>
-        </div>
+        ${cabeceraHtml}
         <table>
           <thead>
             <!-- Filtros arriba de la tabla: se repite en cada página. -->
-            <tr><td colspan="${COLUMNAS.length}"><div class="resumen">
-              <span class="dato"><span class="k">PERIODO</span>${periodo}</span>
+            <tr><td colspan="${columnas.length}"><div class="resumen">
               <span class="dato"><span class="k">VIAJES</span>${cantidad}</span>
               ${empresaBox}
               ${vehiculoBox}
@@ -326,7 +449,8 @@ export function htmlViajes(viajes: Viaje[], opts: OpcionesViajes = {}): string {
           </thead>
           <tbody>${cuerpoHtml}</tbody>
         </table>
-        ${opts.resumen ? htmlResumenGasoil(opts.resumen) : ''}
+        ${opts.resumen ? htmlResumenGasoil(opts.resumen, cabeceraHtml, tituloPersonalizado ?? 'todos los vehículos') : ''}
+        ${htmlResumenTipos(viajes, color, true, cabeceraHtml)}
         <div class="pie">${pieTexto}</div>
       </body>
       </html>
@@ -341,6 +465,7 @@ export class ExportService {
     private readonly repo: ViajeRepository,
     private readonly empresas: EmpresaRepository,
     private readonly vehiculos: VehiculoRepository,
+    private readonly titulos: TituloViajeRepository,
     private readonly stockGasoil: StockGasoilService,
   ) {}
 
@@ -435,14 +560,69 @@ export class ExportService {
     const viajes = ordenarPorFechaAscendente(
       await this.repo.buscar(empresaId, vehiculoId, desde, hasta),
     );
-    const empresaNombre =
-      empresaId != null ? (await this.empresas.findById(empresaId))?.nombre ?? '¿?' : null;
+    const empresa = empresaId != null ? await this.empresas.findById(empresaId) : null;
+    const empresaNombre = empresaId != null ? (empresa?.nombre ?? '¿?') : null;
+    const empresaDireccion = empresa?.direccion?.trim() || null;
     const vehiculoNombre = vehiculoId != null ? await this.nombreVehiculo(vehiculoId) : null;
     const resumen = await this.stockGasoil.resumen();
     const htmlContent = htmlViajes(viajes, {
       empresaId,
       empresaNombre,
+      empresaDireccion,
+      cabeceraReporte: true,
       vehiculoNombre,
+      desde,
+      hasta,
+      color: colorTitulo,
+      resumen,
+    });
+
+    const browser = await lanzarChrome();
+
+    try {
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'load' });
+      const pdfUint8 = await page.pdf({
+        printBackground: true,
+        preferCSSPageSize: true,
+      });
+      return Buffer.from(pdfUint8);
+    } finally {
+      await browser.close();
+    }
+  }
+
+  /**
+   * PDF de viajes personalizados: el título elegido es el H1 del documento y
+   * no se muestra la columna VIATICOS (el formulario no la registra).
+   */
+  async crearPdfPersonalizado(
+    tituloId: number,
+    empresaId: number | null,
+    vehiculoId: number | null,
+    desde?: string,
+    hasta?: string,
+    colorTitulo = '#26324a',
+  ): Promise<Buffer> {
+    const titulo = await this.titulos.findById(tituloId);
+    if (!titulo) throw new ApiException(404, 'Título de viaje no encontrado');
+    const viajes = ordenarPorFechaAscendente(
+      await this.repo.buscar(empresaId, vehiculoId, desde, hasta, tituloId),
+    );
+    const empresa = empresaId != null ? await this.empresas.findById(empresaId) : null;
+    const empresaNombre = empresaId != null ? (empresa?.nombre ?? '¿?') : null;
+    const empresaDireccion = empresa?.direccion?.trim() || null;
+    const vehiculoNombre = vehiculoId != null ? await this.nombreVehiculo(vehiculoId) : null;
+    // Gasoil del título: solo los viajes de este viaje personalizado.
+    const resumen = await this.stockGasoil.resumenPorTitulo(tituloId);
+    const htmlContent = htmlViajes(viajes, {
+      empresaId,
+      empresaNombre,
+      empresaDireccion,
+      cabeceraReporte: true,
+      vehiculoNombre,
+      tituloPersonalizado: titulo.nombre,
+      sinViaticos: true,
       desde,
       hasta,
       color: colorTitulo,

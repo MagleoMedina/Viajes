@@ -1,20 +1,25 @@
 :root {
-  --bg: #f3f5f9;
-  --surface: #ffffff;
-  --border: #e3e8f1;
-  --text: #1f2937;
-  --muted: #6b7280;
-  --primary: #26324a;
-  --primary-2: #35476b;
-  --accent: #2f6fed;
-  --accent-soft: rgba(47, 111, 237, 0.12);
-  --danger: #d64545;
-  --danger-soft: rgba(214, 69, 69, 0.1);
-  --ok: #128a54;
-  --ok-soft: rgba(18, 138, 84, 0.12);
-  --radius: 10px;
-  --shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Paleta «bitácora de carga»: papel cálido, tinta navy, ámbar de la marca. */
+  --bg: #f1f0ea;
+  --surface: #fbfaf6;
+  --border: #d8d7cd;
+  --text: #1b2430;
+  --muted: #646b76;
+  --primary: #17212f;
+  --primary-2: #22304a;
+  --accent: #8a5f00;
+  --accent-soft: #f3e6c4;
+  --marker: #d89a00;
+  --danger: #a33b2b;
+  --danger-soft: rgba(163, 59, 43, 0.1);
+  --ok: #2f6b4f;
+  --ok-soft: rgba(47, 107, 79, 0.12);
+  --radius: 5px;
+  --shadow: none;
+  --shadow-modal: 0 24px 60px rgba(23, 33, 47, 0.28);
+
+  --display: 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
+  --sans: 'Segoe UI', system-ui, sans-serif;
 
   font-family: var(--sans);
   font-size: 15px;
@@ -45,13 +50,17 @@ h3 {
 }
 
 h1 {
-  font-size: 22px;
+  font-family: var(--display);
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 h2 {
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
 }
 
 p {
@@ -72,8 +81,9 @@ textarea {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
+  border-radius: 4px;
+  background: #ffffff;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 input:focus,
@@ -81,7 +91,14 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--marker);
+  outline-offset: 1px;
 }
 
 label {
@@ -93,44 +110,76 @@ label {
   color: var(--muted);
 }
 
+/* Casilla simple (p. ej. «Vehículo privado»): no ocupa todo el ancho. */
+label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+label.check input[type='checkbox'] {
+  width: auto;
+  box-shadow: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 16px;
+  padding: 8px 14px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
+  border-radius: 4px;
+  background: #ffffff;
   color: var(--text);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
 .btn:hover {
-  background: var(--bg);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.btn:active {
+  background: #efe0bb;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--marker);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn.primario {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--primary);
+  border-color: var(--primary);
   color: #fff;
 }
 
 .btn.primario:hover {
-  background: #245dcc;
+  background: var(--primary-2);
+  border-color: var(--primary-2);
 }
 
 .btn.peligro {
   color: var(--danger);
-  background: var(--danger-soft);
-  border-color: transparent;
+  background: #ffffff;
+  border-color: rgba(163, 59, 43, 0.4);
 }
 
 .btn.peligro:hover {
-  background: rgba(214, 69, 69, 0.2);
+  background: var(--danger-soft);
+  border-color: var(--danger);
 }
 
 .btn.pequeno {
@@ -158,7 +207,8 @@ label {
 .tabla {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
 }
 
 .tabla th,
@@ -170,15 +220,17 @@ label {
 }
 
 .tabla th {
+  font-family: var(--sans);
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-  background: #f8fafc;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  background: var(--bg);
+  border-bottom: 2px solid var(--primary);
 }
 
 .tabla tbody tr:hover {
-  background: #f8fafc;
+  background: var(--accent-soft);
 }
 
 .tabla .centro {
@@ -190,19 +242,19 @@ label {
 
 /* Fila de subtotal por título en la vista previa de gastos varios. */
 .tabla tr.suma td {
-  background: #2f6fed;
-  color: #ffffff;
+  background: var(--marker);
+  color: #1b2430;
   font-weight: 700;
 }
 
 /* Título de cada bloque (gasto agrupado por título). */
 .bloque-titulo {
   margin: 14px 0 6px;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #26324a;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
 }
 
 /* Totales generales al pie de la vista previa. */
@@ -219,31 +271,32 @@ label {
 /* Pestañas Registrar / Modificar / Consultar de cada sección de gastos. */
 .pestanas {
   display: flex;
-  gap: 6px;
+  gap: 2px;
   margin: 4px 0 16px;
-  border-bottom: 1px solid #c9d2e0;
+  border-bottom: 1px solid var(--border);
 }
 
 .pestanas button {
   border: none;
+  border-bottom: 2px solid transparent;
   background: transparent;
-  padding: 8px 16px;
+  padding: 9px 14px;
   font: inherit;
   font-weight: 600;
   font-size: 13px;
-  color: #4b5563;
+  color: var(--muted);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   margin-bottom: -1px;
+  transition: color 0.12s ease, border-color 0.12s ease;
 }
 
 .pestanas button:hover {
-  color: #26324a;
+  color: var(--text);
 }
 
 .pestanas button.activa {
-  color: #2f6fed;
-  border-bottom-color: #2f6fed;
+  color: var(--text);
+  border-bottom-color: var(--marker);
 }
 
 .error,

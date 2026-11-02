@@ -25,6 +25,7 @@ const empresa_repository_1 = require("../repo/empresa.repository");
 const punto_repository_1 = require("../repo/punto.repository");
 const recorrido_repository_1 = require("../repo/recorrido.repository");
 const tasa_repository_1 = require("../repo/tasa.repository");
+const titulo_viaje_repository_1 = require("../repo/titulo-viaje.repository");
 const vehiculo_repository_1 = require("../repo/vehiculo.repository");
 const viaje_repository_1 = require("../repo/viaje.repository");
 const stock_gasoil_service_1 = require("../service/stock-gasoil.service");
@@ -45,6 +46,7 @@ class ViajeRequest {
     puntoSalidaId;
     puntoLlegadaId;
     vehiculoId;
+    tituloViajeId;
     montoViaje;
     combustible;
     viaticos;
@@ -89,9 +91,10 @@ let ViajeController = class ViajeController {
     tasaRepo;
     recorridoRepo;
     vehiculoRepo;
+    tituloViajeRepo;
     stockGasoil;
     gastoRepo;
-    constructor(repo, choferRepo, empresaRepo, puntoRepo, tasaRepo, recorridoRepo, vehiculoRepo, stockGasoil, gastoRepo) {
+    constructor(repo, choferRepo, empresaRepo, puntoRepo, tasaRepo, recorridoRepo, vehiculoRepo, tituloViajeRepo, stockGasoil, gastoRepo) {
         this.repo = repo;
         this.choferRepo = choferRepo;
         this.empresaRepo = empresaRepo;
@@ -99,13 +102,14 @@ let ViajeController = class ViajeController {
         this.tasaRepo = tasaRepo;
         this.recorridoRepo = recorridoRepo;
         this.vehiculoRepo = vehiculoRepo;
+        this.tituloViajeRepo = tituloViajeRepo;
         this.stockGasoil = stockGasoil;
         this.gastoRepo = gastoRepo;
     }
-    listar(empresaId, vehiculoId, desde, hasta) {
+    listar(empresaId, vehiculoId, desde, hasta, tituloViajeId) {
         this.validarFechas(desde, hasta);
         return this.repo
-            .buscar(empresaId ? Number(empresaId) : null, vehiculoId ? Number(vehiculoId) : null, desde, hasta)
+            .buscar(empresaId ? Number(empresaId) : null, vehiculoId ? Number(vehiculoId) : null, desde, hasta, tituloViajeId ? Number(tituloViajeId) : null)
             .then((lista) => lista.map(serialize_1.viajeJson));
     }
     crear(req) {
@@ -166,6 +170,7 @@ let ViajeController = class ViajeController {
         viaje.puntoSalida = await this.punto(req.puntoSalidaId);
         viaje.puntoLlegada = await this.punto(req.puntoLlegadaId);
         viaje.vehiculo = await this.vehiculo(req.vehiculoId);
+        viaje.tituloViaje = await this.tituloViaje(req.tituloViajeId);
         viaje.montoViaje = cero(req.montoViaje);
         viaje.combustible = cero(req.combustible);
         viaje.viaticos = cero(req.viaticos);
@@ -241,6 +246,15 @@ let ViajeController = class ViajeController {
             throw new api_exception_1.ApiException(404, 'Vehiculo no encontrado');
         return vehiculo;
     }
+    async tituloViaje(id) {
+        if (id == null)
+            return null;
+        const titulo = await this.tituloViajeRepo.findById(id);
+        if (!titulo || titulo.eliminado) {
+            throw new api_exception_1.ApiException(404, 'Titulo de viaje no encontrado');
+        }
+        return titulo;
+    }
     async empresa(id) {
         const empresa = await this.empresaRepo.findById(id);
         if (!empresa)
@@ -255,8 +269,9 @@ __decorate([
     __param(1, (0, common_1.Query)('vehiculoId')),
     __param(2, (0, common_1.Query)('desde')),
     __param(3, (0, common_1.Query)('hasta')),
+    __param(4, (0, common_1.Query)('tituloViajeId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], ViajeController.prototype, "listar", null);
 __decorate([
@@ -284,7 +299,7 @@ __decorate([
 ], ViajeController.prototype, "eliminar", null);
 exports.ViajeController = ViajeController = __decorate([
     (0, common_1.Controller)('api/viajes'),
-    __param(8, (0, typeorm_1.InjectRepository)(gasto_entity_1.Gasto)),
+    __param(9, (0, typeorm_1.InjectRepository)(gasto_entity_1.Gasto)),
     __metadata("design:paramtypes", [viaje_repository_1.ViajeRepository,
         chofer_repository_1.ChoferRepository,
         empresa_repository_1.EmpresaRepository,
@@ -292,6 +307,7 @@ exports.ViajeController = ViajeController = __decorate([
         tasa_repository_1.TasaRepository,
         recorrido_repository_1.RecorridoRepository,
         vehiculo_repository_1.VehiculoRepository,
+        titulo_viaje_repository_1.TituloViajeRepository,
         stock_gasoil_service_1.StockGasoilService,
         typeorm_2.Repository])
 ], ViajeController);

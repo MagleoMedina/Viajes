@@ -28,6 +28,7 @@ const recorrido_entity_1 = require("./domain/recorrido.entity");
 const tasa_entity_1 = require("./domain/tasa.entity");
 const titulo_gasto_entity_1 = require("./domain/titulo-gasto.entity");
 const titulo_impuesto_entity_1 = require("./domain/titulo-impuesto.entity");
+const titulo_viaje_entity_1 = require("./domain/titulo-viaje.entity");
 const vehiculo_entity_1 = require("./domain/vehiculo.entity");
 const viaje_entity_1 = require("./domain/viaje.entity");
 const chofer_repository_1 = require("./repo/chofer.repository");
@@ -42,6 +43,7 @@ const recorrido_repository_1 = require("./repo/recorrido.repository");
 const tasa_repository_1 = require("./repo/tasa.repository");
 const titulo_gasto_repository_1 = require("./repo/titulo-gasto.repository");
 const titulo_impuesto_repository_1 = require("./repo/titulo-impuesto.repository");
+const titulo_viaje_repository_1 = require("./repo/titulo-viaje.repository");
 const vehiculo_repository_1 = require("./repo/vehiculo.repository");
 const viaje_repository_1 = require("./repo/viaje.repository");
 const tasa_service_1 = require("./service/tasa.service");
@@ -67,6 +69,7 @@ const puntos_controller_1 = require("./web/puntos.controller");
 const recorridos_controller_1 = require("./web/recorridos.controller");
 const titulos_gasto_controller_1 = require("./web/titulos-gasto.controller");
 const titulos_impuesto_controller_1 = require("./web/titulos-impuesto.controller");
+const titulos_viaje_controller_1 = require("./web/titulos-viaje.controller");
 const vehiculos_controller_1 = require("./web/vehiculos.controller");
 const viajes_controller_1 = require("./web/viajes.controller");
 const tasa_controller_1 = require("./web/tasa.controller");
@@ -92,6 +95,7 @@ const ENTIDADES = [
     tasa_entity_1.Tasa,
     titulo_gasto_entity_1.TituloGasto,
     titulo_impuesto_entity_1.TituloImpuesto,
+    titulo_viaje_entity_1.TituloViaje,
     vehiculo_entity_1.Vehiculo,
     viaje_entity_1.Viaje,
 ];
@@ -131,6 +135,7 @@ exports.AppModule = AppModule = __decorate([
             recorridos_controller_1.RecorridoController,
             titulos_gasto_controller_1.TituloGastoController,
             titulos_impuesto_controller_1.TituloImpuestoController,
+            titulos_viaje_controller_1.TituloViajeController,
             vehiculos_controller_1.VehiculoController,
             viajes_controller_1.ViajeController,
             tasa_controller_1.TasaController,
@@ -152,6 +157,7 @@ exports.AppModule = AppModule = __decorate([
             tasa_repository_1.TasaRepository,
             titulo_gasto_repository_1.TituloGastoRepository,
             titulo_impuesto_repository_1.TituloImpuestoRepository,
+            titulo_viaje_repository_1.TituloViajeRepository,
             vehiculo_repository_1.VehiculoRepository,
             viaje_repository_1.ViajeRepository,
             tasa_service_1.TasaService,

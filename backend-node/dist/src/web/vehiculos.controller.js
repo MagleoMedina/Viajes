@@ -26,6 +26,7 @@ class VehiculoRequest {
     modelo;
     tipo;
     placa;
+    privado;
 }
 exports.VehiculoRequest = VehiculoRequest;
 __decorate([
@@ -44,6 +45,11 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)({ message: 'La placa es obligatoria' }),
     __metadata("design:type", String)
 ], VehiculoRequest.prototype, "placa", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], VehiculoRequest.prototype, "privado", void 0);
 let VehiculoController = class VehiculoController {
     repo;
     viajes;
@@ -98,6 +104,7 @@ let VehiculoController = class VehiculoController {
         vehiculo.modelo = req.modelo.trim();
         vehiculo.tipo = req.tipo.trim();
         vehiculo.placa = placa;
+        vehiculo.privado = req.privado === true;
     }
 };
 exports.VehiculoController = VehiculoController;

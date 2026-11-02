@@ -7,6 +7,7 @@ exports.round2 = round2;
 exports.usdDesdeBs = usdDesdeBs;
 exports.ordenarPorFechaAscendente = ordenarPorFechaAscendente;
 exports.money = money;
+exports.formatearRangoFechas = formatearRangoFechas;
 const pad = (n) => String(n).padStart(2, '0');
 function toIsoDate(date) {
     return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
@@ -36,5 +37,27 @@ function money(value) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
+}
+function formatearRangoFechas(desde, hasta) {
+    if (!desde && !hasta)
+        return 'HISTÓRICO GENERAL';
+    const parsear = (fechaIso) => {
+        const [y, m, d] = fechaIso.split('-');
+        return {
+            diaMes: `${d}/${m}`,
+            anioCorto: y ? y.slice(-2) : '',
+        };
+    };
+    if (desde && hasta) {
+        const d = parsear(desde);
+        const h = parsear(hasta);
+        return `${d.diaMes} AL ${h.diaMes}/${h.anioCorto}`;
+    }
+    if (desde) {
+        const d = parsear(desde);
+        return `${d.diaMes}/${d.anioCorto} EN ADELANTE`;
+    }
+    const h = parsear(hasta);
+    return `HASTA EL ${h.diaMes}/${h.anioCorto}`;
 }
 //# sourceMappingURL=dates.js.map

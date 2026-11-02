@@ -51,3 +51,34 @@ export function money(value: number): string {
     maximumFractionDigits: 2,
   });
 }
+
+/**
+ * Rango de fechas legible para la cabecera de los PDF
+ * (ej: "22/09 AL 30/09/26", "HISTÓRICO GENERAL"). Compartido por el listado
+ * y el reporte por empresa.
+ */
+export function formatearRangoFechas(desde?: string, hasta?: string): string {
+  if (!desde && !hasta) return 'HISTÓRICO GENERAL';
+
+  const parsear = (fechaIso: string) => {
+    const [y, m, d] = fechaIso.split('-');
+    return {
+      diaMes: `${d}/${m}`,
+      anioCorto: y ? y.slice(-2) : '',
+    };
+  };
+
+  if (desde && hasta) {
+    const d = parsear(desde);
+    const h = parsear(hasta);
+    return `${d.diaMes} AL ${h.diaMes}/${h.anioCorto}`;
+  }
+
+  if (desde) {
+    const d = parsear(desde);
+    return `${d.diaMes}/${d.anioCorto} EN ADELANTE`;
+  }
+
+  const h = parsear(hasta!);
+  return `HASTA EL ${h.diaMes}/${h.anioCorto}`;
+}

@@ -10,6 +10,7 @@ exports.gastoJson = gastoJson;
 exports.tituloGastoJson = tituloGastoJson;
 exports.gastoVarioJson = gastoVarioJson;
 exports.tituloImpuestoJson = tituloImpuestoJson;
+exports.tituloViajeJson = tituloViajeJson;
 exports.gastoImpuestoJson = gastoImpuestoJson;
 exports.gastoGasoilJson = gastoGasoilJson;
 exports.gasoilEstacionarioJson = gasoilEstacionarioJson;
@@ -42,6 +43,7 @@ function vehiculoJson(v) {
         modelo: text(v.modelo),
         tipo: text(v.tipo),
         placa: text(v.placa),
+        privado: Boolean(v.privado),
     };
 }
 function tasaJson(t) {
@@ -77,6 +79,9 @@ function gastoVarioJson(g) {
     };
 }
 function tituloImpuestoJson(t) {
+    return { id: t.id, nombre: text(t.nombre) };
+}
+function tituloViajeJson(t) {
     return { id: t.id, nombre: text(t.nombre) };
 }
 function gastoImpuestoJson(g) {
@@ -140,6 +145,7 @@ function viajeJson(v) {
         chofer: v.chofer ? choferJson(v.chofer) : undefined,
         empresa: v.empresa ? empresaJson(v.empresa) : undefined,
         vehiculo: v.vehiculo ? vehiculoJson(v.vehiculo) : undefined,
+        tituloViaje: v.tituloViaje ? tituloViajeJson(v.tituloViaje) : undefined,
         carga: text(v.carga),
         recorrido: text(v.recorrido),
         puntoSalida: v.puntoSalida ? puntoJson(v.puntoSalida) : undefined,

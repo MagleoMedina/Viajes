@@ -95,8 +95,8 @@ describe('backend Node', () => {
       expect(texto).toContain('MONTO ($)');
       // La fila del intervalo rellena sus campos...
       expect(texto).toContain('Neveras');
-      // ...y al pie va la suma de los montos.
-      expect(texto).toContain('TOTAL');
+      // ...y el pie ya NO suma los montos (se quitó la fila TOTAL).
+      expect(texto).not.toMatch(/TOTAL\s*\$\s*[\d.,]+/);
     });
 
     it('reporte-empresa-sin-monto', async () => {
@@ -112,9 +112,13 @@ describe('backend Node', () => {
       for (const header of ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA']) {
         expect(texto).toContain(header);
       }
-      // Segundo formato: sin la columna MONTO ni la fila TOTAL.
+      // Segundo formato: sin la columna MONTO ni la fila TOTAL de la tabla.
       expect(texto).not.toContain('MONTO ($)');
-      expect(texto).not.toContain('TOTAL');
+      expect(texto).not.toContain('SUMA');
+      // El resumen por tipo va en página aparte y aquí no muestra importes.
+      // (El CSS del reporte escribe el título en mayúsculas.)
+      expect(texto).toMatch(/resumen por tipo de vehículo/i);
+      expect(texto).not.toContain('MONTO VIAJE $');
     });
   });
 });

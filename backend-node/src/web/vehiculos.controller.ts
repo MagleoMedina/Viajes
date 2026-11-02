@@ -10,7 +10,7 @@ Param,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { IsNotEmpty } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
 import { Vehiculo } from '../domain/vehiculo.entity';
 import { VehiculoRepository } from '../repo/vehiculo.repository';
 import { ViajeRepository } from '../repo/viaje.repository';
@@ -30,6 +30,11 @@ export class VehiculoRequest {
 
   @IsNotEmpty({ message: 'La placa es obligatoria' })
   placa: string;
+
+  /** Vehículo privado: por defecto false. */
+  @IsOptional()
+  @IsBoolean()
+  privado?: boolean;
 }
 
 @Controller('api/vehiculos')
@@ -96,5 +101,6 @@ export class VehiculoController {
     vehiculo.modelo = req.modelo.trim();
     vehiculo.tipo = req.tipo.trim();
     vehiculo.placa = placa;
+    vehiculo.privado = req.privado === true;
   }
 }

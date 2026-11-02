@@ -11,6 +11,7 @@ import { Recorrido } from '../domain/recorrido.entity';
 import { Tasa } from '../domain/tasa.entity';
 import { TituloGasto } from '../domain/titulo-gasto.entity';
 import { TituloImpuesto } from '../domain/titulo-impuesto.entity';
+import { TituloViaje } from '../domain/titulo-viaje.entity';
 import { Vehiculo } from '../domain/vehiculo.entity';
 import { Viaje } from '../domain/viaje.entity';
 import { toIsoDate, toIsoDateTime } from './dates';
@@ -48,6 +49,7 @@ export function vehiculoJson(v: Vehiculo) {
     modelo: text(v.modelo),
     tipo: text(v.tipo),
     placa: text(v.placa),
+    privado: Boolean(v.privado),
   };
 }
 
@@ -88,6 +90,10 @@ export function gastoVarioJson(g: GastoVario) {
 }
 
 export function tituloImpuestoJson(t: TituloImpuesto) {
+  return { id: t.id, nombre: text(t.nombre) };
+}
+
+export function tituloViajeJson(t: TituloViaje) {
   return { id: t.id, nombre: text(t.nombre) };
 }
 
@@ -156,6 +162,7 @@ export function viajeJson(v: Viaje) {
     chofer: v.chofer ? choferJson(v.chofer) : undefined,
     empresa: v.empresa ? empresaJson(v.empresa) : undefined,
     vehiculo: v.vehiculo ? vehiculoJson(v.vehiculo) : undefined,
+    tituloViaje: v.tituloViaje ? tituloViajeJson(v.tituloViaje) : undefined,
     carga: text(v.carga),
     recorrido: text(v.recorrido),
     puntoSalida: v.puntoSalida ? puntoJson(v.puntoSalida) : undefined,

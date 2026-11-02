@@ -45,8 +45,6 @@ let StockGasoilService = class StockGasoilService {
         return this.armar(comprado, usado, estacionario);
     }
     async resumen() {
-        const vehiculos = await this.gastos.manager.find(vehiculo_entity_1.Vehiculo);
-        const placaDe = new Map(vehiculos.map((v) => [v.id, v.placa]));
         const comprados = await this.gastos
             .createQueryBuilder('g')
             .select('g.vehiculo_id', 'vehiculoId')
@@ -62,11 +60,95 @@ let StockGasoilService = class StockGasoilService {
             .addSelect('COALESCE(SUM(v.combustible), 0)', 'combustible')
             .groupBy('v.vehiculo_id')
             .getRawMany();
+        return this.armarResumen(comprados, usados);
+    }
+    async resumenPorTitulo(tituloId) {
+        const usados = await this.viajes
+            .createQueryBuilder('v')
+            .select('v.vehiculo_id', 'vehiculoId')
+            .addSelect('COALESCE(SUM(v.litros), 0)', 'litros')
+            .addSelect('COALESCE(SUM(v.combustible), 0)', 'combustible')
+            .where('v.titulo_viaje_id = :tituloId', { tituloId })
+            .groupBy('v.vehiculo_id')
+            .getRawMany();
+        const ids = usados.map((f) => (f.vehiculoId == null ? null : Number(f.vehiculoId)));
+        const idsNumericos = ids.filter((id) => id != null);
+        let comprados = [];
+        if (ids.length > 0) {
+            const qb = this.gastos
+                .createQueryBuilder('g')
+                .select('g.vehiculo_id', 'vehiculoId')
+                .addSelect('COALESCE(SUM(g.litros), 0)', 'litros')
+                .addSelect('COALESCE(SUM(g.monto_usd), 0)', 'montoUsd')
+                .addSelect('COALESCE(SUM(g.monto_bs), 0)', 'montoBs');
+            if (idsNumericos.length > 0 && ids.some((id) => id == null)) {
+                qb.where('(g.vehiculo_id IN (:...ids) OR g.vehiculo_id IS NULL)', { ids: idsNumericos });
+            }
+            else if (idsNumericos.length > 0) {
+                qb.where('g.vehiculo_id IN (:...ids)', { ids: idsNumericos });
+            }
+            else {
+                qb.where('g.vehiculo_id IS NULL');
+            }
+            comprados = await qb.groupBy('g.vehiculo_id').getRawMany();
+        }
+        return this.armarResumen(comprados, usados);
+    }
+    async resumenPorVehiculos(vehiculoIds, empresaId, desde, hasta) {
+        if (vehiculoIds.length === 0)
+            return this.armarResumen([], []);
+        const usadosQb = this.viajes
+            .createQueryBuilder('v')
+            .select('v.vehiculo_id', 'vehiculoId')
+            .addSelect('COALESCE(SUM(v.litros), 0)', 'litros')
+            .addSelect('COALESCE(SUM(v.combustible), 0)', 'combustible')
+            .where('v.vehiculo_id IN (:...vehiculoIds)', { vehiculoIds })
+            .andWhere('v.titulo_viaje_id IS NULL');
+        if (empresaId != null && Number.isFinite(empresaId) && empresaId > 0) {
+            usadosQb.andWhere('v.empresa_id = :empresaId', { empresaId });
+        }
+        if (desde && hasta) {
+            usadosQb.andWhere('v.fechaInicio BETWEEN :desde AND :hasta', {
+                desde: (0, dates_1.dateOnlyToMillis)(desde),
+                hasta: (0, dates_1.dateOnlyToMillis)(hasta),
+            });
+        }
+        const usados = await usadosQb
+            .groupBy('v.vehiculo_id')
+            .getRawMany();
+        const compradosQb = this.gastos
+            .createQueryBuilder('g')
+            .select('g.vehiculo_id', 'vehiculoId')
+            .addSelect('COALESCE(SUM(g.litros), 0)', 'litros')
+            .addSelect('COALESCE(SUM(g.monto_usd), 0)', 'montoUsd')
+            .addSelect('COALESCE(SUM(g.monto_bs), 0)', 'montoBs')
+            .where('g.vehiculo_id IN (:...vehiculoIds)', { vehiculoIds });
+        if (desde && hasta) {
+            compradosQb.andWhere('g.fecha BETWEEN :desde AND :hasta', {
+                desde: (0, dates_1.dateOnlyToMillis)(desde),
+                hasta: (0, dates_1.dateOnlyToMillis)(hasta),
+            });
+        }
+        const comprados = await compradosQb
+            .groupBy('g.vehiculo_id')
+            .getRawMany();
+        return this.armarResumen(comprados, usados, vehiculoIds);
+    }
+    async armarResumen(comprados, usados, vehiculosExtra = []) {
+        const vehiculos = await this.gastos.manager.find(vehiculo_entity_1.Vehiculo);
+        const etiquetaDe = new Map(vehiculos.map((v) => {
+            const partes = [v.marca, v.modelo].filter((x) => x && x.trim()).join(' ').trim();
+            const placa = v.placa?.trim();
+            const etiqueta = partes && placa ? `${partes} (${placa})` : partes || placa || `Vehículo #${v.id}`;
+            return [v.id, etiqueta];
+        }));
         const claves = new Set();
         for (const f of comprados)
             claves.add(f.vehiculoId == null ? null : Number(f.vehiculoId));
         for (const f of usados)
             claves.add(f.vehiculoId == null ? null : Number(f.vehiculoId));
+        for (const id of vehiculosExtra)
+            claves.add(id);
         const compradoPorId = new Map();
         for (const f of comprados) {
             compradoPorId.set(f.vehiculoId == null ? null : Number(f.vehiculoId), f);
@@ -90,7 +172,7 @@ let StockGasoilService = class StockGasoilService {
             const u = usadoPorId.get(id);
             const fila = {
                 vehiculoId: id,
-                placa: id == null ? 'Sin vehículo' : (placaDe.get(id) ?? `Vehículo #${id}`),
+                placa: id == null ? 'Sin vehículo' : (etiquetaDe.get(id) ?? `Vehículo #${id}`),
                 comprado: (0, dates_1.round2)(Number(c?.litros ?? 0)),
                 compradoUsd: (0, dates_1.round2)(Number(c?.montoUsd ?? 0)),
                 compradoBs: (0, dates_1.round2)(Number(c?.montoBs ?? 0)),

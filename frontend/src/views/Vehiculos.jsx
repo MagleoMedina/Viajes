@@ -4,7 +4,7 @@ import { api } from '../api/client.js'
 import Confirmar from '../components/Confirmar.jsx'
 import { useFocoFormulario } from '../utils/enter-navega.js'
 
-const VACIO = { marca: '', modelo: '', tipo: '', placa: '' }
+const VACIO = { marca: '', modelo: '', tipo: '', placa: '', privado: false }
 
 export default function Vehiculos() {
   const [lista, setLista] = useState([])
@@ -35,6 +35,7 @@ export default function Vehiculos() {
       modelo: vehiculo.modelo,
       tipo: vehiculo.tipo,
       placa: vehiculo.placa,
+      privado: Boolean(vehiculo.privado),
     })
     setError('')
     setAviso('')
@@ -130,6 +131,15 @@ export default function Vehiculos() {
               />
             </label>
 
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={form.privado}
+                onChange={(e) => set('privado', e.target.checked)}
+              />
+              Vehículo privado
+            </label>
+
             <div className="acciones">
               <button type="submit" className="btn primario">
                 {editandoId == null ? (
@@ -163,6 +173,7 @@ export default function Vehiculos() {
                     <th>Modelo</th>
                     <th>Tipo</th>
                     <th>Placa</th>
+                    <th className="centro">Privado</th>
                     <th className="centro">Acciones</th>
                   </tr>
                 </thead>
@@ -173,6 +184,7 @@ export default function Vehiculos() {
                       <td>{vehiculo.modelo}</td>
                       <td>{vehiculo.tipo}</td>
                       <td>{vehiculo.placa}</td>
+                      <td className="centro">{vehiculo.privado ? 'Sí' : 'No'}</td>
                       <td className="centro">
                         <button type="button" className="btn-pequeno"  onClick={() => editar(vehiculo)}>
                           <FiEdit2 aria-hidden="true" /> Editar
@@ -202,7 +214,9 @@ export default function Vehiculos() {
               ? '¿Registrar este vehículo?'
               : '¿Guardar los cambios de este vehículo?'
           }
-          detalle={`${form.marca} ${form.modelo} · ${form.placa}`}
+          detalle={`${form.marca} ${form.modelo} · ${form.placa}${
+            form.privado ? ' · Privado' : ''
+          }`}
           etiqueta={editandoId == null ? 'Registrar' : 'Guardar'}
           onConfirmar={guardar}
           onCancelar={() => setConfirmarGuardado(false)}

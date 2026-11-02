@@ -14,6 +14,25 @@ const COLUMNAS = [
         columna: 'iva',
         ddl: 'ALTER TABLE ingresos ADD COLUMN iva real NOT NULL DEFAULT 0',
     },
+    {
+        tabla: 'titulo_viaje',
+        columna: 'id',
+        ddl: `CREATE TABLE IF NOT EXISTS titulo_viaje (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre varchar(100) NOT NULL UNIQUE,
+      eliminado integer NOT NULL DEFAULT 0
+    )`,
+    },
+    {
+        tabla: 'viajes',
+        columna: 'titulo_viaje_id',
+        ddl: 'ALTER TABLE viajes ADD COLUMN titulo_viaje_id bigint NULL',
+    },
+    {
+        tabla: 'vehiculos',
+        columna: 'privado',
+        ddl: 'ALTER TABLE vehiculos ADD COLUMN privado integer NOT NULL DEFAULT 0',
+    },
 ];
 async function aplicarMigraciones(dataSource) {
     const driver = dataSource.driver;
@@ -26,13 +45,20 @@ async function aplicarMigraciones(dataSource) {
     reportarEsquemaPrevio(db, origen);
     const aplicadas = [];
     for (const m of COLUMNAS) {
-        if (!existeTabla(db, m.tabla))
-            continue;
-        if (columnasDe(db, m.tabla).includes(m.columna))
-            continue;
+        const creaTabla = /^\s*CREATE TABLE/i.test(m.ddl);
+        if (creaTabla) {
+            if (existeTabla(db, m.tabla))
+                continue;
+        }
+        else {
+            if (!existeTabla(db, m.tabla))
+                continue;
+            if (columnasDe(db, m.tabla).includes(m.columna))
+                continue;
+        }
         try {
             db.run(m.ddl);
-            aplicadas.push(`${m.tabla}.${m.columna}`);
+            aplicadas.push(creaTabla ? m.tabla : `${m.tabla}.${m.columna}`);
         }
         catch (e) {
             logger.error(`No se pudo migrar ${m.tabla}.${m.columna}: ${e.message}`);
@@ -40,6 +66,9 @@ async function aplicarMigraciones(dataSource) {
     }
     if (crearIndiceFacturaUnica(db)) {
         aplicadas.push('ingresos.factura_num (unico)');
+    }
+    if (crearIndiceMarcaVehiculo(db)) {
+        aplicadas.push('vehiculos.marca (indice)');
     }
     if (!aplicadas.length)
         return;
@@ -77,6 +106,21 @@ function crearIndiceFacturaUnica(db) {
     }
     catch (e) {
         logger.error(`No se pudo crear el indice unico de facturas: ${e.message}`);
+        return false;
+    }
+    return true;
+}
+function crearIndiceMarcaVehiculo(db) {
+    if (!existeTabla(db, 'vehiculos'))
+        return false;
+    const yaExiste = db.exec("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_vehiculos_marca'");
+    if (yaExiste.length && yaExiste[0].values.length)
+        return false;
+    try {
+        db.run('CREATE INDEX IF NOT EXISTS idx_vehiculos_marca ON vehiculos(marca)');
+    }
+    catch (e) {
+        logger.error(`No se pudo crear el indice de marca: ${e.message}`);
         return false;
     }
     return true;

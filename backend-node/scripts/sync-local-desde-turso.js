@@ -40,6 +40,7 @@ const ORDEN_TABLAS = [
   'vehiculos',
   'titulo_gasto',
   'titulo_impuesto',
+  'titulo_viaje',
   'tasas',
   'viajes',
   'gastos',

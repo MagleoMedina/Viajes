@@ -13,6 +13,7 @@ import {
   TipoRelacion,
 } from '../service/relacion-reportes.service';
 import { EmpresaRepository } from '../repo/empresa.repository';
+import { TituloViajeRepository } from '../repo/titulo-viaje.repository';
 import { ApiException } from './api-exception';
 
 /** "#8c3b87" -> si, cualquier otra cosa -> color por defecto (evita inyectar CSS). */
@@ -42,6 +43,7 @@ export class ExportController {
     private readonly servicio: ExportService,
     private readonly reporteServicio: ReporteEmpresaService,
     private readonly empresaRepo: EmpresaRepository,
+    private readonly tituloViajeRepo: TituloViajeRepository,
     private readonly gastosServicio: GastosVariosService,
     private readonly impuestosServicio: GastosImpuestosService,
     private readonly gasoilServicio: GastosGasoilService,
@@ -96,6 +98,112 @@ export class ExportController {
       colorDe(color, '#26324a'),
     );
     const nombre = await this.nombre(idEmpresa, 'viajes', desde, hasta);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+    res.setHeader('Content-Length', String(buffer.length));
+    res.end(buffer);
+  }
+
+  /** PDF de viajes personalizados: un documento por título (obligatorio). */
+  @Get('personalizados/pdf')
+  async pdfPersonalizado(
+    @Res() res: Response,
+    @Query('tituloViajeId') tituloViajeId?: string,
+    @Query('empresaId') empresaId?: string,
+    @Query('vehiculoId') vehiculoId?: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('color') color?: string,
+  ) {
+    const idTitulo = Number(tituloViajeId);
+    if (!Number.isFinite(idTitulo) || idTitulo <= 0) {
+      throw new ApiException(400, 'El título del viaje personalizado es obligatorio');
+    }
+    const titulo = await this.tituloViajeRepo.findById(idTitulo);
+    if (!titulo) throw new ApiException(404, 'Título de viaje no encontrado');
+    const idEmpresa = empresaId ? Number(empresaId) : null;
+    const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
+    const buffer = await this.servicio.crearPdfPersonalizado(
+      idTitulo,
+      idEmpresa,
+      idVehiculo,
+      desde,
+      hasta,
+      colorDe(color, '#26324a'),
+    );
+    const base = await this.nombre(idEmpresa, 'viajes', desde, hasta);
+    const nombre = `${base}_${slug(titulo.nombre)}`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+    res.setHeader('Content-Length', String(buffer.length));
+    res.end(buffer);
+  }
+
+  /** Reportes de un viaje personalizado: con montos, sin montos y sin chofer. */
+  @Get('personalizados/reporte')
+  async reportePersonalizado(
+    @Res() res: Response,
+    @Query('tituloViajeId') tituloViajeId?: string,
+    @Query('empresaId') empresaId?: string,
+    @Query('vehiculoId') vehiculoId?: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('conMonto') conMonto?: string,
+    @Query('sinChofer') sinChofer?: string,
+    @Query('color') color?: string,
+  ) {
+    const idTitulo = Number(tituloViajeId);
+    if (!Number.isFinite(idTitulo) || idTitulo <= 0) {
+      throw new ApiException(400, 'El título del viaje personalizado es obligatorio');
+    }
+    const titulo = await this.tituloViajeRepo.findById(idTitulo);
+    if (!titulo) throw new ApiException(404, 'Título de viaje no encontrado');
+    const idEmpresa = empresaId ? Number(empresaId) : 0;
+    const buffer = await this.reporteServicio.generarPdf({
+      empresaId: idEmpresa,
+      vehiculoId: vehiculoId ? Number(vehiculoId) : null,
+      desde,
+      hasta,
+      conMonto: conMonto !== 'false',
+      sinChofer: sinChofer === 'true',
+      color: colorDe(color, '#26324a'),
+      tituloViajeId: idTitulo,
+    });
+    const base = await this.nombre(idEmpresa > 0 ? idEmpresa : null, 'reporte', desde, hasta);
+    const nombre = `${base}_${slug(titulo.nombre)}`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+    res.setHeader('Content-Length', String(buffer.length));
+    res.end(buffer);
+  }
+
+  /** Reportes de vehículos privados (marca contiene «PRIVADO»). */
+  @Get('privados/reporte')
+  async reportePrivados(
+    @Res() res: Response,
+    @Query('empresaId') empresaId?: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('conMonto') conMonto?: string,
+    @Query('sinChofer') sinChofer?: string,
+    @Query('color') color?: string,
+  ) {
+    const idEmpresa = empresaId ? Number(empresaId) : 0;
+    const buffer = await this.reporteServicio.generarPdf({
+      empresaId: idEmpresa,
+      desde,
+      hasta,
+      conMonto: conMonto !== 'false',
+      sinChofer: sinChofer === 'true',
+      color: colorDe(color, '#26324a'),
+      soloPrivados: true,
+    });
+    const nombre = await this.nombre(
+      idEmpresa > 0 ? idEmpresa : null,
+      'reporte_privados',
+      desde,
+      hasta,
+    );
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
     res.setHeader('Content-Length', String(buffer.length));

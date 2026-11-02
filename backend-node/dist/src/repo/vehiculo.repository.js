@@ -25,6 +25,12 @@ let VehiculoRepository = class VehiculoRepository {
     findAll() {
         return this.repo.find({ where: { eliminado: false } });
     }
+    vehiculosPrivados() {
+        return this.repo.find({
+            where: { privado: true, eliminado: false },
+            order: { id: 'ASC' },
+        });
+    }
     findById(id) {
         return this.repo.findOneBy({ id });
     }

@@ -23,6 +23,7 @@ const gasoil_estacionario_service_1 = require("../service/gasoil-estacionario.se
 const ingresos_service_1 = require("../service/ingresos.service");
 const relacion_reportes_service_1 = require("../service/relacion-reportes.service");
 const empresa_repository_1 = require("../repo/empresa.repository");
+const titulo_viaje_repository_1 = require("../repo/titulo-viaje.repository");
 const api_exception_1 = require("./api-exception");
 const COLOR_SEGURO = /^#[0-9a-fA-F]{6}$/;
 function colorDe(color, porDefecto) {
@@ -43,16 +44,18 @@ let ExportController = class ExportController {
     servicio;
     reporteServicio;
     empresaRepo;
+    tituloViajeRepo;
     gastosServicio;
     impuestosServicio;
     gasoilServicio;
     estacionarioServicio;
     ingresosServicio;
     relacionServicio;
-    constructor(servicio, reporteServicio, empresaRepo, gastosServicio, impuestosServicio, gasoilServicio, estacionarioServicio, ingresosServicio, relacionServicio) {
+    constructor(servicio, reporteServicio, empresaRepo, tituloViajeRepo, gastosServicio, impuestosServicio, gasoilServicio, estacionarioServicio, ingresosServicio, relacionServicio) {
         this.servicio = servicio;
         this.reporteServicio = reporteServicio;
         this.empresaRepo = empresaRepo;
+        this.tituloViajeRepo = tituloViajeRepo;
         this.gastosServicio = gastosServicio;
         this.impuestosServicio = impuestosServicio;
         this.gasoilServicio = gasoilServicio;
@@ -82,6 +85,67 @@ let ExportController = class ExportController {
         const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
         const buffer = await this.servicio.crearPdf(idEmpresa, idVehiculo, desde, hasta, colorDe(color, '#26324a'));
         const nombre = await this.nombre(idEmpresa, 'viajes', desde, hasta);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+        res.setHeader('Content-Length', String(buffer.length));
+        res.end(buffer);
+    }
+    async pdfPersonalizado(res, tituloViajeId, empresaId, vehiculoId, desde, hasta, color) {
+        const idTitulo = Number(tituloViajeId);
+        if (!Number.isFinite(idTitulo) || idTitulo <= 0) {
+            throw new api_exception_1.ApiException(400, 'El título del viaje personalizado es obligatorio');
+        }
+        const titulo = await this.tituloViajeRepo.findById(idTitulo);
+        if (!titulo)
+            throw new api_exception_1.ApiException(404, 'Título de viaje no encontrado');
+        const idEmpresa = empresaId ? Number(empresaId) : null;
+        const idVehiculo = vehiculoId ? Number(vehiculoId) : null;
+        const buffer = await this.servicio.crearPdfPersonalizado(idTitulo, idEmpresa, idVehiculo, desde, hasta, colorDe(color, '#26324a'));
+        const base = await this.nombre(idEmpresa, 'viajes', desde, hasta);
+        const nombre = `${base}_${slug(titulo.nombre)}`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+        res.setHeader('Content-Length', String(buffer.length));
+        res.end(buffer);
+    }
+    async reportePersonalizado(res, tituloViajeId, empresaId, vehiculoId, desde, hasta, conMonto, sinChofer, color) {
+        const idTitulo = Number(tituloViajeId);
+        if (!Number.isFinite(idTitulo) || idTitulo <= 0) {
+            throw new api_exception_1.ApiException(400, 'El título del viaje personalizado es obligatorio');
+        }
+        const titulo = await this.tituloViajeRepo.findById(idTitulo);
+        if (!titulo)
+            throw new api_exception_1.ApiException(404, 'Título de viaje no encontrado');
+        const idEmpresa = empresaId ? Number(empresaId) : 0;
+        const buffer = await this.reporteServicio.generarPdf({
+            empresaId: idEmpresa,
+            vehiculoId: vehiculoId ? Number(vehiculoId) : null,
+            desde,
+            hasta,
+            conMonto: conMonto !== 'false',
+            sinChofer: sinChofer === 'true',
+            color: colorDe(color, '#26324a'),
+            tituloViajeId: idTitulo,
+        });
+        const base = await this.nombre(idEmpresa > 0 ? idEmpresa : null, 'reporte', desde, hasta);
+        const nombre = `${base}_${slug(titulo.nombre)}`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
+        res.setHeader('Content-Length', String(buffer.length));
+        res.end(buffer);
+    }
+    async reportePrivados(res, empresaId, desde, hasta, conMonto, sinChofer, color) {
+        const idEmpresa = empresaId ? Number(empresaId) : 0;
+        const buffer = await this.reporteServicio.generarPdf({
+            empresaId: idEmpresa,
+            desde,
+            hasta,
+            conMonto: conMonto !== 'false',
+            sinChofer: sinChofer === 'true',
+            color: colorDe(color, '#26324a'),
+            soloPrivados: true,
+        });
+        const nombre = await this.nombre(idEmpresa > 0 ? idEmpresa : null, 'reporte_privados', desde, hasta);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${nombre}.pdf"`);
         res.setHeader('Content-Length', String(buffer.length));
@@ -203,6 +267,47 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ExportController.prototype, "pdf", null);
 __decorate([
+    (0, common_1.Get)('personalizados/pdf'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('tituloViajeId')),
+    __param(2, (0, common_1.Query)('empresaId')),
+    __param(3, (0, common_1.Query)('vehiculoId')),
+    __param(4, (0, common_1.Query)('desde')),
+    __param(5, (0, common_1.Query)('hasta')),
+    __param(6, (0, common_1.Query)('color')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ExportController.prototype, "pdfPersonalizado", null);
+__decorate([
+    (0, common_1.Get)('personalizados/reporte'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('tituloViajeId')),
+    __param(2, (0, common_1.Query)('empresaId')),
+    __param(3, (0, common_1.Query)('vehiculoId')),
+    __param(4, (0, common_1.Query)('desde')),
+    __param(5, (0, common_1.Query)('hasta')),
+    __param(6, (0, common_1.Query)('conMonto')),
+    __param(7, (0, common_1.Query)('sinChofer')),
+    __param(8, (0, common_1.Query)('color')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ExportController.prototype, "reportePersonalizado", null);
+__decorate([
+    (0, common_1.Get)('privados/reporte'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('empresaId')),
+    __param(2, (0, common_1.Query)('desde')),
+    __param(3, (0, common_1.Query)('hasta')),
+    __param(4, (0, common_1.Query)('conMonto')),
+    __param(5, (0, common_1.Query)('sinChofer')),
+    __param(6, (0, common_1.Query)('color')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ExportController.prototype, "reportePrivados", null);
+__decorate([
     (0, common_1.Get)('reporte'),
     __param(0, (0, common_1.Res)()),
     __param(1, (0, common_1.Query)('empresaId')),
@@ -282,6 +387,7 @@ exports.ExportController = ExportController = __decorate([
     __metadata("design:paramtypes", [export_service_1.ExportService,
         reporte_empresa_service_1.ReporteEmpresaService,
         empresa_repository_1.EmpresaRepository,
+        titulo_viaje_repository_1.TituloViajeRepository,
         gastos_varios_service_1.GastosVariosService,
         gastos_impuestos_service_1.GastosImpuestosService,
         gastos_gasoil_service_1.GastosGasoilService,

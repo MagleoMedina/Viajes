@@ -163,6 +163,25 @@ const MIGRACIONES = [
     columna: 'iva',
     ddl: 'ALTER TABLE ingresos ADD COLUMN iva real NOT NULL DEFAULT 0',
   },
+  {
+    tabla: 'titulo_viaje',
+    columna: 'id',
+    ddl: `CREATE TABLE IF NOT EXISTS titulo_viaje (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre varchar(100) NOT NULL UNIQUE,
+      eliminado integer NOT NULL DEFAULT 0
+    )`,
+  },
+  {
+    tabla: 'viajes',
+    columna: 'titulo_viaje_id',
+    ddl: 'ALTER TABLE viajes ADD COLUMN titulo_viaje_id bigint NULL REFERENCES titulo_viaje(id)',
+  },
+  {
+    tabla: 'vehiculos',
+    columna: 'privado',
+    ddl: 'ALTER TABLE vehiculos ADD COLUMN privado integer NOT NULL DEFAULT 0',
+  },
 ];
 
 /**
@@ -224,6 +243,23 @@ function crearIndiceFacturaUnica(db) {
   return true;
 }
 
+/** Indice de `vehiculos.marca` para agilizar busquedas por marca. */
+function crearIndiceMarcaVehiculo(db) {
+  const info = db.exec('PRAGMA table_info(vehiculos)');
+  if (!info.length) return false;
+  const yaExiste = db.exec(
+    "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_vehiculos_marca'",
+  );
+  if (yaExiste.length && yaExiste[0].values.length) return false;
+  try {
+    db.run('CREATE INDEX IF NOT EXISTS idx_vehiculos_marca ON vehiculos(marca)');
+  } catch (e) {
+    console.warn(`[!] No se pudo crear el indice de marca: ${e.message}`);
+    return false;
+  }
+  return true;
+}
+
 async function main() {
   const dbFile = process.argv[2] || process.env.DB_PATH || path.join(__dirname, '..', 'data', 'viajes.db');
   const seedFile = path.join(__dirname, '..', 'test', 'seed.db');
@@ -261,6 +297,10 @@ async function main() {
 
   if (crearIndiceFacturaUnica(db)) {
     aplicadas.push('ingresos.factura_num (unico)');
+  }
+
+  if (crearIndiceMarcaVehiculo(db)) {
+    aplicadas.push('vehiculos.marca (indice)');
   }
 
   guardar();

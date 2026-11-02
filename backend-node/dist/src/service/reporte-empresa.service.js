@@ -16,9 +16,12 @@ const chromium_1 = require("../common/chromium");
 const fs_1 = require("fs");
 const path_1 = require("path");
 const empresa_repository_1 = require("../repo/empresa.repository");
+const titulo_viaje_repository_1 = require("../repo/titulo-viaje.repository");
 const viaje_repository_1 = require("../repo/viaje.repository");
+const vehiculo_repository_1 = require("../repo/vehiculo.repository");
 const dates_1 = require("../common/dates");
-const COLS_CON_MONTO = 8;
+const export_service_1 = require("./export.service");
+const stock_gasoil_service_1 = require("./stock-gasoil.service");
 const escapar = (str) => String(str ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -29,7 +32,7 @@ const formatearDinero = (valor) => Number(valor || 0).toLocaleString('es-VE', {
     maximumFractionDigits: 2,
 });
 function htmlReporte(params) {
-    const { nombreEmpresa, direccionEmpresa, rangoFechas, columnas, filas, conMonto, cantidadViajes = filas.length, total = 0, color, logoUri, } = params;
+    const { nombreEmpresa, direccionEmpresa, rangoFechas, columnas, filas, conMonto, cantidadViajes = filas.length, color, logoUri, cabeceraHtml = '', gasoilHtml = '', resumenTiposHtml = '', } = params;
     const ths = columnas
         .map((c, i) => `<th class="${i === columnas.length - 1 && conMonto ? 'num' : ''}">${c}</th>`)
         .join('');
@@ -41,12 +44,15 @@ function htmlReporte(params) {
             </tr>`)
             .join('')
         : `<tr><td colspan="${columnas.length}" class="vacio">Sin viajes en este intervalo.</td></tr>`;
-    const pie = conMonto && filas.length
-        ? `<tr class="total">
-             <td colspan="${COLS_CON_MONTO - 1}">TOTAL</td>
-             <td class="num">$ ${formatearDinero(total)}</td>
-           </tr>`
-        : '';
+    const pie = '';
+    const cabecera = cabeceraHtml || `
+        <div class="header-container">
+          ${logoUri ? `<img class="logo" src="${logoUri}" alt="Logo" />` : ''}
+          <div class="slogan">Sin pausa, sin excusas, sin limites</div>
+          <div class="titulo-reporte">REPORTE VIAJES DESDE EL ${rangoFechas}</div>
+          <div class="nombre-empresa">${escapar(nombreEmpresa)}</div>
+          ${direccionEmpresa ? `<div class="direccion-empresa">${escapar(direccionEmpresa)}</div>` : ''}
+        </div>`;
     return `
       <!DOCTYPE html>
       <html lang="es">
@@ -76,7 +82,7 @@ function htmlReporte(params) {
           .logo {
             max-width: 200px;
             height: auto;
-            margin-bottom: 6px;
+            margin-bottom: 0;
           }
           .slogan {
             font-size: 10px;
@@ -136,13 +142,13 @@ function htmlReporte(params) {
           th, td {
             border: 1px solid #c9d2e0;
             padding: 5px 6px;
-            font-size: 10pt;
+            font-size: 7pt;
             overflow-wrap: break-word;
           }
           th {
             background-color: #26324a;
             color: #ffffff;
-            font-size: 10pt;
+            font-size: 7pt;
             font-weight: bold;
             text-align: left;
             text-transform: uppercase;
@@ -166,18 +172,56 @@ function htmlReporte(params) {
             font-weight: bold;
             font-size: 10pt;
           }
+
+          /* Página de gasoil (viajes personalizados) */
+          .pagina-gasoil { page-break-before: always; break-before: page; }
+          .gas-titulo {
+            margin: 0 0 8px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+          }
+          .tabla-gasoil { width: 100%; margin-top: 0; }
+          .tabla-gasoil th, .tabla-gasoil td { font-size: 10pt; padding: 5px 6px; }
+          .tabla-gasoil tr.totales td {
+            background-color: #26324a;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 10pt;
+          }
+
+          /* Página final: resumen por tipo de vehículo */
+          .pagina-tipos { page-break-before: always; break-before: page; }
+          .tipos-titulo {
+            margin: 0 0 8px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+          }
+          .tabla-tipos { width: 55%; margin-top: 0; }
+          .tabla-tipos th, .tabla-tipos td { font-size: 10pt; padding: 5px 6px; }
+          .tabla-tipos td.vacio {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 14px;
+          }
+          .tabla-tipos tr.totales td {
+            background-color: #26324a;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 10pt;
+          }
         </style>
       </head>
       <body>
 
         <!-- Cabecera en el medio de la hoja -->
-        <div class="header-container">
-          ${logoUri ? `<img class="logo" src="${logoUri}" alt="Logo" />` : ''}
-          <div class="slogan">Sin pausa, sin excusas, sin limites</div>
-          <div class="titulo-reporte">REPORTE VIAJES DESDE EL ${rangoFechas}</div>
-          <div class="nombre-empresa">${escapar(nombreEmpresa)}</div>
-          <div class="direccion-empresa">${escapar(direccionEmpresa)}</div>
-        </div>
+        ${cabecera}
 
         <div class="resumen">
           <span class="dato"><span class="k">VIAJES</span>${cantidadViajes}</span>
@@ -193,6 +237,9 @@ function htmlReporte(params) {
           </tbody>
         </table>
 
+        ${gasoilHtml}
+        ${resumenTiposHtml}
+
       </body>
       </html>
     `;
@@ -200,22 +247,56 @@ function htmlReporte(params) {
 let ReporteEmpresaService = class ReporteEmpresaService {
     empresaRepo;
     viajeRepo;
-    constructor(empresaRepo, viajeRepo) {
+    tituloRepo;
+    vehiculoRepo;
+    stockGasoil;
+    constructor(empresaRepo, viajeRepo, tituloRepo, vehiculoRepo, stockGasoil) {
         this.empresaRepo = empresaRepo;
         this.viajeRepo = viajeRepo;
+        this.tituloRepo = tituloRepo;
+        this.vehiculoRepo = vehiculoRepo;
+        this.stockGasoil = stockGasoil;
     }
     async generarPdf(params) {
-        const { empresaId, vehiculoId = null, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color } = params;
+        const { empresaId, vehiculoId = null, desde, hasta, direccion: direccionParam, conMonto = true, sinChofer = false, color, tituloViajeId = null, soloPrivados = false } = params;
         const empresa = Number.isFinite(empresaId) && empresaId > 0
             ? await this.empresaRepo.findById(empresaId)
             : null;
-        const nombreEmpresa = empresa?.nombre ?? 'TODAS LAS EMPRESAS';
-        const direccionEmpresa = empresa?.direccion?.trim() ||
-            direccionParam ||
-            'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar';
-        const rangoFechas = this.formatearRangoFechas(desde, hasta);
-        const viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.consultar(empresaId, vehiculoId, desde, hasta));
+        const titulo = tituloViajeId != null ? await this.tituloRepo.findById(tituloViajeId) : null;
+        const nombreEmpresa = titulo?.nombre ?? empresa?.nombre ?? 'TODAS LAS EMPRESAS';
+        const direccionEmpresa = titulo
+            ? (empresa?.direccion?.trim() || direccionParam || '')
+            : (empresa?.direccion?.trim() ||
+                direccionParam ||
+                'Zona Industrial Matanzas, Ciudad Guayana, Estado Bolívar');
+        const rangoFechas = (0, dates_1.formatearRangoFechas)(desde, hasta);
+        let vehiculosPrivados = [];
+        let viajes;
+        if (soloPrivados) {
+            vehiculosPrivados = (await this.vehiculoRepo.vehiculosPrivados()).map((v) => v.id);
+            viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.viajeRepo.buscarPorVehiculos(vehiculosPrivados, empresaId, desde, hasta));
+        }
+        else {
+            viajes = (0, dates_1.ordenarPorFechaAscendente)(await this.consultar(empresaId, vehiculoId, desde, hasta, tituloViajeId));
+        }
         const logoUri = this.obtenerLogoDataUri();
+        const cabeceraHtml = `
+        <div class="header-container">
+          ${logoUri ? `<img class="logo" src="${logoUri}" alt="Logo" />` : ''}
+          <div class="slogan">Sin pausa, sin excusas, sin limites</div>
+          <div class="titulo-reporte">REPORTE VIAJES ${soloPrivados ? 'PRIVADOS ' : ''}DESDE EL ${rangoFechas}</div>
+          <div class="nombre-empresa">${escapar(nombreEmpresa)}</div>
+          ${direccionEmpresa ? `<div class="direccion-empresa">${escapar(direccionEmpresa)}</div>` : ''}
+        </div>`;
+        let gasoilHtml = '';
+        if (soloPrivados) {
+            const resumenGasoil = await this.stockGasoil.resumenPorVehiculos(vehiculosPrivados, empresaId, desde, hasta);
+            gasoilHtml = (0, export_service_1.htmlResumenGasoil)(resumenGasoil, cabeceraHtml, 'vehículos privados');
+        }
+        else if (titulo != null && tituloViajeId != null) {
+            const resumenGasoil = await this.stockGasoil.resumenPorTitulo(tituloViajeId);
+            gasoilHtml = (0, export_service_1.htmlResumenGasoil)(resumenGasoil, cabeceraHtml, titulo.nombre);
+        }
         const filas = viajes.map((v) => {
             const celdas = [
                 this.fechaCorta(v.fechaInicio),
@@ -230,7 +311,6 @@ let ReporteEmpresaService = class ReporteEmpresaService {
                 celdas.push(this.dinero(v.montoViaje ?? 0));
             return celdas;
         });
-        const total = viajes.reduce((suma, v) => suma + (v.montoViaje ?? 0), 0);
         let columnas = conMonto
             ? ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA', 'MONTO ($)']
             : ['FECHA', 'VEHICULO', 'CHOFER', 'RECORRIDO', 'DESDE', 'HASTA', 'CARGA'];
@@ -248,9 +328,11 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             filas,
             conMonto,
             cantidadViajes: viajes.length,
-            total,
             color,
             logoUri,
+            cabeceraHtml,
+            gasoilHtml,
+            resumenTiposHtml: (0, export_service_1.htmlResumenTipos)(viajes, color ?? '#8c3b87', conMonto, cabeceraHtml),
         });
         const browser = await (0, chromium_1.lanzarChrome)();
         try {
@@ -266,9 +348,9 @@ let ReporteEmpresaService = class ReporteEmpresaService {
             await browser.close();
         }
     }
-    consultar(empresaId, vehiculoId, desde, hasta) {
+    consultar(empresaId, vehiculoId, desde, hasta, tituloViajeId) {
         const conEmpresa = Number.isFinite(empresaId) && empresaId > 0;
-        return this.viajeRepo.buscar(conEmpresa ? empresaId : null, vehiculoId ?? null, desde, hasta);
+        return this.viajeRepo.buscar(conEmpresa ? empresaId : null, vehiculoId ?? null, desde, hasta, tituloViajeId ?? null);
     }
     fechaCorta(fecha) {
         if (!fecha)
@@ -297,28 +379,6 @@ let ReporteEmpresaService = class ReporteEmpresaService {
     dinero(valor) {
         return formatearDinero(valor);
     }
-    formatearRangoFechas(desde, hasta) {
-        if (!desde && !hasta)
-            return 'HISTÓRICO GENERAL';
-        const parsear = (fechaIso) => {
-            const [y, m, d] = fechaIso.split('-');
-            return {
-                diaMes: `${d}/${m}`,
-                anioCorto: y ? y.slice(-2) : '',
-            };
-        };
-        if (desde && hasta) {
-            const d = parsear(desde);
-            const h = parsear(hasta);
-            return `${d.diaMes} AL ${h.diaMes}/${h.anioCorto}`;
-        }
-        if (desde) {
-            const d = parsear(desde);
-            return `${d.diaMes}/${d.anioCorto} EN ADELANTE`;
-        }
-        const h = parsear(hasta);
-        return `HASTA EL ${h.diaMes}/${h.anioCorto}`;
-    }
     obtenerLogoDataUri() {
         const logoPath = (0, path_1.join)(process.cwd(), 'assets', 'logo.jpg');
         if ((0, fs_1.existsSync)(logoPath)) {
@@ -332,6 +392,9 @@ exports.ReporteEmpresaService = ReporteEmpresaService;
 exports.ReporteEmpresaService = ReporteEmpresaService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [empresa_repository_1.EmpresaRepository,
-        viaje_repository_1.ViajeRepository])
+        viaje_repository_1.ViajeRepository,
+        titulo_viaje_repository_1.TituloViajeRepository,
+        vehiculo_repository_1.VehiculoRepository,
+        stock_gasoil_service_1.StockGasoilService])
 ], ReporteEmpresaService);
 //# sourceMappingURL=reporte-empresa.service.js.map

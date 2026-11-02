@@ -5,7 +5,7 @@ import { GastoGasoil } from '../domain/gasto-gasoil.entity';
 import { GasoilEstacionario } from '../domain/gasoil-estacionario.entity';
 import { Viaje } from '../domain/viaje.entity';
 import { Vehiculo } from '../domain/vehiculo.entity';
-import { round2 } from '../common/dates';
+import { round2, dateOnlyToMillis } from '../common/dates';
 
 export interface StockGasoil {
   /** Litros totales comprados (gastos_gasoil), todos los vehículos. */
@@ -74,9 +74,6 @@ export class StockGasoilService {
 
   /** Desglose por vehículo (comprado y usado) más los totales globales. */
   async resumen(): Promise<ResumenGasoil> {
-    const vehiculos = await this.gastos.manager.find(Vehiculo);
-    const placaDe = new Map<number, string>(vehiculos.map((v) => [v.id, v.placa]));
-
     const comprados = await this.gastos
       .createQueryBuilder('g')
       .select('g.vehiculo_id', 'vehiculoId')
@@ -94,9 +91,120 @@ export class StockGasoilService {
       .groupBy('v.vehiculo_id')
       .getRawMany<{ vehiculoId: string | null; litros: string; combustible: string }>();
 
+    return this.armarResumen(comprados, usados);
+  }
+
+  /**
+   * Resumen de gasoil de un viaje personalizado: solo cuenta los viajes de
+   * ese título y muestra los vehículos que usaron. Las compras son las del
+   * stock global de esos mismos vehículos.
+   */
+  async resumenPorTitulo(tituloId: number): Promise<ResumenGasoil> {
+    const usados = await this.viajes
+      .createQueryBuilder('v')
+      .select('v.vehiculo_id', 'vehiculoId')
+      .addSelect('COALESCE(SUM(v.litros), 0)', 'litros')
+      .addSelect('COALESCE(SUM(v.combustible), 0)', 'combustible')
+      .where('v.titulo_viaje_id = :tituloId', { tituloId })
+      .groupBy('v.vehiculo_id')
+      .getRawMany<{ vehiculoId: string | null; litros: string; combustible: string }>();
+
+    const ids = usados.map((f) => (f.vehiculoId == null ? null : Number(f.vehiculoId)));
+    const idsNumericos = ids.filter((id): id is number => id != null);
+    let comprados: { vehiculoId: string | null; litros: string; montoUsd: string; montoBs: string }[] = [];
+    if (ids.length > 0) {
+      const qb = this.gastos
+        .createQueryBuilder('g')
+        .select('g.vehiculo_id', 'vehiculoId')
+        .addSelect('COALESCE(SUM(g.litros), 0)', 'litros')
+        .addSelect('COALESCE(SUM(g.monto_usd), 0)', 'montoUsd')
+        .addSelect('COALESCE(SUM(g.monto_bs), 0)', 'montoBs');
+      if (idsNumericos.length > 0 && ids.some((id) => id == null)) {
+        qb.where('(g.vehiculo_id IN (:...ids) OR g.vehiculo_id IS NULL)', { ids: idsNumericos });
+      } else if (idsNumericos.length > 0) {
+        qb.where('g.vehiculo_id IN (:...ids)', { ids: idsNumericos });
+      } else {
+        qb.where('g.vehiculo_id IS NULL');
+      }
+      comprados = await qb.groupBy('g.vehiculo_id').getRawMany();
+    }
+    return this.armarResumen(comprados, usados);
+  }
+
+  /**
+   * Gasoil de una lista de vehículos (reporte de privados), limitado a la
+   * empresa y al intervalo pedidos. Las filas incluyen todos los vehículos
+   * aunque no tengan movimientos en ese periodo.
+   */
+  async resumenPorVehiculos(
+    vehiculoIds: number[],
+    empresaId?: number | null,
+    desde?: string,
+    hasta?: string,
+  ): Promise<ResumenGasoil> {
+    if (vehiculoIds.length === 0) return this.armarResumen([], []);
+
+    const usadosQb = this.viajes
+      .createQueryBuilder('v')
+      .select('v.vehiculo_id', 'vehiculoId')
+      .addSelect('COALESCE(SUM(v.litros), 0)', 'litros')
+      .addSelect('COALESCE(SUM(v.combustible), 0)', 'combustible')
+      .where('v.vehiculo_id IN (:...vehiculoIds)', { vehiculoIds })
+      .andWhere('v.titulo_viaje_id IS NULL');
+    if (empresaId != null && Number.isFinite(empresaId) && empresaId > 0) {
+      usadosQb.andWhere('v.empresa_id = :empresaId', { empresaId });
+    }
+    if (desde && hasta) {
+      usadosQb.andWhere('v.fechaInicio BETWEEN :desde AND :hasta', {
+        desde: dateOnlyToMillis(desde),
+        hasta: dateOnlyToMillis(hasta),
+      });
+    }
+    const usados = await usadosQb
+      .groupBy('v.vehiculo_id')
+      .getRawMany<{ vehiculoId: string | null; litros: string; combustible: string }>();
+
+    const compradosQb = this.gastos
+      .createQueryBuilder('g')
+      .select('g.vehiculo_id', 'vehiculoId')
+      .addSelect('COALESCE(SUM(g.litros), 0)', 'litros')
+      .addSelect('COALESCE(SUM(g.monto_usd), 0)', 'montoUsd')
+      .addSelect('COALESCE(SUM(g.monto_bs), 0)', 'montoBs')
+      .where('g.vehiculo_id IN (:...vehiculoIds)', { vehiculoIds });
+    if (desde && hasta) {
+      compradosQb.andWhere('g.fecha BETWEEN :desde AND :hasta', {
+        desde: dateOnlyToMillis(desde),
+        hasta: dateOnlyToMillis(hasta),
+      });
+    }
+    const comprados = await compradosQb
+      .groupBy('g.vehiculo_id')
+      .getRawMany<{ vehiculoId: string | null; litros: string; montoUsd: string; montoBs: string }>();
+
+    return this.armarResumen(comprados, usados, vehiculoIds);
+  }
+
+  /** Cruza compras y usos por vehículo y arma filas + totales. */
+  private async armarResumen(
+    comprados: { vehiculoId: string | null; litros: string; montoUsd: string; montoBs: string }[],
+    usados: { vehiculoId: string | null; litros: string; combustible: string }[],
+    vehiculosExtra: number[] = [],
+  ): Promise<ResumenGasoil> {
+    const vehiculos = await this.gastos.manager.find(Vehiculo);
+    // Etiqueta como en los reportes: MARCA MODELO (PLACA).
+    const etiquetaDe = new Map<number, string>(
+      vehiculos.map((v) => {
+        const partes = [v.marca, v.modelo].filter((x) => x && x.trim()).join(' ').trim();
+        const placa = v.placa?.trim();
+        const etiqueta = partes && placa ? `${partes} (${placa})` : partes || placa || `Vehículo #${v.id}`;
+        return [v.id, etiqueta];
+      }),
+    );
+
     const claves = new Set<number | null>();
     for (const f of comprados) claves.add(f.vehiculoId == null ? null : Number(f.vehiculoId));
     for (const f of usados) claves.add(f.vehiculoId == null ? null : Number(f.vehiculoId));
+    for (const id of vehiculosExtra) claves.add(id);
 
     const compradoPorId = new Map<number | null, (typeof comprados)[number]>();
     for (const f of comprados) {
@@ -122,7 +230,7 @@ export class StockGasoilService {
       const u = usadoPorId.get(id);
       const fila: FilaGasoilVehiculo = {
         vehiculoId: id,
-        placa: id == null ? 'Sin vehículo' : (placaDe.get(id) ?? `Vehículo #${id}`),
+        placa: id == null ? 'Sin vehículo' : (etiquetaDe.get(id) ?? `Vehículo #${id}`),
         comprado: round2(Number(c?.litros ?? 0)),
         compradoUsd: round2(Number(c?.montoUsd ?? 0)),
         compradoBs: round2(Number(c?.montoBs ?? 0)),
